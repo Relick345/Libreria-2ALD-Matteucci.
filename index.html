@@ -10,7 +10,7 @@
         html { scroll-behavior: smooth; }
         body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; overflow-x: hidden; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
         
-        /* 🚀 ACCELERAZIONE HARDWARE ESTREMA (GPU) */
+        /* 🚀 ACCELERAZIONE HARDWARE ESTREMA (GPU) a 120 FPS */
         .fade-in { 
             animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
             will-change: opacity; 
@@ -35,7 +35,7 @@
         
         .star-cb-group { display: flex; flex-direction: row-reverse; justify-content: center; }
         .star-cb-group input { display: none; }
-        .star-cb-group label { font-size: 2.5rem; color: #cbd5e1; cursor: pointer; transition: color: 0.15s; padding: 0 4px; }
+        .star-cb-group label { font-size: 2.5rem; color: #cbd5e1; cursor: pointer; transition: color 0.15s; padding: 0 4px; }
         .star-cb-group label:hover, .star-cb-group label:hover ~ label, .star-cb-group input:checked ~ label { color: #fbbf24; }
         @media (max-width: 640px) { .star-cb-group label { font-size: 2rem; padding: 0 2px; } }
 
@@ -126,8 +126,7 @@
         allarmi: [], // <--- Memoria Sabotaggi
         modal: null, 
         selectedReviewBookId: null,
-        unsubs: [],
-        presenceInterval: null
+        unsubs: []
     };
 
     let serverState = { attivo: true, last_force_reload: null };
@@ -138,7 +137,7 @@
     const DAY = 86400000;
     const INPUT_CLS = "w-full rounded-2xl border-2 border-slate-200 px-3 sm:px-4 py-2.5 sm:py-3.5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all font-medium bg-slate-50 focus:bg-white text-sm sm:text-base";
 
-    // Generatore Omino Grigio (Decodifica asincrona e Lazy Loading per MASSIMA velocità)
+    // Generatore Omino Grigio in altissima qualità (CON LAZY LOADING)
     window.getAvatar = (url, classes = "w-8 h-8") => {
         if (url && url.length > 10) {
             return `<img src="${escapeHTML(url)}" loading="lazy" decoding="async" class="${classes} rounded-full object-cover shadow-sm border border-slate-200 shrink-0">`;
@@ -172,7 +171,7 @@
     }
 
     // -------------------------------------------------------------
-    // MOTORE DEL CAOS
+    // MOTORE DEL CAOS: ESEGUE MATERIALMENTE GLI EFFETTI VISIVI
     // -------------------------------------------------------------
     window.innescaCaos = (evento, messaggio) => {
         if (evento === 'messaggio') {
@@ -213,7 +212,7 @@
             if (evento === 'thanos') emoji = '💨';
             
             let count = 0;
-            // Ottimizzazione caduta emoji via requestAnimationFrame per evitare blocchi JS
+            // Ottimizzazione caduta emoji via requestAnimationFrame
             let lastTime = 0;
             const animateFall = (time) => {
                 if (time - lastTime > 100) {
@@ -255,7 +254,6 @@
     onAuthStateChanged(auth, async user => {
         state.unsubs.forEach(unsub => unsub()); 
         state.unsubs = [];
-        if (state.presenceInterval) clearInterval(state.presenceInterval);
         state.user = user;
         state.isLoaded = false;
         
@@ -315,10 +313,13 @@
         }));
 
         if (user) {
-            // FIX QUOTA FIREBASE: Eliminiamo il setInterval che caricava 106.000 letture!
+            // ====================================================================
+            // 🔥 SOLUZIONE A COSTO ZERO: RIMOSSO IL "BATTITO CARDIACO" COSTANTE 🔥
+            // ====================================================================
             const updatePresence = () => { if(state.user) updateDoc(doc(db, "utenti", user.uid), { lastActive: serverTimestamp() }).catch(()=>{}); };
-            updatePresence(); // Si aggiorna SOLO al login/caricamento pagina (niente loop)
+            updatePresence(); // Invia che sei online SOLO UNA VOLTA all'apertura del sito
             
+            // Quando si chiude la finestra invia che si è offline
             window.addEventListener('beforeunload', () => { if(state.user) updateDoc(doc(db, "utenti", user.uid), { lastActive: null }).catch(()=>{}); });
 
             state.unsubs.push(onSnapshot(doc(db, "utenti", user.uid), async docSnap => {
@@ -547,6 +548,14 @@
     window.openModal = (type, data = null) => { state.modal = { type, data }; requestRender(); };
     window.closeModal = () => { state.modal = null; requestRender(); };
 
+    // ================================================================
+    // 🔥 NUOVA FUNZIONE MANUALE A COSTO ZERO PER VEDERE CHI È ONLINE 🔥
+    // ================================================================
+    window.apriRadarManuale = () => {
+        state.modal = { type: 'radarManuale' };
+        requestRender();
+    };
+
     function comprimiInBase64(file, maxWidth = 600, maxHeight = 800, quality = 0.6, isSquare = false) {
         return new Promise((resolve, reject) => {
             if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) return reject(new Error("Formato HEIC (iPhone) non supportato."));
@@ -641,7 +650,7 @@
                 
                 const icon = document.createElement('div');
                 icon.className = 'text-5xl sm:text-6xl mb-4 sm:mb-5 drop-shadow-md';
-                icon.innerText = type === 'alert' ? '🔔' : (type === 'confirm' ? '❓' : '✍️');
+                icon.innerText = type === 'alert' ? '🔔' : (type === 'confirm' ? '❓' : '✍️️');
                 box.appendChild(icon);
                 
                 const title = document.createElement('h3');
@@ -813,7 +822,7 @@
                 messaggio: "Ha tentato di BANNARE IL DISPOSITIVO di questo Creatore."
             };
             await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
-            return mostraAlert("⚠️ Azione Negata: I dispositivi dei creatori supremi sono immuni al ban. Tentativo registrato nei log.");
+            return mostraAlert("⚠ Azione Negata: I dispositivi dei creatori supremi sono immuni al ban. Tentativo registrato nei log.");
         }
 
         const isBanned = bannedDevices.includes(u.deviceId);
@@ -993,7 +1002,6 @@
         }
     };
 
-    // MOTORE GIF LAZY LOADING
     let gifTimeout;
     window.cercaGif = (queryStr) => {
         clearTimeout(gifTimeout);
@@ -1118,7 +1126,11 @@
         finally { btn.disabled = false; btn.innerText = "Invia Proposta"; }
     };
 
-    window.cambiaTab = (tab) => { state.tab = tab; state.selectedReviewBookId = null; requestRender(true); };
+    window.cambiaTab = (tab) => { 
+        state.tab = tab; state.selectedReviewBookId = null; 
+        if(state.user) updateDoc(doc(db, "utenti", state.user.uid), { lastActive: serverTimestamp() }).catch(()=>{});
+        requestRender(true); 
+    };
 
     window.toggleServer = async () => {
         const newState = !serverState.attivo;
@@ -1135,7 +1147,7 @@
 
     window.invocaPotere = async (potere) => {
         const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value);
-        if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio dal Radar Divino!");
+        if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio (Tutti o un utente specifico)!");
         await setDoc(doc(db, "sistema", "caos"), { evento: potere, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
         mostraAlert(`⚡ Potere scatenato!`);
     };
@@ -1144,7 +1156,7 @@
         const msg = await chiediInput("Scrivi il messaggio globale:", "");
         if(!msg) return;
         const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value);
-        if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio dal Radar Divino!");
+        if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio!");
         await setDoc(doc(db, "sistema", "caos"), { evento: 'messaggio', messaggio: msg, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
         mostraAlert("Messaggio Divino inviato!");
     };
@@ -1231,6 +1243,41 @@
         if(!state.modal) return '';
         
         if (state.modal.type === 'sguardoDivinoRender') return state.modal.html;
+
+        // 🔥 MODALE RADAR MANUALE A COSTO ZERO 🔥
+        if (state.modal.type === 'radarManuale') {
+            const now = Date.now();
+            const onlineUsers = state.users.filter(u => u.lastActive && u.id !== state.user.uid && (now - u.lastActive.toMillis() < 30 * 60000));
+            
+            return `
+            <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md fade-in" style="transform: translate3d(0,0,0);">
+                <div class="bg-slate-900 rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-center border border-purple-500/30 relative">
+                    <div class="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-rose-900/20 rounded-3xl pointer-events-none"></div>
+                    <button onclick="closeModal()" class="absolute top-5 right-5 w-8 h-8 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center font-bold transition-colors z-20">✕</button>
+                    
+                    <div class="relative z-10">
+                        <div class="text-5xl mb-4">📡</div>
+                        <h2 class="text-2xl font-black text-white mb-2">Scansione Rete Completata</h2>
+                        <p class="text-purple-300/80 text-sm mb-6">Questi utenti hanno l'app aperta o l'hanno usata di recente.</p>
+                        
+                        <div class="bg-black/40 rounded-2xl border border-purple-500/20 p-4 max-h-60 overflow-y-auto hide-scrollbar text-left space-y-3 mb-6 shadow-inner">
+                            ${onlineUsers.length > 0 
+                                ? onlineUsers.map(u => `
+                                    <div class="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                                        <div class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse shrink-0"></div>
+                                        <div class="flex flex-col truncate">
+                                            <span class="text-sm font-bold text-white truncate">${escapeHTML(u.nome)}</span>
+                                        </div>
+                                    </div>
+                                `).join('')
+                                : `<div class="text-center py-6"><span class="text-2xl block mb-2">👻</span><span class="text-slate-400 font-medium text-sm">Nessuno online in questo momento.</span></div>`
+                            }
+                        </div>
+                        <button onclick="closeModal()" class="w-full py-4 rounded-xl font-extrabold text-white bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-600/30 transition-transform active:scale-95">Chiudi Radar</button>
+                    </div>
+                </div>
+            </div>`;
+        }
 
         if (state.modal.type === 'profilo') {
             const avatarPreview = window.getAvatar(state.userData.avatar, "w-24 h-24 sm:w-32 sm:h-32 shadow-lg mx-auto border-4 border-white");
@@ -1409,7 +1456,7 @@
                 </div>
                 <div class="p-5 sm:p-6 flex flex-col flex-1">
                     <h3 class="font-extrabold text-slate-800 text-lg sm:text-xl leading-tight">${escapeHTML(b.titolo)}</h3>
-                    <p class="text-slate-500 font-medium text-xs sm:text-sm mt-1">${escapeHTML(b.autore)}${b.data_pubblicazione ? `&bull; ${escapeHTML(b.data_pubblicazione)}` : ''}</p>
+                    <p class="text-slate-500 font-medium text-xs sm:text-sm mt-1">${escapeHTML(b.autore)} ${b.data_pubblicazione ? `&bull; ${escapeHTML(b.data_pubblicazione)}` : ''}</p>
                     ${b.trama ? `<p class="text-slate-400 text-xs sm:text-sm mt-3 line-clamp-2 sm:line-clamp-3">${escapeHTML(b.trama)}</p>` : ''}
                     <div class="mt-auto pt-5 sm:pt-6">
                         ${b.stato === 'disponibile' ? 
@@ -1472,7 +1519,7 @@
 
         let h = '';
         if(libriDaRec.length > 0) {
-            h += `<div class="mb-10 sm:mb-12 px-4 sm:px-0"><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">✍️️ Da Recensire</h2><div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">${libriDaRec.map(b => `<div class="bg-indigo-50 p-5 sm:p-6 rounded-3xl border border-indigo-100 flex flex-col justify-between items-start gap-4"><div><h4 class="font-bold text-indigo-900 text-base sm:text-lg">${escapeHTML(b.titolo)}</h4><p class="text-indigo-600 text-xs sm:text-sm">${escapeHTML(b.autore)}</p></div><button onclick="openModal('recensisci', {id: '${b.id}', titolo: '${escapeHTML(b.titolo).replace(/'/g, "\\'")}'})" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-sm sm:text-base shadow-lg shadow-indigo-600/30 hover:scale-105 transition-transform">Scrivi Recensione</button></div>`).join('')}</div></div>`;
+            h += `<div class="mb-10 sm:mb-12 px-4 sm:px-0"><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">✍ Da Recensire</h2><div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">${libriDaRec.map(b => `<div class="bg-indigo-50 p-5 sm:p-6 rounded-3xl border border-indigo-100 flex flex-col justify-between items-start gap-4"><div><h4 class="font-bold text-indigo-900 text-base sm:text-lg">${escapeHTML(b.titolo)}</h4><p class="text-indigo-600 text-xs sm:text-sm">${escapeHTML(b.autore)}</p></div><button onclick="openModal('recensisci', {id: '${b.id}', titolo: '${escapeHTML(b.titolo).replace(/'/g, "\\'")}'})" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-sm sm:text-base shadow-lg shadow-indigo-600/30 hover:scale-105 transition-transform">Scrivi Recensione</button></div>`).join('')}</div></div>`;
         }
 
         const revBooksIds = [...new Set(state.reviews.map(r => r.libroId))];
@@ -1555,7 +1602,7 @@
             <section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">Utenti Registrati</h2>
                 <div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto shadow-sm"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Utente</th><th class="p-3 sm:p-5">Email</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">
                     ${state.users.map(u => {
-                        return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3">${window.getAvatar(u.avatar, "w-6 h-6 sm:w-8 sm:h-8")}<span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span>${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
+                        return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3">${window.getAvatar(u.avatar, "w-6 h-6 sm:w-8 sm:h-8")}<span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span> ${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
                     <td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">
                         ${state.isGod ? `
                             <button onclick="sguardoDivino('${u.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Sguardo Divino">👁</button>
@@ -1573,8 +1620,7 @@
     }
 
     function godView() {
-        const now = Date.now();
-        const onlineUsers = state.users.filter(u => u.lastActive && (now - u.lastActive.toMillis() < 25000) && u.id !== state.user.uid);
+        const targetUsers = state.users.filter(u => u.id !== state.user.uid);
 
         return `<div class="bg-slate-900 mx-4 sm:mx-0 rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 border border-purple-500/30 shadow-2xl shadow-purple-900/20 relative overflow-hidden fade-in text-white mb-8 sm:mb-10">
             <div class="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-rose-900/20 pointer-events-none"></div>
@@ -1599,14 +1645,19 @@
                 <button onclick="apocalisse()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-rose-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">💀</span> Apocalisse</button>
             </div>
 
-            <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-purple-200">Radar (Utenti Online)</h3>
+            <!-- NUOVO PANNELLO RADAR BERSAGLI E BOTTONE MANUALE SCANSIONE ONLINE -->
+            <div class="flex items-center justify-between mb-3 sm:mb-4 relative z-10">
+                <h3 class="text-lg sm:text-xl font-bold text-purple-200">Radar Bersagli (Iscritti)</h3>
+                <button onclick="apriRadarManuale()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-xl text-xs sm:text-sm shadow-lg shadow-purple-600/30 transition-colors flex items-center gap-2">📡 Scansione Online</button>
+            </div>
+            
             <div class="bg-black/40 p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-purple-500/30 mb-6 sm:mb-8 relative z-10">
                 <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 border-b border-purple-500/30 pb-3 sm:pb-4">
                     <input type="checkbox" id="target-all" class="target-cb w-4 h-4 sm:w-5 sm:h-5 accent-purple-500 cursor-pointer" value="all" checked onchange="document.querySelectorAll('.target-user').forEach(c => c.checked = false)">
                     <label for="target-all" class="text-white font-bold cursor-pointer text-xs sm:text-sm">🌐 Colpisci TUTTI</label>
                 </div>
                 <div id="god-radar-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 max-h-48 overflow-y-auto pr-1 sm:pr-2 hide-scrollbar">
-                    ${onlineUsers.length ? onlineUsers.map(u => `<label class="flex items-center gap-2 sm:gap-3 bg-white/5 p-2 sm:p-3 rounded-lg sm:rounded-xl cursor-pointer hover:bg-white/10 transition-colors border border-white/5"><input type="checkbox" class="target-cb target-user w-4 h-4 sm:w-5 sm:h-5 accent-purple-500 cursor-pointer" value="${u.id}" onchange="document.getElementById('target-all').checked = false"><div class="flex flex-col truncate"><span class="text-xs sm:text-sm font-bold text-white truncate">${escapeHTML(u.nome)}</span><span class="text-[8px] sm:text-[10px] text-emerald-400 font-black tracking-widest">ONLINE</span></div></label>`).join('') : '<p class="text-xs sm:text-sm text-slate-400 italic font-medium">Nessuno online ora.</p>'}
+                    ${targetUsers.length ? targetUsers.map(u => `<label class="flex items-center gap-2 sm:gap-3 bg-white/5 p-2 sm:p-3 rounded-lg sm:rounded-xl cursor-pointer hover:bg-white/10 transition-colors border border-white/5"><input type="checkbox" class="target-cb target-user w-4 h-4 sm:w-5 sm:h-5 accent-purple-500 cursor-pointer" value="${u.id}" onchange="document.getElementById('target-all').checked = false"><div class="flex flex-col truncate"><span class="text-xs sm:text-sm font-bold text-white truncate">${escapeHTML(u.nome)}</span><span class="text-[8px] sm:text-[10px] text-purple-300/50 font-black tracking-widest uppercase">${escapeHTML(u.ruolo)}</span></div></label>`).join('') : '<p class="text-xs sm:text-sm text-slate-400 italic font-medium">Nessun altro utente registrato.</p>'}
                 </div>
             </div>
 
@@ -1625,7 +1676,6 @@
         </div>`;
     }
 
-    // IL MOTORE DI RENDER A 120FPS
     function actualRender(animate = true) {
         const appDiv = $('app');
         if (!state.user) {
