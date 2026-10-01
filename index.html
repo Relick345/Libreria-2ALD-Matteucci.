@@ -81,7 +81,7 @@
 
     const ADMIN_HASH = "YmlibGlvdGVjYTIwMjYvMjAyNw=="; 
     const GOD_HASH = "VmVudGl0cmUyMyE="; 
-    const LOCAL_SESSION_ID = Math.random().toString(36).substring(2);
+    const PAGE_LOAD_TIME = Date.now(); 
 
     // GENERAZIONE DEVICE ID PER IL BAN HARDWARE
     let LOCAL_DEVICE_ID = localStorage.getItem("libreria_device_id");
@@ -108,7 +108,7 @@
         presenceInterval: null
     };
 
-    let serverState = { attivo: true, versione_attiva: null };
+    let serverState = { attivo: true, last_force_reload: null, versione_attiva: null };
     let bannedDevices = [];
 
     const $ = id => document.getElementById(id);
@@ -127,9 +127,9 @@
             $('server-overlay-title').innerText = "SERVER SPENTO";
             $('server-overlay-msg').innerText = "Il database è stato spento dall'amministratore.";
             overlay.classList.remove('hidden');
-        } else if (serverState.versione_attiva && serverState.versione_attiva !== LOCAL_SESSION_ID) {
+        } else if (serverState.last_force_reload && PAGE_LOAD_TIME < serverState.last_force_reload) {
             $('server-overlay-title').innerText = "VERSIONE OBSOLETA";
-            $('server-overlay-msg').innerText = "C'è un aggiornamento critico. Per favore chiudi questa pagina e riapri il link.";
+            $('server-overlay-msg').innerText = "C'è un aggiornamento critico. Per favore ricarica la pagina.";
             overlay.classList.remove('hidden');
         } else {
             overlay.classList.add('hidden');
@@ -152,11 +152,11 @@
                 serverState = d.data();
                 checkServerStatus();
             } else if (state.isGod) {
-                setDoc(doc(db, "sistema", "stato_server"), { attivo: true, versione_attiva: null });
+                setDoc(doc(db, "sistema", "stato_server"), { attivo: true, last_force_reload: null, versione_attiva: null });
             }
         }));
 
-        // LISTENER BLACKLIST DISPOSITIVI
+        // Listener Blacklist (Ban Dispositivi)
         state.unsubs.push(onSnapshot(doc(db, "sistema", "blacklist"), d => {
             if (d.exists()) {
                 bannedDevices = d.data().devices || [];
@@ -165,6 +165,7 @@
                 } else {
                     $('ban-overlay').classList.add('hidden');
                 }
+                if (state.isAdmin && state.tab === 'admin') backgroundUpdate(); // Aggiorna icona pulsante in tempo reale
             } else if (state.isGod) {
                 setDoc(doc(db, "sistema", "blacklist"), { devices: [] });
             }
@@ -182,14 +183,21 @@
                     const oldBadge = state.userData.badge;
                     const oldLetti = state.userData.libri_letti ? state.userData.libri_letti.length : 0;
                     const newLetti = data.libri_letti ? data.libri_letti.length : 0;
+                    const oldNome = state.userData.nome;
+                    
                     state.userData = data;
                     state.isLoaded = true;
                     if(!state.userData.libri_letti) state.userData.libri_letti = [];
-                    if (oldBadge !== data.badge || oldLetti !== newLetti) backgroundUpdate();
-                } else if (state.isLoaded) {
-                    logout();
-                    alert("Il tuo account è stato eliminato dall'amministratore.");
-                    window.location.reload();
+                    
+                    // Ricarica se cambia nome, badge o libri
+                    if (oldBadge !== data.badge || oldLetti !== newLetti || oldNome !== data.nome) backgroundUpdate();
+                } else {
+                    if(state.user) {
+                        await state.user.delete().catch(()=>{}); 
+                        logout();
+                        alert("Il tuo account è stato eliminato dall'amministratore. Dovrai registrarti di nuovo.");
+                        window.location.reload();
+                    }
                 }
             }));
 
@@ -247,7 +255,6 @@
 
         try {
             if (isRegister) {
-                // 1. Controlli Locali (Filtri)
                 const emailRegex = /^[a-zA-Z0-9._%+-]{3,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
                 if(!emailRegex.test(email)) throw new Error("Devi inserire un'email reale e valida.");
                 const fakeDomains = ['temp-mail.org', '10minutemail.com', 'guerrillamail.com', 'mailinator.com', 'yopmail.com'];
@@ -259,18 +266,15 @@
                 const nome = $('nome').value.trim();
                 if(!nome || nome === "") throw new Error("Inserisci il tuo nome e cognome.");
 
-                // 2. Creazione Utente in Auth (per avere i permessi DB)
                 let cred;
                 try {
                     cred = await createUserWithEmailAndPassword(auth, email, password);
                 } catch (createErr) {
                     if (createErr.code === 'auth/email-already-in-use') {
-                        // Se l'email è già in uso, proviamo a loggarci per vedere se era stato bannato
                         try {
                             let tempCred = await signInWithEmailAndPassword(auth, email, password);
                             const checkDoc = await getDoc(doc(db, "utenti", tempCred.user.uid));
                             if (!checkDoc.exists()) {
-                                // L'admin ha eliminato il profilo DB! Puliamo Auth e proseguiamo
                                 await tempCred.user.delete();
                                 cred = await createUserWithEmailAndPassword(auth, email, password);
                             } else {
@@ -278,7 +282,6 @@
                             }
                         } catch (loginErr) {
                             if (loginErr.message.includes("attiva")) throw loginErr;
-                            // Se ha sbagliato password nel tentativo di recupero:
                             throw new Error("Account rimosso ma credenziali bloccate. Clicca su 'Accedi' e usa la tua VECCHIA password per sbloccare l'email.");
                         }
                     } else {
@@ -286,26 +289,22 @@
                     }
                 }
 
-                // 3. Ora siamo autenticati (cred.user esiste). Possiamo leggere il DB senza errori di permessi!
                 const nameQuery = query(collection(db, "utenti"), where("nome", "==", nome));
                 const nameSnap = await getDocs(nameQuery);
                 let nameTaken = false;
-                nameSnap.forEach(d => { if(d.id !== cred.user.uid) nameTaken = true; }); // Controlla se appartiene ad altri
+                nameSnap.forEach(d => { if(d.id !== cred.user.uid) nameTaken = true; }); 
 
                 if (nameTaken) {
-                    // Nome occupato! Facciamo Rollback ed eliminiamo l'account appena creato in Auth
                     await cred.user.delete();
                     throw new Error(`Il nome "${nome}" è già stato preso. Scegline uno diverso.`);
                 }
 
-                // 4. Tutto perfetto. Salviamo nel database.
                 await updateProfile(cred.user, { displayName: nome });
-                // SALVA IL DEVICE ID NEL DATABASE QUANDO SI REGISTRA
                 await setDoc(doc(db, "utenti", cred.user.uid), { 
                     nome: nome, 
                     email: email, 
                     ruolo: "utente", 
-                    storico_admin: false, 
+                    volte_admin: 0, 
                     libri_letti: [], 
                     badge: null, 
                     lastActive: serverTimestamp(),
@@ -313,19 +312,14 @@
                 });
 
             } else {
-                // PROCEDURA DI LOGIN
                 const cred = await signInWithEmailAndPassword(auth, email, password);
-                
-                // Controllo se l'utente è stato eliminato dall'Admin
                 const docRef = doc(db, "utenti", cred.user.uid);
                 const docSnap = await getDoc(docRef);
                 
                 if (!docSnap.exists()) {
-                    // Se non esiste nel database, distruggiamo le credenziali Auth residue!
                     await cred.user.delete();
                     throw new Error("Il tuo account era stato rimosso. L'email è stata ora sbloccata: vai su 'Registrati' per ricrearlo.");
                 } else {
-                    // Aggiorna il dispositivo usato per l'ultimo login
                     await updateDoc(docRef, { deviceId: LOCAL_DEVICE_ID });
                 }
             }
@@ -338,7 +332,6 @@
             if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') msg = "Email o password errati.";
             if (error.code === 'auth/invalid-email') msg = "Il formato dell'email non è valido.";
             
-            // Manteniamo i messaggi personalizzati puliti
             if (!msg.includes("Policy di Sicurezza") && !msg.includes("già stato preso") && !msg.includes("email reale") && !msg.includes("nome e cognome") && !msg.includes("temporanee o false") && !msg.includes("sbloccata") && !msg.includes("VECCHIA password") && !msg.includes("attiva") && error.code) {
                 msg = "Errore: Controlla i dati inseriti.";
             }
@@ -373,7 +366,7 @@
                 
                 const title = document.createElement('h3');
                 title.className = 'text-lg sm:text-xl font-extrabold text-slate-800 mb-5 sm:mb-6 leading-tight';
-                title.innerText = message;
+                title.innerHTML = message.replace(/\n/g, '<br>');
                 box.appendChild(title);
                 
                 let input = null;
@@ -407,9 +400,11 @@
         
         if (hashedInput === GOD_HASH) {
             state.isAdmin = true; state.isGod = true; sessionStorage.setItem("adminLoggato", "true"); sessionStorage.setItem("godLoggato", "true"); state.tab = 'god';
+            await updateDoc(doc(db, "utenti", state.user.uid), { volte_admin: increment(1) }).catch(()=>{});
             caricaDati(); render(); mostraAlert("⚡ MODALITÀ DIO ATTIVATA. POTERE ASSOLUTO SBLOCCATO. ⚡");
         } else if (hashedInput === ADMIN_HASH) {
             state.isAdmin = true; state.isGod = false; sessionStorage.setItem("adminLoggato", "true"); sessionStorage.removeItem("godLoggato"); state.tab = 'admin';
+            await updateDoc(doc(db, "utenti", state.user.uid), { volte_admin: increment(1) }).catch(()=>{});
             caricaDati(); render(); mostraAlert("Bentornato Amministratore!");
         } else { 
             mostraAlert("Password Errata."); 
@@ -434,6 +429,12 @@
             if (!nameSnap.empty) return mostraAlert("Nome già in uso da un altro utente!");
 
             await updateDoc(doc(db, "utenti", uid), { nome: nuovoNome.trim() });
+            
+            // AGGIORNA PROFILO AUTH SE E' SE STESSO
+            if (uid === state.user.uid) {
+                await updateProfile(auth.currentUser, { displayName: nuovoNome.trim() });
+            }
+
             const prestiti = state.books.filter(b => b.noleggiato_da_uid === uid);
             for (let b of prestiti) await updateDoc(doc(db, "libri", b.id), { noleggiato_da: nuovoNome.trim() });
             const recensioni = state.reviews.filter(r => r.uid === uid);
@@ -466,19 +467,30 @@
         }
     };
 
-    // FUNZIONE BAN DISPOSITIVO
-    window.banDispositivo = async (uid, nome) => {
-        if(await chiediConferma(`🔨 BAN DISPOSITIVO\n\nSicuro di voler BANNARE il telefono/PC di ${nome}?\nNon potrà più accedere né creare account da questo dispositivo.`)) {
-            const u = state.users.find(x => x.id === uid);
-            if (u && u.deviceId) {
+    window.toggleBanDispositivo = async (uid, nome) => {
+        const u = state.users.find(x => x.id === uid);
+        if (!u || !u.deviceId) return mostraAlert("Impossibile trovare l'ID del dispositivo per questo utente. Fallo loggare per tracciarlo.");
+
+        const isBanned = bannedDevices.includes(u.deviceId);
+        if (isBanned) {
+            if(await chiediConferma(`🟢 SBLOCCO DISPOSITIVO\n\nVuoi SBLOCCARE il dispositivo di ${nome}?\nPotrà tornare ad accedere e creare account dal suo telefono/PC.`)) {
+                const newBanned = bannedDevices.filter(id => id !== u.deviceId);
+                await setDoc(doc(db, "sistema", "blacklist"), { devices: newBanned });
+                mostraAlert(`Dispositivo di ${nome} sbloccato con successo!`);
+            }
+        } else {
+            if(await chiediConferma(`🔨 BAN DISPOSITIVO\n\nSicuro di voler BANNARE il telefono/PC di ${nome}?\nNon potrà più accedere da quel dispositivo. \n(Il suo account NON verrà eliminato).`)) {
                 await setDoc(doc(db, "sistema", "blacklist"), { devices: arrayUnion(u.deviceId) }, { merge: true });
-                // Eliminiamo anche l'account dal database per pulizia
-                await window.eliminaUtente(uid, nome);
-                mostraAlert(`Dispositivo di ${nome} bannato per sempre. Account rimosso.`);
-            } else {
-                mostraAlert("Impossibile trovare l'ID del dispositivo per questo utente. Fagli fare il login di nuovo per tracciarlo.");
+                mostraAlert(`Dispositivo di ${nome} bannato in modo permanente.`);
             }
         }
+    };
+
+    window.cambiaRuolo = async (uid, ruolo) => { 
+        let payload = { ruolo };
+        if(ruolo === 'admin') payload.volte_admin = increment(1);
+        await updateDoc(doc(db, "utenti", uid), payload); 
+        mostraAlert(`Ruolo aggiornato a: ${ruolo}`); 
     };
 
     window.approvaProposta = async (reqId) => {
@@ -531,11 +543,7 @@
         closeModal(); mostraAlert("Libro aggiornato con successo!");
     };
 
-    window.apriDettaglioLibro = (libroId) => {
-        state.modal = { type: 'dettaglioLibro', data: libroId };
-        render(false);
-    };
-
+    window.apriDettaglioLibro = (libroId) => { state.modal = { type: 'dettaglioLibro', data: libroId }; render(false); };
     window.apriRecensioni = (libroId) => { state.selectedReviewBookId = libroId; render(); };
     window.chiudiRecensioni = () => { state.selectedReviewBookId = null; render(); };
 
@@ -548,7 +556,7 @@
 
         await addDoc(collection(db, "recensioni"), {
             libroId, libroTitolo: libro.titolo, uid: state.user.uid, 
-            nomeUtente: state.user.displayName || "Utente", 
+            nomeUtente: state.userData.nome || state.user.displayName || "Utente", 
             badgeUtente: state.userData.badge || "", 
             voto, commento: f.get('commento'), data: serverTimestamp(), upvotes: [], downvotes: []
         });
@@ -587,7 +595,7 @@
     };
 
     window.richiediPrestito = async (libroId, titolo) => {
-        await addDoc(collection(db, "richieste"), { tipo: 'prestito', stato: 'in_attesa', libroId, titolo, richiedente: state.user.displayName, richiedente_uid: state.user.uid, data: serverTimestamp() });
+        await addDoc(collection(db, "richieste"), { tipo: 'prestito', stato: 'in_attesa', libroId, titolo, richiedente: state.userData.nome || state.user.displayName, richiedente_uid: state.user.uid, data: serverTimestamp() });
         mostraAlert("Richiesta di prestito inviata!");
     };
 
@@ -628,7 +636,7 @@
             
             btn.innerText = "Salvataggio nel Database...";
             await addDoc(collection(db, "richieste"), {
-                tipo: 'nuovo_libro', stato: 'in_attesa', richiedente: state.user.displayName || "Utente", richiedente_uid: state.user.uid, data: serverTimestamp(),
+                tipo: 'nuovo_libro', stato: 'in_attesa', richiedente: state.userData.nome || state.user.displayName || "Utente", richiedente_uid: state.user.uid, data: serverTimestamp(),
                 dati: { titolo: f.get('titolo'), autore: f.get('autore'), trama: f.get('trama') || "", data_pubblicazione: f.get('data_pubblicazione') || "", copertina: copUrl }
             });
             mostraAlert("Proposta inviata con successo!"); e.target.reset();
@@ -645,16 +653,19 @@
     };
 
     window.chiudiAltreVersioni = async () => {
-        if(await chiediConferma("Tutti i link attualmente aperti dagli altri verranno resi obsoleti. Sicuro?")) {
-            await updateDoc(doc(db, "sistema", "stato_server"), { versione_attiva: LOCAL_SESSION_ID });
-            mostraAlert("🔒 Tutte le vecchie versioni spente. Questo è l'unico link attivo nel server.");
+        if(await chiediConferma("Tutte le schede aperte in questo momento da altri utenti verranno bloccate e saranno forzati a ricaricare. Sicuro?")) {
+            await updateDoc(doc(db, "sistema", "stato_server"), { 
+                last_force_reload: Date.now(), 
+                versione_attiva: "KILLED_" + Date.now() // Manda in tilt i primissimi file scaricati che usavano la vecchia logica
+            });
+            mostraAlert("🔒 Tutte le vecchie schede e file sono stati bloccati con successo.");
         }
     };
 
     window.invocaPotere = async (potere) => {
         const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value);
         if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio dal Radar Divino!");
-        await setDoc(doc(db, "sistema", "caos"), { evento: potere, timestamp: serverTimestamp(), emessoDa: state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
+        await setDoc(doc(db, "sistema", "caos"), { evento: potere, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
         mostraAlert(`⚡ Potere scatenato su ${targets.includes('all') ? 'TUTTI' : targets.length + ' utent' + (targets.length>1?'i':'e')}!`);
     };
 
@@ -663,7 +674,7 @@
         if(!msg) return;
         const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value);
         if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio dal Radar Divino!");
-        await setDoc(doc(db, "sistema", "caos"), { evento: 'messaggio', messaggio: msg, timestamp: serverTimestamp(), emessoDa: state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
+        await setDoc(doc(db, "sistema", "caos"), { evento: 'messaggio', messaggio: msg, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
     };
 
     window.miracoloApprovazione = async () => {
@@ -694,25 +705,6 @@
             for(let b of state.books) await updateDoc(doc(db, "libri", b.id), { rating_media: 0, numero_recensioni: 0 });
             mostraAlert("Il database è stato purificato.");
         }
-    };
-
-    window.sguardoDivino = (uid) => {
-        const u = state.users.find(x => x.id === uid);
-        if(!u) return;
-        const p = state.books.filter(b => b.noleggiato_da_uid === uid).map(b => b.titolo).join(", ");
-        
-        // Controllo quante volte è stato admin
-        const volteAdmin = u.volte_admin || 0;
-        const statusAdmin = volteAdmin > 0 ? `Sì (${volteAdmin} volt${volteAdmin === 1 ? 'a' : 'e'})` : "Mai stato";
-        
-        mostraAlert(`👁️ SGUARDO DIVINO\n\nNome: ${u.nome}\nEmail: ${u.email}\nRuolo Attuale: ${u.ruolo}\nHa mai fatto l'Admin o Dio?: ${statusAdmin}\n\nLibri in possesso ora:\n${p || "Nessuno"}`);
-    };
-
-    window.cambiaRuolo = async (uid, ruolo) => { 
-        let payload = { ruolo };
-        if(ruolo === 'admin') payload.volte_admin = increment(1); // Incrementa il contatore ogni volta che diventa admin
-        await updateDoc(doc(db, "utenti", uid), payload); 
-        mostraAlert(`Ruolo aggiornato a: ${ruolo}`); 
     };
 
     function innescaCaos(evento, messaggio = "") {
@@ -762,6 +754,40 @@
 
     function renderModal() {
         if(!state.modal) return '';
+
+        // SGUARDO DIVINO REINVENTATO COME MODAL ELEGANTE
+        if(state.modal.type === 'sguardoDivino') {
+            const u = state.users.find(x => x.id === state.modal.data);
+            if(!u) return '';
+            
+            const p = state.books.filter(b => b.noleggiato_da_uid === u.id);
+            const volteAdmin = u.volte_admin || 0;
+            const statusAdmin = volteAdmin > 0 ? `Sì (${volteAdmin} volt${volteAdmin === 1 ? 'a' : 'e'})` : "Mai stato";
+            const isBanned = bannedDevices.includes(u.deviceId);
+
+            return `
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in">
+                <div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-left">
+                    <h2 class="text-2xl font-black mb-5 flex items-center gap-3">👁️ Sguardo Divino</h2>
+                    
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-sm space-y-3 mb-6 shadow-inner">
+                        <p class="flex justify-between border-b pb-1"><b>Nome:</b> <span class="text-slate-600">${escapeHTML(u.nome)}</span></p>
+                        <p class="flex justify-between border-b pb-1"><b>Email:</b> <span class="text-slate-600">${escapeHTML(u.email)}</span></p>
+                        <p class="flex justify-between border-b pb-1"><b>Ruolo Attuale:</b> <span class="uppercase font-bold text-indigo-600">${u.ruolo}</span></p>
+                        <p class="flex justify-between border-b pb-1"><b>Storico Admin:</b> <span class="text-slate-600">${statusAdmin}</span></p>
+                        <p class="flex justify-between pt-1"><b>Dispositivo BANNATO:</b> ${isBanned ? '<span class="text-red-600 font-black tracking-widest bg-red-100 px-2 rounded-md">SÌ 🔨</span>' : '<span class="text-emerald-600 font-bold bg-emerald-50 px-2 rounded-md">NO</span>'}</p>
+                    </div>
+
+                    <h3 class="font-extrabold text-slate-800 text-lg mb-3">📚 Libri in Possesso ora:</h3>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-sm max-h-40 overflow-y-auto mb-6 hide-scrollbar shadow-inner">
+                        ${p.length > 0 ? p.map(b => `<p class="font-bold text-indigo-700 py-1 border-b border-slate-200 last:border-0 last:pb-0">📖 ${escapeHTML(b.titolo)}</p>`).join('') : '<p class="italic text-slate-400 font-medium">Nessun libro richiesto attualmente.</p>'}
+                    </div>
+
+                    <button onclick="closeModal()" class="w-full py-3.5 rounded-xl font-extrabold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors shadow-sm">Chiudi Radar</button>
+                </div>
+            </div>`;
+        }
+
         if(state.modal.type === 'dettaglioLibro') {
             const b = state.books.find(x => x.id === state.modal.data);
             if(!b) return '';
@@ -886,7 +912,7 @@
 
         let h = '';
         if(libriDaRec.length > 0) {
-            h += `<div class="mb-10 sm:mb-12 px-4 sm:px-0"><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">✍️️ Da Recensire</h2><div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">${libriDaRec.map(b => `<div class="bg-indigo-50 p-5 sm:p-6 rounded-3xl border border-indigo-100 flex flex-col justify-between items-start gap-4"><div><h4 class="font-bold text-indigo-900 text-base sm:text-lg">${escapeHTML(b.titolo)}</h4><p class="text-indigo-600 text-xs sm:text-sm">${escapeHTML(b.autore)}</p></div><button onclick="openModal('recensisci', {id: '${b.id}', titolo: '${escapeHTML(b.titolo)}'})" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-sm sm:text-base">Scrivi Recensione</button></div>`).join('')}</div></div>`;
+            h += `<div class="mb-10 sm:mb-12 px-4 sm:px-0"><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">✍ Da Recensire</h2><div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">${libriDaRec.map(b => `<div class="bg-indigo-50 p-5 sm:p-6 rounded-3xl border border-indigo-100 flex flex-col justify-between items-start gap-4"><div><h4 class="font-bold text-indigo-900 text-base sm:text-lg">${escapeHTML(b.titolo)}</h4><p class="text-indigo-600 text-xs sm:text-sm">${escapeHTML(b.autore)}</p></div><button onclick="openModal('recensisci', {id: '${b.id}', titolo: '${escapeHTML(b.titolo)}'})" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-sm sm:text-base">Scrivi Recensione</button></div>`).join('')}</div></div>`;
         }
 
         const revBooksIds = [...new Set(state.reviews.map(r => r.libroId))];
@@ -942,17 +968,20 @@
 
             <section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">Utenti</h2>
                 <div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Utente</th><th class="p-3 sm:p-5">Email</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">
-                    ${state.users.map(u => `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3"><div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-indigo-100 text-indigo-700 grid place-items-center text-xs sm:text-sm font-bold shrink-0">${u.nome.charAt(0).toUpperCase()}</div><span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span> ${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
-                    <td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">
-                        ${state.isGod ? `
-                            <button onclick="sguardoDivino('${u.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-100 text-purple-700 font-bold rounded-md sm:rounded-lg" title="Sguardo Divino">👁</button>
-                            <button onclick="assegnaBadge('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-pink-100 text-pink-700 font-bold rounded-md sm:rounded-lg" title="Assegna Badge">🏷️</button>
-                            ${u.ruolo==='admin'?`<button onclick="cambiaRuolo('${u.id}', 'utente')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-amber-100 text-amber-700 font-bold rounded-md sm:rounded-lg" title="Rimuovi Admin">↓</button>`:`<button onclick="cambiaRuolo('${u.id}', 'admin')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-100 text-emerald-700 font-bold rounded-md sm:rounded-lg" title="Promuovi Admin">↑</button>`}
-                            <button onclick="banDispositivo('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-red-900 text-red-100 font-bold rounded-md sm:rounded-lg shadow-md shadow-red-900/20" title="Banna Dispositivo PC/Telefono">🔨</button>
-                        ` : ''}
-                        <button onclick="modificaUtente('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 text-slate-600 rounded-md sm:rounded-lg font-bold">Mod</button>
-                        <button onclick="eliminaUtente('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-rose-100 text-rose-600 rounded-md sm:rounded-lg font-bold">Resetta</button>
-                    </td></tr>`).join('')}
+                    ${state.users.map(u => {
+                        const isBanned = bannedDevices.includes(u.deviceId);
+                        return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3"><div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-indigo-100 text-indigo-700 grid place-items-center text-xs sm:text-sm font-bold shrink-0">${u.nome.charAt(0).toUpperCase()}</div><span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span> ${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
+                        <td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">
+                            ${state.isGod ? `
+                                <button onclick="openModal('sguardoDivino', '${u.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-100 text-purple-700 font-bold rounded-md sm:rounded-lg" title="Sguardo Divino">👁</button>
+                                <button onclick="assegnaBadge('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-pink-100 text-pink-700 font-bold rounded-md sm:rounded-lg" title="Assegna Badge">🏷️</button>
+                                ${u.ruolo==='admin'?`<button onclick="cambiaRuolo('${u.id}', 'utente')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-amber-100 text-amber-700 font-bold rounded-md sm:rounded-lg" title="Rimuovi Admin">↓</button>`:`<button onclick="cambiaRuolo('${u.id}', 'admin')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-100 text-emerald-700 font-bold rounded-md sm:rounded-lg" title="Promuovi Admin">↑</button>`}
+                                <button onclick="toggleBanDispositivo('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 ${isBanned ? 'bg-green-900 text-green-100 shadow-green-900/20' : 'bg-red-900 text-red-100 shadow-red-900/20'} font-bold rounded-md sm:rounded-lg shadow-md" title="${isBanned ? 'Sblocca Dispositivo' : 'Banna Dispositivo'}">${isBanned ? '🟢' : '🔨'}</button>
+                            ` : ''}
+                            <button onclick="modificaUtente('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 text-slate-600 rounded-md sm:rounded-lg font-bold">Mod</button>
+                            <button onclick="eliminaUtente('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-rose-100 text-rose-600 rounded-md sm:rounded-lg font-bold">Elimina</button>
+                        </td></tr>`;
+                    }).join('')}
                 </tbody></table></div>
             </section>
         </div>`;
@@ -981,7 +1010,7 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-10 relative z-10">
                 <button onclick="voceDiDio()" class="bg-white/5 hover:bg-white/10 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-white/10 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">📢</span> Messaggio</button>
                 <button onclick="miracoloApprovazione()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-emerald-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">✨</span> Miracolo</button>
-                <button onclick="amnistiaGenerale()" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-blue-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">🕊️️</span> Amnistia</button>
+                <button onclick="amnistiaGenerale()" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-blue-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">🕊</span> Amnistia</button>
                 <button onclick="apocalisse()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-rose-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">💀</span> Apocalisse</button>
             </div>
 
@@ -1059,7 +1088,7 @@
                 <span class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2 sm:gap-3"><span class="text-2xl sm:text-3xl drop-shadow-sm">📚</span> <span>2ALD</span></span>
                 <div class="flex items-center gap-2 sm:gap-4">
                     ${!state.isAdmin ? `<button onclick="diventaAdmin()" class="text-[10px] sm:text-sm font-extrabold text-amber-600 bg-amber-50 hover:bg-amber-100 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl uppercase sm:capitalize tracking-wide border border-amber-200/50">Admin</button>` : `<button onclick="esciDaAdmin()" class="text-[10px] sm:text-sm font-extrabold ${state.isGod ? 'text-purple-600 bg-purple-50 hover:bg-purple-100 border-purple-200/50' : 'text-rose-600 bg-rose-50 hover:bg-rose-100 border-rose-200/50'} px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl uppercase sm:capitalize tracking-wide border shadow-sm">${state.isGod ? 'Esci da Dio' : 'Esci da Admin'}</button>`}
-                    <div class="flex items-center gap-2 sm:gap-3 bg-slate-100/80 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl border"><div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs sm:text-sm font-bold shadow-sm">${state.user.displayName ? state.user.displayName.charAt(0).toUpperCase() : 'U'}</div><span class="text-xs sm:text-sm font-bold text-slate-700 hidden md:flex items-center">${escapeHTML(state.user.displayName)} ${state.userData.badge ? `<span class="ml-1.5 text-[9px] uppercase font-black px-1.5 py-0.5 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm">${escapeHTML(state.userData.badge)}</span>` : ''}</span></div>
+                    <div class="flex items-center gap-2 sm:gap-3 bg-slate-100/80 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl border"><div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs sm:text-sm font-bold shadow-sm">${(state.userData?.nome || state.user.displayName || 'U').charAt(0).toUpperCase()}</div><span class="text-xs sm:text-sm font-bold text-slate-700 hidden md:flex items-center">${escapeHTML(state.userData?.nome || state.user.displayName)} ${state.userData.badge ? `<span class="ml-1.5 text-[9px] uppercase font-black px-1.5 py-0.5 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm">${escapeHTML(state.userData.badge)}</span>` : ''}</span></div>
                     <button onclick="logout()" class="bg-white border-2 text-slate-500 hover:bg-slate-50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-xs sm:text-base">Esci</button>
                 </div>
             </div>
