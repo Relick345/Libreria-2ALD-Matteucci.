@@ -35,7 +35,7 @@
         
         .star-cb-group { display: flex; flex-direction: row-reverse; justify-content: center; }
         .star-cb-group input { display: none; }
-        .star-cb-group label { font-size: 2.5rem; color: #cbd5e1; cursor: pointer; transition: color 0.15s; padding: 0 4px; }
+        .star-cb-group label { font-size: 2.5rem; color: #cbd5e1; cursor: pointer; transition: color: 0.15s; padding: 0 4px; }
         .star-cb-group label:hover, .star-cb-group label:hover ~ label, .star-cb-group input:checked ~ label { color: #fbbf24; }
         @media (max-width: 640px) { .star-cb-group label { font-size: 2rem; padding: 0 2px; } }
 
@@ -315,9 +315,10 @@
         }));
 
         if (user) {
+            // FIX QUOTA FIREBASE: Eliminiamo il setInterval che caricava 106.000 letture!
             const updatePresence = () => { if(state.user) updateDoc(doc(db, "utenti", user.uid), { lastActive: serverTimestamp() }).catch(()=>{}); };
-            updatePresence();
-            state.presenceInterval = setInterval(updatePresence, 10000);
+            updatePresence(); // Si aggiorna SOLO al login/caricamento pagina (niente loop)
+            
             window.addEventListener('beforeunload', () => { if(state.user) updateDoc(doc(db, "utenti", user.uid), { lastActive: null }).catch(()=>{}); });
 
             state.unsubs.push(onSnapshot(doc(db, "utenti", user.uid), async docSnap => {
@@ -340,7 +341,7 @@
                         
                         setTimeout(() => alert("⛔ ACCESSO NEGATO: Tentativo di falso login Admin tramite Console rilevato. Registrato."), 500);
                         if(state.tab === 'admin') state.tab = 'catalogo';
-                        requestRender(); // Usiamo render ottimizzato
+                        requestRender(); 
                     }
 
                     // MANTENIMENTO FORCE ADMIN E LOG SABOTAGGIO OFFLINE PER CREATORI
@@ -538,7 +539,6 @@
     };
     
     window.logout = () => { 
-        if (state.presenceInterval) clearInterval(state.presenceInterval);
         if(state.user) updateDoc(doc(db, "utenti", state.user.uid), { lastActive: null }).catch(()=>{});
         sessionStorage.clear(); 
         signOut(auth); 
@@ -641,7 +641,7 @@
                 
                 const icon = document.createElement('div');
                 icon.className = 'text-5xl sm:text-6xl mb-4 sm:mb-5 drop-shadow-md';
-                icon.innerText = type === 'alert' ? '🔔' : (type === 'confirm' ? '❓' : '✍️️');
+                icon.innerText = type === 'alert' ? '🔔' : (type === 'confirm' ? '❓' : '✍️');
                 box.appendChild(icon);
                 
                 const title = document.createElement('h3');
@@ -771,7 +771,7 @@
                 messaggio: "Ha tentato di ELIMINARE l'account di questo Creatore dal pannello."
             };
             await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
-            return mostraAlert("⚠ Eresia rilevata! Impossibile eliminare l'account di un creatore supremo. L'azione è stata registrata.");
+            return mostraAlert("⚠️ Eresia rilevata! Impossibile eliminare l'account di un creatore supremo. L'azione è stata registrata.");
         }
         
         if (uid === state.user.uid) return mostraAlert("Non puoi eliminare te stesso.");
@@ -813,7 +813,7 @@
                 messaggio: "Ha tentato di BANNARE IL DISPOSITIVO di questo Creatore."
             };
             await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
-            return mostraAlert("⚠ Azione Negata: I dispositivi dei creatori supremi sono immuni al ban. Tentativo registrato nei log.");
+            return mostraAlert("⚠️ Azione Negata: I dispositivi dei creatori supremi sono immuni al ban. Tentativo registrato nei log.");
         }
 
         const isBanned = bannedDevices.includes(u.deviceId);
@@ -1409,7 +1409,7 @@
                 </div>
                 <div class="p-5 sm:p-6 flex flex-col flex-1">
                     <h3 class="font-extrabold text-slate-800 text-lg sm:text-xl leading-tight">${escapeHTML(b.titolo)}</h3>
-                    <p class="text-slate-500 font-medium text-xs sm:text-sm mt-1">${escapeHTML(b.autore)} ${b.data_pubblicazione ? `&bull; ${escapeHTML(b.data_pubblicazione)}` : ''}</p>
+                    <p class="text-slate-500 font-medium text-xs sm:text-sm mt-1">${escapeHTML(b.autore)}${b.data_pubblicazione ? `&bull; ${escapeHTML(b.data_pubblicazione)}` : ''}</p>
                     ${b.trama ? `<p class="text-slate-400 text-xs sm:text-sm mt-3 line-clamp-2 sm:line-clamp-3">${escapeHTML(b.trama)}</p>` : ''}
                     <div class="mt-auto pt-5 sm:pt-6">
                         ${b.stato === 'disponibile' ? 
@@ -1472,7 +1472,7 @@
 
         let h = '';
         if(libriDaRec.length > 0) {
-            h += `<div class="mb-10 sm:mb-12 px-4 sm:px-0"><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">✍️ Da Recensire</h2><div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">${libriDaRec.map(b => `<div class="bg-indigo-50 p-5 sm:p-6 rounded-3xl border border-indigo-100 flex flex-col justify-between items-start gap-4"><div><h4 class="font-bold text-indigo-900 text-base sm:text-lg">${escapeHTML(b.titolo)}</h4><p class="text-indigo-600 text-xs sm:text-sm">${escapeHTML(b.autore)}</p></div><button onclick="openModal('recensisci', {id: '${b.id}', titolo: '${escapeHTML(b.titolo).replace(/'/g, "\\'")}'})" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-sm sm:text-base shadow-lg shadow-indigo-600/30 hover:scale-105 transition-transform">Scrivi Recensione</button></div>`).join('')}</div></div>`;
+            h += `<div class="mb-10 sm:mb-12 px-4 sm:px-0"><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">✍️️ Da Recensire</h2><div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">${libriDaRec.map(b => `<div class="bg-indigo-50 p-5 sm:p-6 rounded-3xl border border-indigo-100 flex flex-col justify-between items-start gap-4"><div><h4 class="font-bold text-indigo-900 text-base sm:text-lg">${escapeHTML(b.titolo)}</h4><p class="text-indigo-600 text-xs sm:text-sm">${escapeHTML(b.autore)}</p></div><button onclick="openModal('recensisci', {id: '${b.id}', titolo: '${escapeHTML(b.titolo).replace(/'/g, "\\'")}'})" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-sm sm:text-base shadow-lg shadow-indigo-600/30 hover:scale-105 transition-transform">Scrivi Recensione</button></div>`).join('')}</div></div>`;
         }
 
         const revBooksIds = [...new Set(state.reviews.map(r => r.libroId))];
@@ -1555,7 +1555,7 @@
             <section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">Utenti Registrati</h2>
                 <div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto shadow-sm"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Utente</th><th class="p-3 sm:p-5">Email</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">
                     ${state.users.map(u => {
-                        return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3">${window.getAvatar(u.avatar, "w-6 h-6 sm:w-8 sm:h-8")}<span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span> ${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
+                        return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3">${window.getAvatar(u.avatar, "w-6 h-6 sm:w-8 sm:h-8")}<span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span>${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
                     <td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">
                         ${state.isGod ? `
                             <button onclick="sguardoDivino('${u.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Sguardo Divino">👁</button>
