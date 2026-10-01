@@ -7,12 +7,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
-        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        .slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; overflow-x: hidden; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+        
+        /* 🚀 ACCELERAZIONE HARDWARE ESTREMA (GPU) */
+        .fade-in { 
+            animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            will-change: opacity; 
+            transform: translate3d(0,0,0); 
+            backface-visibility: hidden;
+        }
+        .slide-up { 
+            animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; 
+            will-change: transform, opacity; 
+            transform: translate3d(0,0,0); 
+            backface-visibility: hidden;
+        }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); }
+        @keyframes slideUp { from { opacity: 0; transform: translate3d(0, 15px, 0) scale(0.98); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
+        
+        .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); transform: translate3d(0,0,0); }
         
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -21,20 +35,23 @@
         
         .star-cb-group { display: flex; flex-direction: row-reverse; justify-content: center; }
         .star-cb-group input { display: none; }
-        .star-cb-group label { font-size: 2.5rem; color: #cbd5e1; cursor: pointer; transition: color 0.2s; padding: 0 4px; }
+        .star-cb-group label { font-size: 2.5rem; color: #cbd5e1; cursor: pointer; transition: color 0.15s; padding: 0 4px; }
         .star-cb-group label:hover, .star-cb-group label:hover ~ label, .star-cb-group input:checked ~ label { color: #fbbf24; }
         @media (max-width: 640px) { .star-cb-group label { font-size: 2rem; padding: 0 2px; } }
 
-        /* Effetti Modalità Dio */
-        @keyframes terremoto { 0% { transform: translate(2px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(0px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(2px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(2px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
-        .caos-terremoto { animation: terremoto 0.3s infinite; }
+        /* Effetti Modalità Dio - GPU Accelerated */
+        @keyframes terremoto { 0% { transform: translate3d(2px, 1px, 0) rotate(0deg); } 10% { transform: translate3d(-1px, -2px, 0) rotate(-1deg); } 20% { transform: translate3d(-3px, 0px, 0) rotate(1deg); } 30% { transform: translate3d(0px, 2px, 0) rotate(0deg); } 40% { transform: translate3d(1px, -1px, 0) rotate(1deg); } 50% { transform: translate3d(-1px, 2px, 0) rotate(-1deg); } 60% { transform: translate3d(-3px, 1px, 0) rotate(0deg); } 70% { transform: translate3d(2px, 1px, 0) rotate(-1deg); } 80% { transform: translate3d(-1px, -1px, 0) rotate(1deg); } 90% { transform: translate3d(2px, 2px, 0) rotate(0deg); } 100% { transform: translate3d(1px, -2px, 0) rotate(-1deg); } }
+        .caos-terremoto { animation: terremoto 0.3s infinite; will-change: transform; }
         @keyframes discoteca { 0% { filter: hue-rotate(0deg) saturate(2); } 100% { filter: hue-rotate(360deg) saturate(2); } }
-        .caos-discoteca { animation: discoteca 1.5s infinite; }
-        .caos-sottosopra { transform: rotate(180deg); transition: transform 1s ease-in-out; }
+        .caos-discoteca { animation: discoteca 1.5s infinite; will-change: filter; }
+        .caos-sottosopra { transform: rotate(180deg) translate3d(0,0,0); transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; }
         .caos-buio * { background-color: black !important; color: black !important; border-color: black !important; box-shadow: none !important; background-image: none !important; }
         .caos-comic * { font-family: "Comic Sans MS", "Comic Sans", cursive !important; }
-        .falling-item { position: fixed; top: -50px; font-size: 2rem; z-index: 9999; animation: fall linear forwards; pointer-events: none; }
-        @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
+        .falling-item { position: fixed; top: -50px; font-size: 2rem; z-index: 9999; animation: fall linear forwards; pointer-events: none; will-change: transform; }
+        @keyframes fall { to { transform: translate3d(0, 110vh, 0) rotate(360deg); } }
+        
+        /* Ottimizzazione immagini */
+        img { content-visibility: auto; }
     </style>
 </head>
 <body class="text-slate-800 antialiased selection:bg-indigo-200 min-h-screen pb-20">
@@ -121,10 +138,10 @@
     const DAY = 86400000;
     const INPUT_CLS = "w-full rounded-2xl border-2 border-slate-200 px-3 sm:px-4 py-2.5 sm:py-3.5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all font-medium bg-slate-50 focus:bg-white text-sm sm:text-base";
 
-    // Generatore Omino Grigio in altissima qualità (Avatar Standard)
+    // Generatore Omino Grigio (Decodifica asincrona e Lazy Loading per MASSIMA velocità)
     window.getAvatar = (url, classes = "w-8 h-8") => {
         if (url && url.length > 10) {
-            return `<img src="${escapeHTML(url)}" class="${classes} rounded-full object-cover shadow-sm border border-slate-200 shrink-0">`;
+            return `<img src="${escapeHTML(url)}" loading="lazy" decoding="async" class="${classes} rounded-full object-cover shadow-sm border border-slate-200 shrink-0">`;
         } else {
             return `<div class="${classes} shrink-0 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center overflow-hidden">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3/4 h-3/4 text-slate-400 mt-[15%]">
@@ -154,6 +171,87 @@
         }
     }
 
+    // -------------------------------------------------------------
+    // MOTORE DEL CAOS
+    // -------------------------------------------------------------
+    window.innescaCaos = (evento, messaggio) => {
+        if (evento === 'messaggio') {
+            CustomUI.show(`📢 LA VOCE SUPREMA:\n\n${escapeHTML(messaggio)}`, 'alert');
+            return;
+        }
+
+        const body = document.body;
+        const rimuoviTutto = () => { body.classList.remove('caos-discoteca', 'caos-terremoto', 'caos-sottosopra', 'caos-buio', 'caos-comic'); };
+        rimuoviTutto();
+
+        if (evento === 'discoteca') {
+            body.classList.add('caos-discoteca');
+            setTimeout(rimuoviTutto, 10000);
+        } else if (evento === 'terremoto') {
+            body.classList.add('caos-terremoto');
+            setTimeout(rimuoviTutto, 8000);
+        } else if (evento === 'sottosopra') {
+            body.classList.add('caos-sottosopra');
+            setTimeout(rimuoviTutto, 15000);
+        } else if (evento === 'buio') {
+            body.classList.add('caos-buio');
+            setTimeout(rimuoviTutto, 10000);
+        } else if (evento === 'comic') {
+            body.classList.add('caos-comic');
+            setTimeout(rimuoviTutto, 15000);
+        } else if (evento === 'rickroll') {
+            const rr = document.createElement('div');
+            rr.className = 'fixed inset-0 z-[999999] bg-black flex flex-col items-center justify-center fade-in';
+            rr.innerHTML = `
+                <button onclick="this.parentNode.remove()" class="absolute top-6 right-6 px-6 py-3 bg-red-600 text-white font-black uppercase tracking-wider rounded-2xl z-[1000000] hover:bg-red-700 shadow-2xl transition-transform active:scale-95">CHIEDI PIETÀ 🏳️</button>
+                <iframe width="100%" height="100%" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            `;
+            document.body.appendChild(rr);
+        } else if (['pioggia', 'gattini', 'thanos'].includes(evento)) {
+            let emoji = '🌧️';
+            if (evento === 'gattini') emoji = '🐱';
+            if (evento === 'thanos') emoji = '💨';
+            
+            let count = 0;
+            // Ottimizzazione caduta emoji via requestAnimationFrame per evitare blocchi JS
+            let lastTime = 0;
+            const animateFall = (time) => {
+                if (time - lastTime > 100) {
+                    if (count > 50) return;
+                    const el = document.createElement('div');
+                    el.className = 'falling-item drop-shadow-lg';
+                    el.innerText = emoji;
+                    el.style.left = Math.random() * 100 + 'vw';
+                    el.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                    el.style.fontSize = (Math.random() * 2.5 + 2) + 'rem';
+                    document.body.appendChild(el);
+                    setTimeout(() => { if(el.parentNode) el.parentNode.removeChild(el); }, 3500);
+                    count++;
+                    lastTime = time;
+                }
+                if (count <= 50) requestAnimationFrame(animateFall);
+            };
+            requestAnimationFrame(animateFall);
+            
+            if(evento === 'thanos') {
+               const appDiv = document.getElementById('app');
+               if(appDiv) {
+                   appDiv.style.transition = "opacity 4s cubic-bezier(0.4, 0, 0.2, 1), filter 4s cubic-bezier(0.4, 0, 0.2, 1)";
+                   appDiv.style.opacity = "0";
+                   appDiv.style.filter = "blur(15px)";
+                   appDiv.style.willChange = "opacity, filter";
+                   setTimeout(() => {
+                       appDiv.style.transition = "opacity 2s ease-out, filter 2s ease-out";
+                       appDiv.style.opacity = "1";
+                       appDiv.style.filter = "blur(0)";
+                       setTimeout(() => { appDiv.style.willChange = "auto"; }, 2000);
+                   }, 10000);
+               }
+            }
+        }
+    };
+    // -------------------------------------------------------------
+
     onAuthStateChanged(auth, async user => {
         state.unsubs.forEach(unsub => unsub()); 
         state.unsubs = [];
@@ -161,8 +259,38 @@
         state.user = user;
         state.isLoaded = false;
         
-        if (sessionStorage.getItem("adminLoggato") === "true") state.isAdmin = true;
-        if (sessionStorage.getItem("godLoggato") === "true") { state.isAdmin = true; state.isGod = true; }
+        // ------------------------------------------------------------------
+        // FIREWALL ANTI-HACKER CONSOLE
+        // ------------------------------------------------------------------
+        if (user) {
+            const isGodUser = GOD_EMAILS.includes(user.email);
+            
+            if (sessionStorage.getItem("godLoggato") === "true") {
+                if (isGodUser) {
+                    state.isAdmin = true;
+                    state.isGod = true;
+                } else {
+                    sessionStorage.removeItem("godLoggato");
+                    sessionStorage.removeItem("adminLoggato");
+                    state.isAdmin = false;
+                    state.isGod = false;
+                    
+                    const logEntry = {
+                        data: Date.now(),
+                        attaccante_nome: user.displayName || "Sconosciuto",
+                        attaccante_email: user.email,
+                        bersaglio: "SISTEMA - HACKING CONSOLE",
+                        messaggio: "Ha incollato script nella console per forzare l'accesso alla Modalità Dio. Azione bloccata."
+                    };
+                    setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
+                    
+                    setTimeout(() => alert("⛔ ACCESSO NEGATO: Rilevato tentativo di aggirare la sicurezza tramite Console! Le autorità di sistema sono state allertate."), 500);
+                }
+            } else if (sessionStorage.getItem("adminLoggato") === "true") {
+                state.isAdmin = true;
+            }
+        }
+        // ------------------------------------------------------------------
 
         state.unsubs.push(onSnapshot(doc(db, "sistema", "stato_server"), d => {
             if (d.exists()) {
@@ -196,19 +324,37 @@
                 if(docSnap.exists()) {
                     const data = docSnap.data();
                     
-                    // MANTENIMENTO FORCE ADMIN E LOG SABOTAGGIO OFFLINE
+                    // CONTROLLO FALSO ADMIN
+                    if (!GOD_EMAILS.includes(user.email) && data.ruolo !== 'admin' && data.ruolo !== 'god' && state.isAdmin) {
+                        state.isAdmin = false;
+                        sessionStorage.removeItem("adminLoggato");
+                        
+                        const logEntry = {
+                            data: Date.now(),
+                            attaccante_nome: data.nome || user.displayName || "Sconosciuto",
+                            attaccante_email: user.email,
+                            bersaglio: "SISTEMA - HACKING CONSOLE",
+                            messaggio: "Ha incollato script nella console per fingersi Admin. Azione bloccata."
+                        };
+                        setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
+                        
+                        setTimeout(() => alert("⛔ ACCESSO NEGATO: Tentativo di falso login Admin tramite Console rilevato. Registrato."), 500);
+                        if(state.tab === 'admin') state.tab = 'catalogo';
+                        requestRender(); // Usiamo render ottimizzato
+                    }
+
+                    // MANTENIMENTO FORCE ADMIN E LOG SABOTAGGIO OFFLINE PER CREATORI
                     if (GOD_EMAILS.includes(state.user.email)) {
                         if (data.ruolo !== 'admin' && data.ruolo !== 'god') {
                             await updateDoc(doc(db, "utenti", state.user.uid), { ruolo: 'admin' }).catch(()=>{});
-                            data.ruolo = 'admin'; // Override locale immediato
+                            data.ruolo = 'admin'; 
                             
-                            // Registrazione del tradimento avvenuto offline
                             const logEntry = {
                                 data: Date.now(),
                                 attaccante_nome: "Ignoto (Forzatura esterna / DB)",
                                 attaccante_email: "Sconosciuta",
                                 bersaglio: state.user.email,
-                                messaggio: "Il sistema ha rilevato che il ruolo era stato rimosso in modo anomalo mentre eri offline. Il grado è stato ripristinato automaticamente al tuo accesso."
+                                messaggio: "Il sistema ha rilevato che il ruolo era stato rimosso in modo anomalo mentre eri offline. Il grado è stato ripristinato automaticamente."
                             };
                             await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
                         }
@@ -232,12 +378,32 @@
             state.isAdmin = false;
             state.isGod = false;
         }
-        render();
+        requestRender();
     });
 
+    // 🚀 OTTIMIZZAZIONE MASSIMA: DEBOUNCING E REQUEST ANIMATION FRAME (120FPS Feel)
+    let bgUpdateTimer;
     function backgroundUpdate() {
         if (state.tab === 'proponi' || state.modal) return;
-        render(false);
+        clearTimeout(bgUpdateTimer);
+        bgUpdateTimer = setTimeout(() => requestRender(false), 16); // ~60fps batching
+    }
+
+    let isRendering = false;
+    let renderRequested = false;
+    let shouldAnimateNextRender = true;
+
+    // Sostituisce render() diretto per fluidità estrema sincronizzata col monitor
+    function requestRender(animate = true) {
+        if (!animate) shouldAnimateNextRender = false;
+        if (!isRendering) {
+            isRendering = true;
+            requestAnimationFrame(() => {
+                actualRender(shouldAnimateNextRender);
+                isRendering = false;
+                shouldAnimateNextRender = true; // reset
+            });
+        }
     }
 
     function caricaDati() {
@@ -249,7 +415,6 @@
             state.unsubs.push(onSnapshot(query(collection(db, "richieste"), where("stato", "==", "in_attesa")), s => { state.requests = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }));
             state.unsubs.push(onSnapshot(collection(db, "utenti"), s => { state.users = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }));
             
-            // ASCCOLTO LOG DI SABOTAGGIO
             state.unsubs.push(onSnapshot(doc(db, "sistema", "sicurezza"), d => {
                 if(d.exists()) {
                     state.allarmi = d.data().log || [];
@@ -263,11 +428,10 @@
         state.unsubs.push(onSnapshot(doc(db, "sistema", "caos"), d => {
             if(d.exists()) {
                 const data = d.data();
-                if(data.timestamp && (Date.now() - data.timestamp.toMillis() < 8000)) {
-                    if (state.isGod) return; 
+                if(data.timestamp && (Date.now() - data.timestamp.toMillis() < 15000)) {
                     const targets = data.targets || ['all'];
                     if (targets.includes('all') || targets.includes(state.user.uid)) {
-                        innescaCaos(data.evento, data.messaggio);
+                        window.innescaCaos(data.evento, data.messaggio);
                     }
                 }
             }
@@ -276,7 +440,7 @@
 
     window.toggleAuthMode = () => {
         state.authMode = state.authMode === 'login' ? 'register' : 'login';
-        render();
+        requestRender();
     };
 
     window.gestisciLogin = async (e) => {
@@ -380,8 +544,8 @@
         signOut(auth); 
     };
 
-    window.openModal = (type, data = null) => { state.modal = { type, data }; render(); };
-    window.closeModal = () => { state.modal = null; render(); };
+    window.openModal = (type, data = null) => { state.modal = { type, data }; requestRender(); };
+    window.closeModal = () => { state.modal = null; requestRender(); };
 
     function comprimiInBase64(file, maxWidth = 600, maxHeight = 800, quality = 0.6, isSquare = false) {
         return new Promise((resolve, reject) => {
@@ -477,7 +641,7 @@
                 
                 const icon = document.createElement('div');
                 icon.className = 'text-5xl sm:text-6xl mb-4 sm:mb-5 drop-shadow-md';
-                icon.innerText = type === 'alert' ? '🔔' : (type === 'confirm' ? '❓' : '✍️');
+                icon.innerText = type === 'alert' ? '🔔' : (type === 'confirm' ? '❓' : '✍️️');
                 box.appendChild(icon);
                 
                 const title = document.createElement('h3');
@@ -509,7 +673,6 @@
     window.chiediConferma = (msg) => CustomUI.show(msg, 'confirm');
     window.chiediInput = (msg, defaultVal = "", type = "text") => CustomUI.show(msg, 'prompt', defaultVal, type);
     
-    // Funzione pulizia log (Per rimuovere le tracce di chi ci ha provato)
     window.pulisciAllarmi = async () => {
         if(await chiediConferma("Sei sicuro di voler eliminare tutto il registro dei sabotaggi?")) {
             await setDoc(doc(db, "sistema", "sicurezza"), { log: [] }, { merge: true });
@@ -518,9 +681,7 @@
     };
 
     const checkPasswordObfuscated = (pass) => {
-        // Criptaggio Matematico. "biblioteca2026/2027" -> 19 chars (+15 di shift)
         const a = [113, 120, 113, 123, 120, 126, 131, 116, 114, 112, 65, 63, 65, 69, 62, 65, 63, 65, 70]; 
-        // "Ventitre23!" -> 11 chars
         const g = [101, 116, 125, 131, 120, 131, 129, 116, 65, 66, 48];
         const isMatch = (arr, str) => str.length === arr.length && arr.every((c, i) => c === str.charCodeAt(i) + 15);
         if (isMatch(g, pass)) return 'god';
@@ -535,24 +696,19 @@
         const role = checkPasswordObfuscated(pass);
         const isGodEmail = GOD_EMAILS.includes(state.user.email);
         
-        // Regola 2FA: Il DB deve approvarti PRIMA che la password funzioni (I Creatori saltano questo controllo)
         if (!isGodEmail && state.userData.ruolo !== 'admin' && state.userData.ruolo !== 'god') {
             return mostraAlert("Accesso Negato. Non hai il ruolo di Amministratore nel Database. Fatti promuovere da qualcun altro.");
         }
         
         if (role === 'god') {
-            // SICUREZZA MODALITA DIO ASSOLUTA
-            if (!isGodEmail) {
-                return mostraAlert("Azione negata. Solo i creatori supremi possono accedere alla Modalità Dio.");
-            }
-            
+            if (!isGodEmail) return mostraAlert("Azione negata. Solo i creatori supremi possono accedere alla Modalità Dio.");
             state.isAdmin = true; state.isGod = true; sessionStorage.setItem("adminLoggato", "true"); sessionStorage.setItem("godLoggato", "true"); state.tab = 'god';
             await updateDoc(doc(db, "utenti", state.user.uid), { volte_admin: increment(1) }).catch(()=>{});
-            caricaDati(); render(); mostraAlert("⚡ MODALITÀ DIO ATTIVATA.");
+            caricaDati(); requestRender(); mostraAlert("⚡ MODALITÀ DIO ATTIVATA.");
         } else if (role === 'admin') {
             state.isAdmin = true; state.isGod = false; sessionStorage.setItem("adminLoggato", "true"); sessionStorage.removeItem("godLoggato"); state.tab = 'admin';
             await updateDoc(doc(db, "utenti", state.user.uid), { volte_admin: increment(1) }).catch(()=>{});
-            caricaDati(); render(); mostraAlert("Bentornato Amministratore!");
+            caricaDati(); requestRender(); mostraAlert("Bentornato Amministratore!");
         } else { 
             mostraAlert("Password Errata."); 
         }
@@ -564,14 +720,13 @@
         sessionStorage.removeItem("adminLoggato");
         sessionStorage.removeItem("godLoggato");
         if (state.tab === 'admin' || state.tab === 'god') state.tab = 'catalogo'; 
-        render();
+        requestRender();
         mostraAlert("Sei tornato alla visualizzazione utente normale.");
     };
 
     window.cambiaRuolo = async (uid, ruolo) => { 
         const u = state.users.find(x => x.id === uid);
         if (u && GOD_EMAILS.includes(u.email)) {
-            // SALVATAGGIO LOG SABOTAGGIO
             const logEntry = {
                 data: Date.now(),
                 attaccante_nome: state.userData.nome || state.user.displayName || "Sconosciuto",
@@ -580,7 +735,6 @@
                 messaggio: `Ha tentato di degradare questo account Supremo al ruolo di "${ruolo}".`
             };
             await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
-            
             return mostraAlert("⚠️ Azione Rilevata e Negata.\nNon puoi modificare il ruolo di un Creatore Supremo. Il tuo tentativo è stato registrato nel database di sicurezza.");
         }
         await updateDoc(doc(db, "utenti", uid), { ruolo: ruolo }); 
@@ -609,7 +763,6 @@
     window.eliminaUtente = async (uid, nome) => {
         const u = state.users.find(x => x.id === uid);
         if (u && GOD_EMAILS.includes(u.email)) {
-            // SALVATAGGIO LOG SABOTAGGIO
             const logEntry = {
                 data: Date.now(),
                 attaccante_nome: state.userData.nome || state.user.email,
@@ -618,8 +771,7 @@
                 messaggio: "Ha tentato di ELIMINARE l'account di questo Creatore dal pannello."
             };
             await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
-            
-            return mostraAlert("⚠️ Eresia rilevata! Impossibile eliminare l'account di un creatore supremo. L'azione è stata registrata.");
+            return mostraAlert("⚠ Eresia rilevata! Impossibile eliminare l'account di un creatore supremo. L'azione è stata registrata.");
         }
         
         if (uid === state.user.uid) return mostraAlert("Non puoi eliminare te stesso.");
@@ -653,7 +805,6 @@
         if (!u || !u.deviceId) return mostraAlert("Impossibile trovare l'ID del dispositivo. L'utente deve rifare l'accesso per essere tracciato.");
         
         if (GOD_EMAILS.includes(u.email)) {
-            // SALVATAGGIO LOG SABOTAGGIO
             const logEntry = {
                 data: Date.now(),
                 attaccante_nome: state.userData.nome || state.user.email,
@@ -662,8 +813,7 @@
                 messaggio: "Ha tentato di BANNARE IL DISPOSITIVO di questo Creatore."
             };
             await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
-            
-            return mostraAlert("⚠️ Azione Negata: I dispositivi dei creatori supremi sono immuni al ban. Tentativo registrato nei log.");
+            return mostraAlert("⚠ Azione Negata: I dispositivi dei creatori supremi sono immuni al ban. Tentativo registrato nei log.");
         }
 
         const isBanned = bannedDevices.includes(u.deviceId);
@@ -736,9 +886,9 @@
         mostraAlert("Richiesta di prestito inviata con successo!");
     };
 
-    window.apriDettaglioLibro = (libroId) => { state.modal = { type: 'dettaglioLibro', data: libroId }; render(false); };
-    window.apriRecensioni = (libroId) => { state.selectedReviewBookId = libroId; render(); };
-    window.chiudiRecensioni = () => { state.selectedReviewBookId = null; render(); };
+    window.apriDettaglioLibro = (libroId) => { state.modal = { type: 'dettaglioLibro', data: libroId }; requestRender(false); };
+    window.apriRecensioni = (libroId) => { state.selectedReviewBookId = libroId; requestRender(); };
+    window.chiudiRecensioni = () => { state.selectedReviewBookId = null; requestRender(); };
 
     window.inviaRecensione = async (e, libroId) => {
         e.preventDefault(); const f = new FormData(e.target); const voto = parseInt(f.get('voto'));
@@ -843,7 +993,7 @@
         }
     };
 
-    // Motore GIF Integrato
+    // MOTORE GIF LAZY LOADING
     let gifTimeout;
     window.cercaGif = (queryStr) => {
         clearTimeout(gifTimeout);
@@ -853,26 +1003,46 @@
         container.innerHTML = '<div class="col-span-2 text-center text-xs font-bold text-slate-400 py-4 absolute inset-0 flex items-center justify-center">Caricamento GIF...</div>';
         
         gifTimeout = setTimeout(async () => {
+            const fallbackGifs = [
+                "https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif", "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
+                "https://media.giphy.com/media/13CoXDiaCcCoyk/giphy.gif", "https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/giphy.gif",
+                "https://media.giphy.com/media/l0HlRnAWXxn0MhK5W/giphy.gif", "https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif",
+                "https://media.giphy.com/media/xT0GqfvuVpNqEf3z2w/giphy.gif", "https://media.giphy.com/media/xT9IgG50Fb7Mi0prwE/giphy.gif",
+                "https://media.giphy.com/media/5VKbvrjvwz248/giphy.gif", "https://media.giphy.com/media/11ISwbgCxEzMyY/giphy.gif",
+                "https://media.giphy.com/media/3o7rc0qU6m5hneMsuc/giphy.gif", "https://media.giphy.com/media/YPIrsRqqO7oB2/giphy.gif",
+                "https://media.giphy.com/media/3o85xwxr06YNoFdSbm/giphy.gif", "https://media.giphy.com/media/8vQSQ3cNXuDNY4zNXw/giphy.gif",
+                "https://media.giphy.com/media/aLdiZJlw4G8Pq/giphy.gif", "https://media.giphy.com/media/VbnUQpmnXf64E/giphy.gif",
+                "https://media.giphy.com/media/l3q2K5jinAlChoCLS/giphy.gif", "https://media.giphy.com/media/ui1hpJSyBDWlG/giphy.gif",
+                "https://media.giphy.com/media/yYSSBtDgbbRzq/giphy.gif", "https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif",
+                "https://media.giphy.com/media/26BRO9GJ0nAFRzzZm/giphy.gif", "https://media.giphy.com/media/xT8qBgvOUl9mMZ5D0I/giphy.gif",
+                "https://media.giphy.com/media/fXnRObM8Q0RkOmR5nf/giphy.gif", "https://media.giphy.com/media/ZfK4cXKJTTay1Ava29/giphy.gif",
+                "https://media.giphy.com/media/3otPoO4cfZXsVGkIwM/giphy.gif", "https://media.giphy.com/media/l41lFw057lAJQMwg0/giphy.gif",
+                "https://media.giphy.com/media/WjBqwOEVXwEHC/giphy.gif", "https://media.giphy.com/media/4pMX5rJ4PURbO/giphy.gif",
+                "https://media.giphy.com/media/10uct1aSFT7QiY/giphy.gif", "https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif"
+            ];
+
             try {
-                // Usiamo l'API Giphy Pubblica per Trending e Ricerca
                 const GIPHY_KEY = "GlVGYHqc3SyCEwzSicFXvSEzS3Z3962r"; 
                 let url = (!queryStr || queryStr.trim() === "") 
-                    ? `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_KEY}&limit=12&rating=g`
-                    : `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(queryStr)}&limit=12&rating=g`;
+                    ? `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_KEY}&limit=20&rating=g`
+                    : `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(queryStr)}&limit=20&rating=g`;
                 
                 const res = await fetch(url);
+                if (!res.ok) throw new Error("Errore API");
                 const data = await res.json();
                 
                 if (data.data && data.data.length > 0) {
                     container.innerHTML = data.data.map(g => {
                         const gifUrl = g.images.fixed_height_small.url;
-                        return `<img src="${gifUrl}" onclick="selezionaGif('${gifUrl}', this)" class="gif-item w-full h-24 object-cover cursor-pointer hover:scale-105 border-4 border-transparent transition-transform rounded-xl shadow-sm">`;
+                        return `<img src="${gifUrl}" loading="lazy" decoding="async" onclick="selezionaGif('${gifUrl}', this)" class="gif-item w-full h-24 object-cover cursor-pointer hover:scale-105 border-4 border-transparent transition-transform rounded-xl shadow-sm bg-slate-200">`;
                     }).join('');
                 } else {
-                    container.innerHTML = '<div class="col-span-2 text-center text-xs font-bold text-slate-400 py-4 absolute inset-0 flex items-center justify-center">Nessuna GIF trovata</div>';
+                    throw new Error("Nessuna GIF trovata.");
                 }
             } catch(e) {
-                container.innerHTML = '<div class="col-span-2 text-center text-xs font-bold text-red-400 py-4 absolute inset-0 flex items-center justify-center">Errore di connessione a Giphy.</div>';
+                container.innerHTML = fallbackGifs.map(gifUrl => {
+                    return `<img src="${gifUrl}" loading="lazy" decoding="async" onclick="selezionaGif('${gifUrl}', this)" class="gif-item w-full h-24 object-cover cursor-pointer hover:scale-105 border-4 border-transparent transition-transform rounded-xl shadow-sm bg-slate-200">`;
+                }).join('');
             }
         }, 500);
     };
@@ -885,7 +1055,7 @@
 
     window.apriRisposta = (recensioneId, parentId = null, replyToName = "") => {
         state.modal = { type: 'rispondi', data: { recensioneId, parentId, replyToName } };
-        render();
+        requestRender();
         setTimeout(() => { if(window.cercaGif) window.cercaGif(''); }, 100);
     };
 
@@ -897,7 +1067,6 @@
         const borderClass = depth % 2 === 0 ? "border-indigo-200" : "border-rose-200";
 
         return children.map(c => {
-            // FIX SICUREZZA PREVENZIONE CRASH TO-MILLIS
             const dataStr = (c.data && c.data.toMillis) ? new Date(c.data.toMillis()).toLocaleDateString() : 'Pochi istanti fa';
             const badgeHtml = c.badgeUtente ? `<span class="ml-1 text-[8px] font-black uppercase px-1.5 py-0.5 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm align-middle">${escapeHTML(c.badgeUtente)}</span>` : '';
             
@@ -913,8 +1082,8 @@
                     </div>
                     
                     ${c.testo ? `<p class="text-xs sm:text-sm font-medium text-slate-700 break-words mb-2">${escapeHTML(c.testo)}</p>` : ''}
-                    ${c.gifUrl ? `<img src="${escapeHTML(c.gifUrl)}" class="rounded-xl max-w-[150px] sm:max-w-[200px] shadow-sm mb-2">` : ''}
-                    ${c.fotoUrl ? `<img src="${escapeHTML(c.fotoUrl)}" class="rounded-xl max-w-full sm:max-w-xs shadow-sm mb-2 max-h-48 object-contain border border-slate-200/60">` : ''}
+                    ${c.gifUrl ? `<img src="${escapeHTML(c.gifUrl)}" loading="lazy" decoding="async" class="rounded-xl max-w-[150px] sm:max-w-[200px] shadow-sm mb-2 bg-slate-100">` : ''}
+                    ${c.fotoUrl ? `<img src="${escapeHTML(c.fotoUrl)}" loading="lazy" decoding="async" class="rounded-xl max-w-full sm:max-w-xs shadow-sm mb-2 max-h-48 object-contain border border-slate-200/60">` : ''}
                     
                     <div class="flex flex-wrap gap-2 items-center mt-2 border-t border-slate-200/50 pt-2">
                         <button onclick="votaCommento('${c.id}', 'up')" class="text-[10px] sm:text-xs flex items-center gap-1 py-1 px-2 rounded-lg font-bold transition-colors ${c.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white border text-slate-500 hover:bg-slate-100'}">👍 ${c.upvotes?.length||0}</button>
@@ -949,7 +1118,7 @@
         finally { btn.disabled = false; btn.innerText = "Invia Proposta"; }
     };
 
-    window.cambiaTab = (tab) => { state.tab = tab; state.selectedReviewBookId = null; render(true); };
+    window.cambiaTab = (tab) => { state.tab = tab; state.selectedReviewBookId = null; requestRender(true); };
 
     window.toggleServer = async () => {
         const newState = !serverState.attivo;
@@ -957,7 +1126,6 @@
         mostraAlert(newState ? "✅ Server Riattivato." : "🛑 Server Spento.");
     };
 
-    // Apocalisse temporale che sfrutta i millis per non bloccare le ricariche.
     window.chiudiAltreVersioni = async () => {
         if(await chiediConferma("Tutti i link attualmente aperti dagli altri verranno bloccati. Sicuro?")) {
             await updateDoc(doc(db, "sistema", "stato_server"), { last_force_reload: Date.now() });
@@ -978,6 +1146,7 @@
         const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value);
         if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio dal Radar Divino!");
         await setDoc(doc(db, "sistema", "caos"), { evento: 'messaggio', messaggio: msg, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
+        mostraAlert("Messaggio Divino inviato!");
     };
 
     window.miracoloApprovazione = async () => {
@@ -1022,7 +1191,7 @@
         state.modal = { 
             type: 'sguardoDivinoRender', 
             html: `
-            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in">
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);">
                 <div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-left relative">
                     <button onclick="closeModal()" class="absolute top-5 right-5 w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold transition-colors">✕</button>
                     <div class="text-center">
@@ -1044,7 +1213,7 @@
                 </div>
             </div>` 
         };
-        render(false);
+        requestRender(false);
     };
 
     function renderStars(rating) {
@@ -1066,7 +1235,7 @@
         if (state.modal.type === 'profilo') {
             const avatarPreview = window.getAvatar(state.userData.avatar, "w-24 h-24 sm:w-32 sm:h-32 shadow-lg mx-auto border-4 border-white");
             return `
-            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in">
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);">
                 <div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-indigo-500 to-purple-600 z-0"></div>
                     <button onclick="closeModal()" class="absolute top-4 right-4 z-20 w-8 h-8 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center font-bold transition-colors">✕</button>
@@ -1101,7 +1270,7 @@
             const contextText = d.parentId ? `Rispondi a <span class="text-indigo-600">${escapeHTML(d.replyToName)}</span>` : "Aggiungi un commento";
             
             return `
-            <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm fade-in">
+            <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);">
                 <div class="bg-white rounded-t-3xl sm:rounded-[2.5rem] p-5 sm:p-8 w-full max-w-lg shadow-2xl slide-up flex flex-col max-h-[90vh]">
                     <div class="flex justify-between items-center mb-4 border-b pb-3 shrink-0">
                         <h3 class="font-extrabold text-lg sm:text-xl text-slate-800">${contextText}</h3>
@@ -1157,7 +1326,7 @@
                         </div>
                         
                         ${r.commento ? `<p class="text-sm sm:text-base font-medium text-slate-700 mb-3 break-words leading-relaxed">${escapeHTML(r.commento)}</p>` : ''}
-                        ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" class="rounded-2xl max-w-full sm:max-w-md shadow-sm mb-4 border border-slate-100">` : ''}
+                        ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" loading="lazy" decoding="async" class="rounded-2xl max-w-full sm:max-w-md shadow-sm mb-4 border border-slate-100">` : ''}
                         
                         <div class="flex flex-wrap gap-2 items-center border-t border-slate-100 pt-3">
                             <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-1.5 px-3 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button>
@@ -1173,12 +1342,12 @@
             }
 
             return `
-            <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/70 backdrop-blur-sm fade-in">
+            <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/70 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);">
                 <div class="bg-slate-50 w-full h-[95vh] sm:h-auto sm:max-h-[90vh] sm:max-w-3xl rounded-t-3xl sm:rounded-3xl flex flex-col shadow-2xl slide-up overflow-hidden relative">
                     <button onclick="closeModal()" class="absolute top-4 right-4 z-50 w-10 h-10 bg-black/50 backdrop-blur-md text-white rounded-full flex items-center justify-center font-bold text-xl hover:bg-black/70 transition-colors">✕</button>
                     <div class="overflow-y-auto w-full hide-scrollbar flex-1 pb-20 sm:pb-0 relative">
                         <div class="w-full h-48 sm:h-64 bg-slate-900 relative flex items-center justify-center overflow-hidden shrink-0">
-                            ${b.copertina ? `<img src="${escapeHTML(b.copertina)}" class="absolute inset-0 w-full h-full object-cover opacity-40 blur-2xl scale-125"><img src="${escapeHTML(b.copertina)}" class="relative z-10 w-full h-full object-contain p-4 drop-shadow-2xl">` : `<div class="text-7xl z-10 opacity-30 text-white">📖</div>`}
+                            ${b.copertina ? `<img src="${escapeHTML(b.copertina)}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover opacity-40 blur-2xl scale-125"><img src="${escapeHTML(b.copertina)}" loading="lazy" decoding="async" class="relative z-10 w-full h-full object-contain p-4 drop-shadow-2xl">` : `<div class="text-7xl z-10 opacity-30 text-white">📖</div>`}
                             <div class="absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-transparent z-10"></div>
                         </div>
                         <div class="px-5 sm:px-8 py-4 sm:py-6 relative z-20 -mt-8 sm:-mt-10">
@@ -1204,7 +1373,7 @@
 
         if(state.modal.type === 'modificaLibro') {
             const b = state.modal.data;
-            return `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in"><div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-lg shadow-2xl slide-up max-h-[90vh] overflow-y-auto"><h2 class="text-xl sm:text-2xl font-bold mb-6">Modifica Libro</h2><form onsubmit="salvaModificaLibro(event, '${b.id}')" class="space-y-3 sm:space-y-4">
+            return `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);"><div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-lg shadow-2xl slide-up max-h-[90vh] overflow-y-auto"><h2 class="text-xl sm:text-2xl font-bold mb-6">Modifica Libro</h2><form onsubmit="salvaModificaLibro(event, '${b.id}')" class="space-y-3 sm:space-y-4">
                 <div><label class="text-xs sm:text-sm font-bold mb-1 block">Titolo</label><input name="titolo" value="${escapeHTML(b.titolo)}" class="${INPUT_CLS}" required></div>
                 <div><label class="text-xs sm:text-sm font-bold mb-1 block">Autore</label><input name="autore" value="${escapeHTML(b.autore)}" class="${INPUT_CLS}" required></div>
                 <div><label class="text-xs sm:text-sm font-bold mb-1 block">Anno</label><input name="data_pubblicazione" type="number" value="${escapeHTML(b.data_pubblicazione)}" class="${INPUT_CLS}"></div>
@@ -1215,7 +1384,7 @@
 
         if(state.modal.type === 'recensisci') {
             const b = state.modal.data;
-            return `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in"><div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-center"><h2 class="text-xl sm:text-2xl font-bold mb-2">Scrivi Recensione</h2><p class="text-xs sm:text-sm text-slate-500 mb-6 font-medium">${escapeHTML(b.titolo)}</p><form onsubmit="inviaRecensione(event, '${b.id}')" class="space-y-4 sm:space-y-6">
+            return `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);"><div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-center"><h2 class="text-xl sm:text-2xl font-bold mb-2">Scrivi Recensione</h2><p class="text-xs sm:text-sm text-slate-500 mb-6 font-medium">${escapeHTML(b.titolo)}</p><form onsubmit="inviaRecensione(event, '${b.id}')" class="space-y-4 sm:space-y-6">
                 <div class="star-cb-group">
                     <input type="radio" id="r5" name="voto" value="5"/><label for="r5">★</label><input type="radio" id="r4" name="voto" value="4"/><label for="r4">★</label><input type="radio" id="r3" name="voto" value="3"/><label for="r3">★</label><input type="radio" id="r2" name="voto" value="2"/><label for="r2">★</label><input type="radio" id="r1" name="voto" value="1"/><label for="r1">★</label>
                 </div>
@@ -1235,12 +1404,12 @@
         return `<div class="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 px-4 sm:px-0">${state.books.map(b => `
             <div onclick="apriDettaglioLibro('${b.id}')" class="bg-white rounded-3xl sm:rounded-[2rem] overflow-hidden shadow-sm border hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col group cursor-pointer active:scale-[0.98] sm:active:scale-100">
                 <div class="relative h-56 sm:h-72 bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
-                    ${b.copertina ? `<img src="${escapeHTML(b.copertina)}" class="absolute inset-0 w-full h-full object-cover opacity-30 blur-xl scale-125 transition-transform duration-700 group-hover:scale-150"><img src="${escapeHTML(b.copertina)}" class="relative z-10 w-full h-full object-contain p-3 sm:p-4 group-hover:scale-105 transition-transform duration-300 drop-shadow-2xl">` : `<div class="w-full h-full grid place-items-center text-6xl sm:text-7xl z-10 opacity-50">📖</div>`}
+                    ${b.copertina ? `<img src="${escapeHTML(b.copertina)}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover opacity-30 blur-xl scale-125 transition-transform duration-700 group-hover:scale-150"><img src="${escapeHTML(b.copertina)}" loading="lazy" decoding="async" class="relative z-10 w-full h-full object-contain p-3 sm:p-4 group-hover:scale-105 transition-transform duration-300 drop-shadow-2xl">` : `<div class="w-full h-full grid place-items-center text-6xl sm:text-7xl z-10 opacity-50">📖</div>`}
                     <div class="absolute top-3 right-3 z-20 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-xl shadow-sm font-bold text-[10px] sm:text-xs flex items-center gap-1">${renderStars(b.rating_media)} <span class="text-slate-400 font-medium">(${b.numero_recensioni || 0})</span></div>
                 </div>
                 <div class="p-5 sm:p-6 flex flex-col flex-1">
                     <h3 class="font-extrabold text-slate-800 text-lg sm:text-xl leading-tight">${escapeHTML(b.titolo)}</h3>
-                    <p class="text-slate-500 font-medium text-xs sm:text-sm mt-1">${escapeHTML(b.autore)}${b.data_pubblicazione ? `&bull; ${escapeHTML(b.data_pubblicazione)}` : ''}</p>
+                    <p class="text-slate-500 font-medium text-xs sm:text-sm mt-1">${escapeHTML(b.autore)} ${b.data_pubblicazione ? `&bull; ${escapeHTML(b.data_pubblicazione)}` : ''}</p>
                     ${b.trama ? `<p class="text-slate-400 text-xs sm:text-sm mt-3 line-clamp-2 sm:line-clamp-3">${escapeHTML(b.trama)}</p>` : ''}
                     <div class="mt-auto pt-5 sm:pt-6">
                         ${b.stato === 'disponibile' ? 
@@ -1279,7 +1448,7 @@
                             <div class="scale-90 sm:scale-100 origin-top-right shrink-0">${renderStars(r.voto)}</div>
                         </div>
                         ${r.commento ? `<p class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-100 text-sm sm:text-base font-medium italic text-slate-700 mb-3">${escapeHTML(r.commento)}</p>` : ''}
-                        ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" class="rounded-2xl max-w-full sm:max-w-md shadow-sm mb-4 border border-slate-100">` : ''}
+                        ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" loading="lazy" decoding="async" class="rounded-2xl max-w-full sm:max-w-md shadow-sm mb-4 border border-slate-100">` : ''}
                         
                         <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 pt-2 border-t border-slate-100">
                             <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button>
@@ -1314,7 +1483,7 @@
         else {
             h += `<div class="grid gap-4 sm:gap-6 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 px-4 sm:px-0">${revBooks.map(b => {
                 const count = state.reviews.filter(r => r.libroId === b.id).length;
-                return `<div onclick="apriRecensioni('${b.id}')" class="bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden border hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group flex flex-col"><div class="h-32 sm:h-56 bg-slate-800 relative overflow-hidden flex items-center justify-center">${b.copertina ? `<img src="${escapeHTML(b.copertina)}" class="absolute inset-0 w-full h-full object-cover opacity-40 blur-xl scale-125 transition-transform duration-700 group-hover:scale-150"><img src="${escapeHTML(b.copertina)}" class="relative z-10 w-full h-full object-contain p-2 sm:p-3 group-hover:scale-105 transition-transform duration-300 drop-shadow-xl">` : `<div class="grid place-items-center h-full text-4xl sm:text-5xl z-10 text-white opacity-50">📖</div>`}<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent z-10 pointer-events-none"></div><div class="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 z-20 bg-black/60 backdrop-blur-md text-white font-bold text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl shadow-lg">💬 ${count} Voti</div></div><div class="p-3 sm:p-5 flex-1"><h4 class="font-extrabold text-slate-800 text-sm sm:text-lg leading-tight line-clamp-2">${escapeHTML(b.titolo)}</h4><div class="mt-1 sm:mt-2 scale-75 sm:scale-100 origin-left">${renderStars(b.rating_media)}</div></div></div>`;
+                return `<div onclick="apriRecensioni('${b.id}')" class="bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden border hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group flex flex-col"><div class="h-32 sm:h-56 bg-slate-800 relative overflow-hidden flex items-center justify-center">${b.copertina ? `<img src="${escapeHTML(b.copertina)}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover opacity-40 blur-xl scale-125 transition-transform duration-700 group-hover:scale-150"><img src="${escapeHTML(b.copertina)}" loading="lazy" decoding="async" class="relative z-10 w-full h-full object-contain p-2 sm:p-3 group-hover:scale-105 transition-transform duration-300 drop-shadow-xl">` : `<div class="grid place-items-center h-full text-4xl sm:text-5xl z-10 text-white opacity-50">📖</div>`}<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent z-10 pointer-events-none"></div><div class="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 z-20 bg-black/60 backdrop-blur-md text-white font-bold text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl shadow-lg">💬 ${count} Voti</div></div><div class="p-3 sm:p-5 flex-1"><h4 class="font-extrabold text-slate-800 text-sm sm:text-lg leading-tight line-clamp-2">${escapeHTML(b.titolo)}</h4><div class="mt-1 sm:mt-2 scale-75 sm:scale-100 origin-left">${renderStars(b.rating_media)}</div></div></div>`;
             }).join('')}</div>`;
         }
         return h;
@@ -1374,7 +1543,7 @@
             
             <section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">Catalogo & Prestiti</h2>
                 <div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto shadow-sm"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Libro</th><th class="p-3 sm:p-5">Stato</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">
-                    ${state.books.map(b => `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3 max-w-[150px] sm:max-w-xs truncate">${b.copertina ? `<img src="${b.copertina}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover shrink-0 border border-slate-200">` : `<div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-slate-200 flex items-center justify-center text-sm sm:text-lg shrink-0">📖</div>`} <span class="truncate">${escapeHTML(b.titolo)}</span></td><td class="p-3 sm:p-5"><span class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-[9px] sm:text-xs font-black uppercase ${b.stato==='noleggiato'?'bg-amber-100 text-amber-700':'bg-emerald-100 text-emerald-700'}">${b.stato}</span></td>
+                    ${state.books.map(b => `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3 max-w-[150px] sm:max-w-xs truncate">${b.copertina ? `<img src="${b.copertina}" loading="lazy" class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover shrink-0 border border-slate-200">` : `<div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-slate-200 flex items-center justify-center text-sm sm:text-lg shrink-0">📖</div>`} <span class="truncate">${escapeHTML(b.titolo)}</span></td><td class="p-3 sm:p-5"><span class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-[9px] sm:text-xs font-black uppercase ${b.stato==='noleggiato'?'bg-amber-100 text-amber-700':'bg-emerald-100 text-emerald-700'}">${b.stato}</span></td>
                     <td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">
                         ${b.stato==='noleggiato'?`<button onclick="prolungaPrestito('${b.id}', ${b.scadenza})" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-100 text-emerald-700 rounded-md sm:rounded-lg font-bold hover:bg-emerald-200">+ G</button><button onclick="restituisciLibro('${b.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-indigo-100 text-indigo-700 rounded-md sm:rounded-lg font-bold hover:bg-indigo-200">Fine</button>`:''}
                         <button onclick='openModal("modificaLibro", ${JSON.stringify(b).replace(/'/g, "&#39;")})' class="px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 text-slate-600 rounded-md sm:rounded-lg font-bold hover:bg-slate-200">Mod</button>
@@ -1386,7 +1555,7 @@
             <section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">Utenti Registrati</h2>
                 <div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto shadow-sm"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Utente</th><th class="p-3 sm:p-5">Email</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">
                     ${state.users.map(u => {
-                        return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3">${window.getAvatar(u.avatar, "w-6 h-6 sm:w-8 sm:h-8")}<span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span>${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
+                        return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3">${window.getAvatar(u.avatar, "w-6 h-6 sm:w-8 sm:h-8")}<span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span> ${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
                     <td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">
                         ${state.isGod ? `
                             <button onclick="sguardoDivino('${u.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Sguardo Divino">👁</button>
@@ -1456,7 +1625,8 @@
         </div>`;
     }
 
-    function render(animate = true) {
+    // IL MOTORE DI RENDER A 120FPS
+    function actualRender(animate = true) {
         const appDiv = $('app');
         if (!state.user) {
             appDiv.innerHTML = `
