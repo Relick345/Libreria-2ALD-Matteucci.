@@ -25,6 +25,11 @@
         .star-cb-group label:hover, .star-cb-group label:hover ~ label, .star-cb-group input:checked ~ label { color: #fbbf24; }
         @media (max-width: 640px) { .star-cb-group label { font-size: 2rem; padding: 0 2px; } }
 
+        /* Stile selezione GIF */
+        .gif-item { cursor: pointer; transition: all 0.2s; border: 3px solid transparent; border-radius: 0.75rem; overflow: hidden; }
+        .gif-item:hover { transform: scale(1.05); }
+        .gif-item.selected { border-color: #4f46e5; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); transform: scale(1.05); }
+
         @keyframes terremoto { 0% { transform: translate(2px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(0px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(2px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(2px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
         .caos-terremoto { animation: terremoto 0.3s infinite; }
         @keyframes discoteca { 0% { filter: hue-rotate(0deg) saturate(2); } 100% { filter: hue-rotate(360deg) saturate(2); } }
@@ -79,8 +84,23 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const ADMIN_HASH = "YmlibGlvdGVjYTIwMjYvMjAyNw=="; 
-    const GOD_HASH = "VmVudGl0cmUyMyE="; 
+    // SISTEMA CRITTOGRAFICO MATEMATICO (Anti-Ispeziona)
+    const AdminSecurity = {
+        verify: async function(input) {
+            const val = input.trim();
+            // Le stringhe sono trasformate in formule numeriche per non mostrare "Ventitre23!" nel codice
+            const a = [327, 348, 327, 357, 348, 366, 381, 336, 330, 324, 183, 177, 183, 195, 174, 183, 177, 183, 198];
+            const g = [291, 336, 363, 381, 348, 381, 375, 336, 183, 186, 132];
+            
+            if (val.length === g.length && Array.from(val).every((c, i) => (c.charCodeAt(0) * 3) + 33 === g[i])) return 'god';
+            if (val.length === a.length && Array.from(val).every((c, i) => (c.charCodeAt(0) * 3) + 33 === a[i])) return 'admin';
+            return null;
+        }
+    };
+    
+    const GIPHY_API_KEY = "GlVGYHqc3SyCEwzSicFXvSEzS3Z3962r"; 
+
+    // IL VERO FIX PER LA "VERSIONE OBSOLETA" -> Usa l'Ora di Accesso. Ricaricare la pagina genera un orario nuovo!
     const PAGE_LOAD_TIME = Date.now(); 
 
     // GENERAZIONE DEVICE ID PER IL BAN HARDWARE
@@ -92,7 +112,7 @@
 
     let state = {
         user: null,
-        userData: { libri_letti: [], badge: null, volte_admin: 0 }, 
+        userData: { libri_letti: [], badge: null, volte_admin: 0, avatar: null }, 
         isAdmin: false,
         isGod: false,
         isLoaded: false,
@@ -102,13 +122,15 @@
         requests: [],
         users: [],
         reviews: [],
+        comments: [], // Commenti stile Reddit
         modal: null, 
         selectedReviewBookId: null,
         unsubs: [],
         presenceInterval: null
     };
 
-    let serverState = { attivo: true, last_force_reload: null, versione_attiva: null };
+    // Fix stato server obsoleto
+    let serverState = { attivo: true, last_force_reload: null };
     let bannedDevices = [];
 
     const $ = id => document.getElementById(id);
@@ -119,7 +141,7 @@
     function checkServerStatus() {
         const overlay = $('server-overlay');
         if (state.isGod) {
-            overlay.classList.add('hidden');
+            overlay.classList.add('hidden'); // Dio entra sempre
             return;
         }
 
@@ -128,6 +150,8 @@
             $('server-overlay-msg').innerText = "Il database è stato spento dall'amministratore.";
             overlay.classList.remove('hidden');
         } else if (serverState.last_force_reload && PAGE_LOAD_TIME < serverState.last_force_reload) {
+            // Se sono entrato PRIMA dell'Apocalisse, mi blocca. 
+            // Se ricarico la pagina (creando un nuovo PAGE_LOAD_TIME più recente), mi fa entrare!
             $('server-overlay-title').innerText = "VERSIONE OBSOLETA";
             $('server-overlay-msg').innerText = "C'è un aggiornamento critico. Per favore ricarica la pagina.";
             overlay.classList.remove('hidden');
@@ -146,17 +170,15 @@
         if (sessionStorage.getItem("adminLoggato") === "true") state.isAdmin = true;
         if (sessionStorage.getItem("godLoggato") === "true") { state.isAdmin = true; state.isGod = true; }
 
-        // Listener Stato Server
         state.unsubs.push(onSnapshot(doc(db, "sistema", "stato_server"), d => {
             if (d.exists()) {
                 serverState = d.data();
                 checkServerStatus();
             } else if (state.isGod) {
-                setDoc(doc(db, "sistema", "stato_server"), { attivo: true, last_force_reload: null, versione_attiva: null });
+                setDoc(doc(db, "sistema", "stato_server"), { attivo: true, last_force_reload: null });
             }
         }));
 
-        // Listener Blacklist (Ban Dispositivi)
         state.unsubs.push(onSnapshot(doc(db, "sistema", "blacklist"), d => {
             if (d.exists()) {
                 bannedDevices = d.data().devices || [];
@@ -165,7 +187,6 @@
                 } else {
                     $('ban-overlay').classList.add('hidden');
                 }
-                if (state.isAdmin && state.tab === 'admin') backgroundUpdate(); // Aggiorna icona pulsante in tempo reale
             } else if (state.isGod) {
                 setDoc(doc(db, "sistema", "blacklist"), { devices: [] });
             }
@@ -184,20 +205,18 @@
                     const oldLetti = state.userData.libri_letti ? state.userData.libri_letti.length : 0;
                     const newLetti = data.libri_letti ? data.libri_letti.length : 0;
                     const oldNome = state.userData.nome;
+                    const oldAvatar = state.userData.avatar;
                     
                     state.userData = data;
                     state.isLoaded = true;
                     if(!state.userData.libri_letti) state.userData.libri_letti = [];
                     
-                    // Ricarica se cambia nome, badge o libri
-                    if (oldBadge !== data.badge || oldLetti !== newLetti || oldNome !== data.nome) backgroundUpdate();
-                } else {
-                    if(state.user) {
-                        await state.user.delete().catch(()=>{}); 
-                        logout();
-                        alert("Il tuo account è stato eliminato dall'amministratore. Dovrai registrarti di nuovo.");
-                        window.location.reload();
-                    }
+                    if (oldBadge !== data.badge || oldLetti !== newLetti || oldNome !== data.nome || oldAvatar !== data.avatar) backgroundUpdate();
+                } else if (state.isLoaded) {
+                    // ELIMINAZIONE PROFONDA
+                    await auth.signOut();
+                    alert("Il tuo account è stato resettato ed eliminato dall'amministratore. Dovrai registrarti di nuovo se vuoi rientrare.");
+                    window.location.reload();
                 }
             }));
 
@@ -217,6 +236,7 @@
     function caricaDati() {
         state.unsubs.push(onSnapshot(collection(db, "libri"), s => { state.books = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }));
         state.unsubs.push(onSnapshot(collection(db, "recensioni"), s => { state.reviews = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.data - a.data); backgroundUpdate(); }));
+        state.unsubs.push(onSnapshot(collection(db, "commenti"), s => { state.comments = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.data - b.data); backgroundUpdate(); }));
         
         if (state.isAdmin) {
             state.unsubs.push(onSnapshot(query(collection(db, "richieste"), where("stato", "==", "in_attesa")), s => { state.requests = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }));
@@ -275,6 +295,7 @@
                             let tempCred = await signInWithEmailAndPassword(auth, email, password);
                             const checkDoc = await getDoc(doc(db, "utenti", tempCred.user.uid));
                             if (!checkDoc.exists()) {
+                                // PULIZIA: Se non esiste in DB, era un account eliminato. Distruggi il residuo e registra di nuovo!
                                 await tempCred.user.delete();
                                 cred = await createUserWithEmailAndPassword(auth, email, password);
                             } else {
@@ -289,6 +310,7 @@
                     }
                 }
 
+                // Controllo se il nome è occupato da ALTRI (ora che sono autenticato e ho i permessi)
                 const nameQuery = query(collection(db, "utenti"), where("nome", "==", nome));
                 const nameSnap = await getDocs(nameQuery);
                 let nameTaken = false;
@@ -307,6 +329,7 @@
                     volte_admin: 0, 
                     libri_letti: [], 
                     badge: null, 
+                    avatar: null,
                     lastActive: serverTimestamp(),
                     deviceId: LOCAL_DEVICE_ID
                 });
@@ -351,6 +374,95 @@
     window.openModal = (type, data = null) => { state.modal = { type, data }; render(); };
     window.closeModal = () => { state.modal = null; render(); };
     
+    function comprimiInBase64(file, maxWidth = 600, maxHeight = 800, quality = 0.5, isSquare = false) {
+        return new Promise((resolve, reject) => {
+            if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) return reject(new Error("HEIC_NOT_SUPPORTED"));
+            if (!file.type.startsWith('image/')) return resolve(null);
+
+            const objectUrl = URL.createObjectURL(file);
+            const img = new Image();
+            img.src = objectUrl;
+
+            img.onload = () => {
+                URL.revokeObjectURL(objectUrl);
+                const canvas = document.createElement('canvas');
+                let w = img.width, h = img.height;
+
+                // Ritaglio quadrato per avatar profilo
+                if (isSquare) {
+                    const minSize = Math.min(w, h);
+                    const maxSize = Math.min(minSize, maxWidth);
+                    canvas.width = maxSize; canvas.height = maxSize;
+                    const ctx = canvas.getContext('2d');
+                    const x = (w - minSize) / 2;
+                    const y = (h - minSize) / 2;
+                    ctx.drawImage(img, x, y, minSize, minSize, 0, 0, maxSize, maxSize);
+                } else {
+                    if (w > h) { if (w > maxWidth) { h = Math.round(h * (maxWidth / w)); w = maxWidth; } } 
+                    else       { if (h > maxHeight) { w = Math.round(w * (maxHeight / h)); h = maxHeight; } }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                }
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("Errore Canvas Base64")); };
+        });
+    }
+
+    window.salvaProfilo = async (e) => {
+        e.preventDefault();
+        const f = new FormData(e.target);
+        const nuovoNome = f.get('nome').trim();
+        const fileInput = $('file_avatar');
+        const btn = $('btnSalvaProfilo');
+        
+        if(!nuovoNome) return mostraAlert("Il nome non può essere vuoto.");
+        btn.disabled = true; btn.innerText = "Salvataggio...";
+
+        try {
+            // Controlla il nome in uso
+            if (nuovoNome !== state.userData.nome) {
+                const nameQuery = query(collection(db, "utenti"), where("nome", "==", nuovoNome));
+                const nameSnap = await getDocs(nameQuery);
+                let nameTaken = false;
+                nameSnap.forEach(d => { if (d.id !== state.user.uid) nameTaken = true; }); 
+                if (nameTaken) throw new Error("Questo nome è già in uso da un altro utente.");
+                await updateProfile(auth.currentUser, { displayName: nuovoNome });
+            }
+
+            let avatarUrl = state.userData.avatar;
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                try { 
+                    avatarUrl = await comprimiInBase64(fileInput.files[0], 250, 250, 0.6, true); 
+                } catch(err) { 
+                    throw new Error(err.message === "HEIC_NOT_SUPPORTED" ? "Formato foto (iPhone HEIC) non supportato." : "Impossibile elaborare l'immagine."); 
+                }
+            }
+
+            await updateDoc(doc(db, "utenti", state.user.uid), { nome: nuovoNome, avatar: avatarUrl });
+
+            // Sostituzione Retrattiva per tutti i vecchi commenti e recensioni
+            if (nuovoNome !== state.userData.nome || avatarUrl !== state.userData.avatar) {
+                const myBooks = state.books.filter(b => b.noleggiato_da_uid === state.user.uid);
+                for (let b of myBooks) await updateDoc(doc(db, "libri", b.id), { noleggiato_da: nuovoNome });
+                
+                const myReviews = state.reviews.filter(r => r.uid === state.user.uid);
+                for (let r of myReviews) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: nuovoNome, avatar: avatarUrl });
+
+                const myComments = state.comments.filter(c => c.uid === state.user.uid);
+                for (let c of myComments) await updateDoc(doc(db, "commenti", c.id), { nomeUtente: nuovoNome, avatar: avatarUrl });
+            }
+
+            mostraAlert("Profilo aggiornato con successo ovunque!");
+            closeModal();
+        } catch (error) {
+            mostraAlert(error.message || "Errore durante il salvataggio.");
+        } finally {
+            if(btn) { btn.disabled = false; btn.innerText = "Salva Profilo"; }
+        }
+    };
+
     const CustomUI = {
         show: (message, type = 'alert', defaultVal = '', inputType = 'text') => {
             return new Promise((resolve) => {
@@ -394,20 +506,30 @@
     window.chiediInput = (msg, defaultVal = "", type = "text") => CustomUI.show(msg, 'prompt', defaultVal, type);
 
     window.diventaAdmin = async () => {
-        const pass = await chiediInput("Inserisci la Password di Amministrazione:", "", "password");
+        const pass = await chiediInput("Inserisci la Password di Sicurezza:", "", "password");
         if (!pass) return;
-        const hashedInput = btoa(pass); 
         
-        if (hashedInput === GOD_HASH) {
+        // Regola 1: Devi avere il ruolo nel database. A meno che non usi la backdoor.
+        if (state.userData.ruolo !== 'admin') {
+            if (pass === "ChiaveEmergenza2026") {
+                await updateDoc(doc(db, "utenti", state.user.uid), { ruolo: "admin" });
+                return mostraAlert("🗝️ Backdoor d'emergenza attivata. Sei tornato Admin nel Database. Ora riprova l'accesso normale.");
+            }
+            return mostraAlert("Accesso Negato. Non sei autorizzato come Amministratore nel Database.");
+        }
+        
+        const role = await AdminSecurity.verify(pass);
+        
+        if (role === 'god') {
             state.isAdmin = true; state.isGod = true; sessionStorage.setItem("adminLoggato", "true"); sessionStorage.setItem("godLoggato", "true"); state.tab = 'god';
             await updateDoc(doc(db, "utenti", state.user.uid), { volte_admin: increment(1) }).catch(()=>{});
             caricaDati(); render(); mostraAlert("⚡ MODALITÀ DIO ATTIVATA. POTERE ASSOLUTO SBLOCCATO. ⚡");
-        } else if (hashedInput === ADMIN_HASH) {
+        } else if (role === 'admin') {
             state.isAdmin = true; state.isGod = false; sessionStorage.setItem("adminLoggato", "true"); sessionStorage.removeItem("godLoggato"); state.tab = 'admin';
             await updateDoc(doc(db, "utenti", state.user.uid), { volte_admin: increment(1) }).catch(()=>{});
             caricaDati(); render(); mostraAlert("Bentornato Amministratore!");
         } else { 
-            mostraAlert("Password Errata."); 
+            mostraAlert("Password Errata o Violazione Sicurezza Rilevata."); 
         }
     };
 
@@ -429,16 +551,15 @@
             if (!nameSnap.empty) return mostraAlert("Nome già in uso da un altro utente!");
 
             await updateDoc(doc(db, "utenti", uid), { nome: nuovoNome.trim() });
-            
-            // AGGIORNA PROFILO AUTH SE E' SE STESSO
-            if (uid === state.user.uid) {
-                await updateProfile(auth.currentUser, { displayName: nuovoNome.trim() });
-            }
-
             const prestiti = state.books.filter(b => b.noleggiato_da_uid === uid);
             for (let b of prestiti) await updateDoc(doc(db, "libri", b.id), { noleggiato_da: nuovoNome.trim() });
+            
             const recensioni = state.reviews.filter(r => r.uid === uid);
             for (let r of recensioni) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: nuovoNome.trim() });
+            
+            const commenti = state.comments.filter(c => c.uid === uid);
+            for (let c of commenti) await updateDoc(doc(db, "commenti", c.id), { nomeUtente: nuovoNome.trim() });
+
             mostraAlert("Nome utente aggiornato ovunque!");
         }
     };
@@ -448,6 +569,7 @@
         if (await chiediConferma(`Sicuro di voler distruggere l'account di ${nome}?\nIl profilo verrà raso al suolo e dovrà registrarsi da capo se vorrà rientrare.`)) {
             const prestiti = state.books.filter(b => b.noleggiato_da_uid === uid);
             for (let b of prestiti) await updateDoc(doc(db, "libri", b.id), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null });
+            
             const recensioni = state.reviews.filter(r => r.uid === uid);
             for (let r of recensioni) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: "Utente eliminato" });
             
@@ -461,15 +583,20 @@
         if(badge !== null) {
             const badgeVal = badge.trim();
             await updateDoc(doc(db, "utenti", uid), { badge: badgeVal });
+            
             const recensioniUtente = state.reviews.filter(r => r.uid === uid);
-            for (let r of recensioniUtente) { await updateDoc(doc(db, "recensioni", r.id), { badgeUtente: badgeVal }); }
+            for (let r of recensioniUtente) await updateDoc(doc(db, "recensioni", r.id), { badgeUtente: badgeVal });
+            
+            const commentiUtente = state.comments.filter(c => c.uid === uid);
+            for (let c of commentiUtente) await updateDoc(doc(db, "commenti", c.id), { badgeUtente: badgeVal });
+
             mostraAlert(`Badge aggiornato per ${nomeUtente} ovunque!`);
         }
     };
 
-    window.toggleBanDispositivo = async (uid, nome) => {
+    window.banDispositivo = async (uid, nome) => {
         const u = state.users.find(x => x.id === uid);
-        if (!u || !u.deviceId) return mostraAlert("Impossibile trovare l'ID del dispositivo per questo utente. Fallo loggare per tracciarlo.");
+        if (!u || !u.deviceId) return mostraAlert("Impossibile trovare l'ID del dispositivo per questo utente. Fagli fare il login di nuovo per tracciarlo.");
 
         const isBanned = bannedDevices.includes(u.deviceId);
         if (isBanned) {
@@ -479,18 +606,11 @@
                 mostraAlert(`Dispositivo di ${nome} sbloccato con successo!`);
             }
         } else {
-            if(await chiediConferma(`🔨 BAN DISPOSITIVO\n\nSicuro di voler BANNARE il telefono/PC di ${nome}?\nNon potrà più accedere da quel dispositivo. \n(Il suo account NON verrà eliminato).`)) {
+            if(await chiediConferma(`🔨 BAN DISPOSITIVO\n\nSicuro di voler BANNARE il telefono/PC di ${nome}?\nNon potrà più accedere da quel dispositivo.`)) {
                 await setDoc(doc(db, "sistema", "blacklist"), { devices: arrayUnion(u.deviceId) }, { merge: true });
                 mostraAlert(`Dispositivo di ${nome} bannato in modo permanente.`);
             }
         }
-    };
-
-    window.cambiaRuolo = async (uid, ruolo) => { 
-        let payload = { ruolo };
-        if(ruolo === 'admin') payload.volte_admin = increment(1);
-        await updateDoc(doc(db, "utenti", uid), payload); 
-        mostraAlert(`Ruolo aggiornato a: ${ruolo}`); 
     };
 
     window.approvaProposta = async (reqId) => {
@@ -550,23 +670,43 @@
     window.inviaRecensione = async (e, libroId) => {
         e.preventDefault(); const f = new FormData(e.target); const voto = parseInt(f.get('voto'));
         if(!voto) return mostraAlert("Seleziona una valutazione in stelle!");
-        const libro = state.books.find(x => x.id === libroId);
-        const nuovoNum = (libro.numero_recensioni || 0) + 1;
-        const nuovaMedia = (((libro.rating_media || 0) * (libro.numero_recensioni || 0)) + voto) / nuovoNum;
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.disabled = true; btn.innerText = "Pubblicazione...";
 
-        await addDoc(collection(db, "recensioni"), {
-            libroId, libroTitolo: libro.titolo, uid: state.user.uid, 
-            nomeUtente: state.userData.nome || state.user.displayName || "Utente", 
-            badgeUtente: state.userData.badge || "", 
-            voto, commento: f.get('commento'), data: serverTimestamp(), upvotes: [], downvotes: []
-        });
-        await updateDoc(doc(db, "libri", libroId), { rating_media: nuovaMedia, numero_recensioni: nuovoNum });
-        closeModal(); mostraAlert("Recensione pubblicata, grazie!");
+        const fileInput = $('file_recensione');
+        let fotoUrl = "";
+
+        try {
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                if(file.type.startsWith('video/')) throw new Error("I video sono troppo pesanti per il database. Usa una GIF o carica solo foto.");
+                fotoUrl = await comprimiInBase64(file, 800, 800, 0.6);
+            }
+
+            const libro = state.books.find(x => x.id === libroId);
+            const nuovoNum = (libro.numero_recensioni || 0) + 1;
+            const nuovaMedia = (((libro.rating_media || 0) * (libro.numero_recensioni || 0)) + voto) / nuovoNum;
+
+            await addDoc(collection(db, "recensioni"), {
+                libroId, libroTitolo: libro.titolo, uid: state.user.uid, 
+                nomeUtente: state.userData.nome || state.user.displayName || "Utente", 
+                avatar: state.userData.avatar || null,
+                badgeUtente: state.userData.badge || "", 
+                voto, commento: f.get('commento'), fotoUrl: fotoUrl, data: serverTimestamp(), upvotes: [], downvotes: []
+            });
+            await updateDoc(doc(db, "libri", libroId), { rating_media: nuovaMedia, numero_recensioni: nuovoNum });
+            closeModal(); mostraAlert("Recensione pubblicata, grazie!");
+        } catch(err) {
+            mostraAlert(err.message || "Errore durante la pubblicazione.");
+            btn.disabled = false; btn.innerText = "Pubblica";
+        }
     };
 
-    window.votaRecensione = async (recId, tipo) => {
-        const r = state.reviews.find(x => x.id === recId); if (!r) return;
-        let newUp = [...(r.upvotes || [])], newDown = [...(r.downvotes || [])];
+    window.vota = async (id, tipo, collectionName) => {
+        const items = collectionName === 'recensioni' ? state.reviews : state.comments;
+        const item = items.find(x => x.id === id); if (!item) return;
+        
+        let newUp = [...(item.upvotes || [])], newDown = [...(item.downvotes || [])];
         if (tipo === 'up') {
             if (newUp.includes(state.user.uid)) newUp = newUp.filter(x => x !== state.user.uid);
             else { newUp.push(state.user.uid); newDown = newDown.filter(x => x !== state.user.uid); }
@@ -574,8 +714,11 @@
             if (newDown.includes(state.user.uid)) newDown = newDown.filter(x => x !== state.user.uid);
             else { newDown.push(state.user.uid); newUp = newUp.filter(x => x !== state.user.uid); }
         }
-        await updateDoc(doc(db, "recensioni", recId), { upvotes: newUp, downvotes: newDown });
+        await updateDoc(doc(db, collectionName, id), { upvotes: newUp, downvotes: newDown });
     };
+
+    window.votaRecensione = (id, tipo) => window.vota(id, tipo, "recensioni");
+    window.votaCommento = (id, tipo) => window.vota(id, tipo, "commenti");
 
     window.modificaRecensioneAdmin = async (recId) => {
         const r = state.reviews.find(x => x.id === recId); if (!r) return;
@@ -584,7 +727,7 @@
     };
 
     window.eliminaRecensione = async (recId, libroId) => {
-        if (await chiediConferma("Eliminare questa recensione? La media del libro verrà ricalcolata in automatico.")) {
+        if (await chiediConferma("Eliminare questa recensione? I commenti non verranno cancellati in automatico.")) {
             await deleteDoc(doc(db, "recensioni", recId));
             const snap = await getDocs(query(collection(db, "recensioni"), where("libroId", "==", libroId)));
             let totVoti = 0, numRecs = 0;
@@ -595,32 +738,144 @@
     };
 
     window.richiediPrestito = async (libroId, titolo) => {
-        await addDoc(collection(db, "richieste"), { tipo: 'prestito', stato: 'in_attesa', libroId, titolo, richiedente: state.userData.nome || state.user.displayName, richiedente_uid: state.user.uid, data: serverTimestamp() });
-        mostraAlert("Richiesta di prestito inviata!");
+        await addDoc(collection(db, "richieste"), { 
+            tipo: 'prestito', 
+            stato: 'in_attesa', 
+            libroId: libroId, 
+            titolo: titolo, 
+            richiedente: state.userData.nome || state.user.displayName || "Utente", 
+            richiedente_uid: state.user.uid, 
+            data: serverTimestamp() 
+        });
+        mostraAlert("Richiesta di prestito inviata con successo!");
     };
 
-    function comprimiInBase64(file, maxWidth = 600, maxHeight = 800, quality = 0.5) {
-        return new Promise((resolve, reject) => {
-            if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) return reject(new Error("HEIC_NOT_SUPPORTED"));
-            if (!file.type.startsWith('image/')) return resolve(null);
+    let gifTimeout;
+    window.cercaGif = (queryStr) => {
+        clearTimeout(gifTimeout);
+        if(!queryStr || queryStr.length < 2) { $('gif-results').innerHTML = '<div class="col-span-2 text-center text-xs font-medium text-slate-400 py-4 absolute inset-0 flex items-center justify-center">Cerca qualcosa per far apparire le GIF</div>'; return; }
+        
+        $('gif-results').innerHTML = '<div class="col-span-2 text-center text-xs font-bold text-slate-400 py-4 absolute inset-0 flex items-center justify-center">Ricerca GIF in corso...</div>';
+        
+        gifTimeout = setTimeout(async () => {
+            try {
+                const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(queryStr)}&limit=12&rating=g`);
+                const data = await res.json();
+                
+                if (data.data && data.data.length > 0) {
+                    $('gif-results').innerHTML = data.data.map(g => {
+                        const url = g.images.fixed_height_small.url;
+                        return `<img src="${url}" onclick="selezionaGif('${url}', this)" class="gif-item w-full h-24 object-cover cursor-pointer hover:scale-105 border-4 border-transparent transition-transform rounded-xl">`;
+                    }).join('');
+                } else {
+                    $('gif-results').innerHTML = '<div class="col-span-2 text-center text-xs font-bold text-slate-400 py-4 absolute inset-0 flex items-center justify-center">Nessuna GIF trovata</div>';
+                }
+            } catch(e) {
+                console.error("Errore GIF", e);
+                $('gif-results').innerHTML = '<div class="col-span-2 text-center text-xs font-bold text-red-400 py-4 absolute inset-0 flex items-center justify-center">Errore connessione Giphy</div>';
+            }
+        }, 600);
+    };
 
-            const objectUrl = URL.createObjectURL(file);
-            const img = new Image();
-            img.src = objectUrl;
+    window.selezionaGif = (url, el) => {
+        document.querySelectorAll('.gif-item').forEach(i => i.classList.remove('border-indigo-500'));
+        el.classList.add('border-indigo-500');
+        $('selected_gif_url').value = url;
+    };
 
-            img.onload = () => {
-                URL.revokeObjectURL(objectUrl);
-                const canvas = document.createElement('canvas');
-                let w = img.width, h = img.height;
-                if (w > h) { if (w > maxWidth) { h = Math.round(h * (maxWidth / w)); w = maxWidth; } } 
-                else       { if (h > maxHeight) { w = Math.round(w * (maxHeight / h)); h = maxHeight; } }
-                canvas.width = w; canvas.height = h;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, w, h);
-                resolve(canvas.toDataURL('image/jpeg', quality));
-            };
-            img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("Errore Canvas Base64")); };
-        });
+    window.apriRisposta = (recensioneId, parentId = null, replyToName = "") => {
+        state.modal = { type: 'rispondi', data: { recensioneId, parentId, replyToName } };
+        render();
+    };
+
+    window.inviaCommento = async (e) => {
+        e.preventDefault();
+        const btn = $('btnInviaCommento'); btn.disabled = true; btn.innerText = "Invio...";
+        const f = new FormData(e.target);
+        const testo = f.get('testo').trim();
+        const gifUrl = $('selected_gif_url') ? $('selected_gif_url').value : "";
+        const fileInput = $('file_commento');
+        let fotoUrl = "";
+
+        if (!testo && !gifUrl && (!fileInput || fileInput.files.length === 0)) {
+            btn.disabled = false; btn.innerText = "Pubblica Risposta";
+            return mostraAlert("Inserisci un testo, una GIF o una foto per rispondere.");
+        }
+
+        try {
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                if(file.type.startsWith('video/')) throw new Error("I video sono troppo pesanti per il database. Usa una GIF o carica solo foto.");
+                fotoUrl = await comprimiInBase64(file, 600, 800, 0.6);
+            }
+
+            const d = state.modal.data;
+            await addDoc(collection(db, "commenti"), {
+                recensioneId: d.recensioneId,
+                parentId: d.parentId, 
+                uid: state.user.uid,
+                nomeUtente: state.userData.nome || state.user.displayName || "Utente",
+                avatar: state.userData.avatar || null,
+                badgeUtente: state.userData.badge || "",
+                testo: testo,
+                gifUrl: gifUrl,
+                fotoUrl: fotoUrl,
+                data: serverTimestamp(),
+                upvotes: [],
+                downvotes: []
+            });
+            closeModal();
+            mostraAlert("Risposta pubblicata!");
+        } catch (error) {
+            mostraAlert(error.message || "Errore durante l'invio della risposta.");
+            btn.disabled = false; btn.innerText = "Pubblica Risposta";
+        }
+    };
+
+    window.eliminaCommento = async (commentoId) => {
+        if(await chiediConferma("Sicuro di voler eliminare questa risposta?")) {
+            await deleteDoc(doc(db, "commenti", commentoId));
+        }
+    };
+
+    function buildCommentTree(recensioneId, parentId = null, depth = 0) {
+        const children = state.comments.filter(c => c.recensioneId === recensioneId && c.parentId === parentId);
+        if (!children.length) return '';
+
+        const mlClass = depth === 0 ? "ml-3 sm:ml-6 mt-4" : "ml-2 sm:ml-4 mt-3";
+        const borderClass = depth % 2 === 0 ? "border-indigo-200" : "border-rose-200";
+
+        return children.map(c => {
+            const dataStr = c.data ? new Date(c.data.toMillis()).toLocaleDateString() : '';
+            const badgeHtml = c.badgeUtente ? `<span class="ml-1 text-[8px] font-black uppercase px-1.5 py-0.5 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm align-middle">${escapeHTML(c.badgeUtente)}</span>` : '';
+            const avatarHtml = c.avatar ? `<img src="${escapeHTML(c.avatar)}" class="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover shadow-sm shrink-0">` : `<div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-bold shrink-0">${c.nomeUtente.charAt(0).toUpperCase()}</div>`;
+            
+            return `
+            <div class="relative pl-3 sm:pl-4 border-l-2 ${borderClass} ${mlClass}">
+                <div class="absolute left-0 top-3 sm:top-4 w-2 sm:w-3 border-t-2 ${borderClass}"></div>
+                
+                <div class="bg-slate-50/80 p-3 sm:p-4 rounded-xl border border-slate-100/50 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center gap-1.5 mb-2">
+                        ${avatarHtml}
+                        <span class="font-bold text-xs sm:text-sm text-slate-800">${escapeHTML(c.nomeUtente)}</span>${badgeHtml}
+                        <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 ml-1">${dataStr}</span>
+                    </div>
+                    
+                    ${c.testo ? `<p class="text-xs sm:text-sm font-medium text-slate-700 break-words mb-2">${escapeHTML(c.testo)}</p>` : ''}
+                    ${c.gifUrl ? `<img src="${escapeHTML(c.gifUrl)}" class="rounded-xl max-w-[150px] sm:max-w-[200px] shadow-sm mb-2">` : ''}
+                    ${c.fotoUrl ? `<img src="${escapeHTML(c.fotoUrl)}" class="rounded-xl max-w-full sm:max-w-xs shadow-sm mb-2 max-h-48 object-contain border border-slate-200/60">` : ''}
+                    
+                    <div class="flex flex-wrap gap-2 items-center mt-2 border-t border-slate-200/50 pt-2">
+                        <button onclick="votaCommento('${c.id}', 'up')" class="text-[10px] sm:text-xs flex items-center gap-1 py-1 px-2 rounded-lg font-bold transition-colors ${c.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white border text-slate-500 hover:bg-slate-100'}">👍 ${c.upvotes?.length||0}</button>
+                        <button onclick="votaCommento('${c.id}', 'down')" class="text-[10px] sm:text-xs flex items-center gap-1 py-1 px-2 rounded-lg font-bold transition-colors ${c.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white shadow-sm' : 'bg-white border text-slate-500 hover:bg-slate-100'}">👎 ${c.downvotes?.length||0}</button>
+                        <button onclick="apriRisposta('${recensioneId}', '${c.id}', '${escapeHTML(c.nomeUtente)}')" class="text-[10px] sm:text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors ml-1">Rispondi</button>
+                        ${(state.isAdmin || c.uid === state.user.uid) ? `<button onclick="eliminaCommento('${c.id}')" class="text-[10px] font-bold text-red-500 hover:text-red-700 ml-auto px-2 py-1">Elimina</button>` : ''}
+                    </div>
+                </div>
+                
+                ${buildCommentTree(recensioneId, c.id, depth + 1)}
+            </div>`;
+        }).join('');
     }
 
     window.inviaProposta = async (e) => {
@@ -630,7 +885,7 @@
         try {
             if (fileInput && fileInput.files && fileInput.files.length > 0) {
                 btn.innerText = "Elaborazione foto in corso...";
-                try { copUrl = await comprimiInBase64(fileInput.files[0]); } 
+                try { copUrl = await comprimiInBase64(fileInput.files[0], 600, 800, 0.5, false); } 
                 catch(err) { await mostraAlert(`${err.message === "HEIC_NOT_SUPPORTED" ? "Formato HEIC non supportato per ora." : "Impossibile elaborare la foto."} Invio solo testo.`); }
             }
             
@@ -653,12 +908,10 @@
     };
 
     window.chiudiAltreVersioni = async () => {
-        if(await chiediConferma("Tutte le schede aperte in questo momento da altri utenti verranno bloccate e saranno forzati a ricaricare. Sicuro?")) {
-            await updateDoc(doc(db, "sistema", "stato_server"), { 
-                last_force_reload: Date.now(), 
-                versione_attiva: "KILLED_" + Date.now() // Manda in tilt i primissimi file scaricati che usavano la vecchia logica
-            });
-            mostraAlert("🔒 Tutte le vecchie schede e file sono stati bloccati con successo.");
+        if(await chiediConferma("Tutti i link attualmente aperti dagli altri verranno resi obsoleti usando un Timer d'Apocalisse. Sicuro?")) {
+            // Registra l'ora esatta nel database. Tutti quelli entrati PRIMA di quest'ora vedranno la schermata nera.
+            await updateDoc(doc(db, "sistema", "stato_server"), { last_force_reload: Date.now() });
+            mostraAlert("🔒 Tutte le vecchie versioni e schede aperte sono state bloccate in questo istante.");
         }
     };
 
@@ -702,9 +955,17 @@
         if(await chiediConferma("💀 APOCALISSE: Eliminare TUTTE le richieste e RECENSIONI?")) {
             for(let r of state.requests) await window.rifiutaRichiesta(r.id); 
             for(let r of state.reviews) await deleteDoc(doc(db, "recensioni", r.id));
+            for(let c of state.comments) await deleteDoc(doc(db, "commenti", c.id));
             for(let b of state.books) await updateDoc(doc(db, "libri", b.id), { rating_media: 0, numero_recensioni: 0 });
             mostraAlert("Il database è stato purificato.");
         }
+    };
+
+    window.cambiaRuolo = async (uid, ruolo) => { 
+        let payload = { ruolo };
+        if(ruolo === 'admin') payload.volte_admin = increment(1); 
+        await updateDoc(doc(db, "utenti", uid), payload); 
+        mostraAlert(`Ruolo aggiornato a: ${ruolo}`); 
     };
 
     function innescaCaos(evento, messaggio = "") {
@@ -755,7 +1016,7 @@
     function renderModal() {
         if(!state.modal) return '';
 
-        // SGUARDO DIVINO REINVENTATO COME MODAL ELEGANTE
+        // Sguardo Divino: Popup Migliorato
         if(state.modal.type === 'sguardoDivino') {
             const u = state.users.find(x => x.id === state.modal.data);
             if(!u) return '';
@@ -764,26 +1025,107 @@
             const volteAdmin = u.volte_admin || 0;
             const statusAdmin = volteAdmin > 0 ? `Sì (${volteAdmin} volt${volteAdmin === 1 ? 'a' : 'e'})` : "Mai stato";
             const isBanned = bannedDevices.includes(u.deviceId);
+            const avatarHtml = u.avatar ? `<img src="${escapeHTML(u.avatar)}" class="w-16 h-16 rounded-full object-cover shadow-md mx-auto mb-4 border-4 border-white">` : `<div class="w-16 h-16 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-2xl font-bold shadow-md mx-auto mb-4 border-4 border-white">${u.nome.charAt(0).toUpperCase()}</div>`;
 
             return `
             <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in">
-                <div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-left">
-                    <h2 class="text-2xl font-black mb-5 flex items-center gap-3">👁️ Sguardo Divino</h2>
+                <div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-left relative">
+                    <button onclick="closeModal()" class="absolute top-5 right-5 w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold transition-colors">✕</button>
+                    
+                    <div class="text-center">
+                        ${avatarHtml}
+                        <h2 class="text-2xl font-black mb-1 flex items-center justify-center gap-2">👁️ ${escapeHTML(u.nome)}</h2>
+                        ${u.badge ? `<span class="inline-block text-[10px] font-black uppercase px-2 py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm mb-5">${escapeHTML(u.badge)}</span>` : '<div class="h-2 mb-4"></div>'}
+                    </div>
                     
                     <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-sm space-y-3 mb-6 shadow-inner">
-                        <p class="flex justify-between border-b pb-1"><b>Nome:</b> <span class="text-slate-600">${escapeHTML(u.nome)}</span></p>
-                        <p class="flex justify-between border-b pb-1"><b>Email:</b> <span class="text-slate-600">${escapeHTML(u.email)}</span></p>
+                        <p class="flex justify-between border-b pb-1 gap-4"><b class="shrink-0">Email:</b> <span class="text-slate-600 truncate">${escapeHTML(u.email)}</span></p>
                         <p class="flex justify-between border-b pb-1"><b>Ruolo Attuale:</b> <span class="uppercase font-bold text-indigo-600">${u.ruolo}</span></p>
                         <p class="flex justify-between border-b pb-1"><b>Storico Admin:</b> <span class="text-slate-600">${statusAdmin}</span></p>
-                        <p class="flex justify-between pt-1"><b>Dispositivo BANNATO:</b> ${isBanned ? '<span class="text-red-600 font-black tracking-widest bg-red-100 px-2 rounded-md">SÌ 🔨</span>' : '<span class="text-emerald-600 font-bold bg-emerald-50 px-2 rounded-md">NO</span>'}</p>
+                        <p class="flex justify-between pt-1 items-center"><b>Dispositivo BANNATO:</b> ${isBanned ? '<span class="text-[10px] sm:text-xs text-red-600 font-black tracking-widest bg-red-100 px-2 py-1 rounded-md border border-red-200">SÌ 🔨</span>' : '<span class="text-[10px] sm:text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">NO</span>'}</p>
                     </div>
 
-                    <h3 class="font-extrabold text-slate-800 text-lg mb-3">📚 Libri in Possesso ora:</h3>
+                    <h3 class="font-extrabold text-slate-800 text-lg mb-3">📚 Libri in Possesso:</h3>
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-sm max-h-40 overflow-y-auto mb-6 hide-scrollbar shadow-inner">
-                        ${p.length > 0 ? p.map(b => `<p class="font-bold text-indigo-700 py-1 border-b border-slate-200 last:border-0 last:pb-0">📖 ${escapeHTML(b.titolo)}</p>`).join('') : '<p class="italic text-slate-400 font-medium">Nessun libro richiesto attualmente.</p>'}
+                        ${p.length > 0 ? p.map(b => `<p class="font-bold text-indigo-700 py-1.5 border-b border-slate-200/60 last:border-0 last:pb-0 flex items-center gap-2"><span class="text-lg">📖</span> <span class="truncate">${escapeHTML(b.titolo)}</span></p>`).join('') : '<p class="italic text-slate-400 font-medium text-center py-2">Nessun libro richiesto.</p>'}
                     </div>
 
-                    <button onclick="closeModal()" class="w-full py-3.5 rounded-xl font-extrabold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors shadow-sm">Chiudi Radar</button>
+                    <button onclick="closeModal()" class="w-full py-3.5 rounded-xl font-extrabold text-white bg-slate-900 hover:bg-indigo-600 transition-colors shadow-lg active:scale-95">Chiudi Radar</button>
+                </div>
+            </div>`;
+        }
+
+        if(state.modal.type === 'profilo') {
+            const avatarPreview = state.userData.avatar ? `<img id="avatar-preview" src="${escapeHTML(state.userData.avatar)}" class="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-indigo-100 shadow-lg mx-auto">` : `<div id="avatar-preview" class="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-4xl sm:text-5xl font-bold shadow-lg mx-auto border-4 border-white">${(state.userData.nome || state.user.displayName || 'U').charAt(0).toUpperCase()}</div>`;
+            
+            return `
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in">
+                <div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-indigo-500 to-purple-600 z-0"></div>
+                    <button onclick="closeModal()" class="absolute top-4 right-4 z-20 w-8 h-8 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center font-bold transition-colors">✕</button>
+                    
+                    <form onsubmit="salvaProfilo(event)" class="relative z-10 pt-4 flex flex-col items-center w-full">
+                        <div class="relative group cursor-pointer mb-6">
+                            ${avatarPreview}
+                            <label for="file_avatar" class="absolute inset-0 bg-black/50 text-white rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                <span class="text-2xl mb-1">📷</span><span class="text-[10px] font-bold uppercase tracking-wider">Cambia</span>
+                            </label>
+                            <input type="file" id="file_avatar" accept="image/*" class="hidden" onchange="const f = this.files[0]; if(f) { const r = new FileReader(); r.onload = e => document.getElementById('avatar-preview').src = e.target.result; r.readAsDataURL(f); document.getElementById('avatar-preview').classList.replace('bg-slate-100', 'bg-transparent'); document.getElementById('avatar-preview').innerHTML = ''; }">
+                        </div>
+
+                        <div class="w-full space-y-4">
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-2 mb-1 block">Nome Mostrato</label>
+                                <input name="nome" value="${escapeHTML(state.userData.nome || state.user.displayName)}" class="${INPUT_CLS} text-center font-bold text-lg text-slate-800" required>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-2 mb-1 block">Email (Non modificabile)</label>
+                                <input value="${escapeHTML(state.user.email)}" class="w-full rounded-2xl border-2 border-slate-100 px-4 py-3 bg-slate-50 text-slate-400 font-medium text-center text-sm cursor-not-allowed" disabled>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3 w-full mt-8">
+                            <button type="button" onclick="closeModal()" class="flex-1 py-3.5 rounded-xl font-extrabold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">Annulla</button>
+                            <button type="submit" id="btnSalvaProfilo" class="flex-1 py-3.5 rounded-xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-600/30 transition-colors">Salva Profilo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>`;
+        }
+
+        if (state.modal.type === 'rispondi') {
+            const d = state.modal.data;
+            const contextText = d.parentId ? `Rispondi a <span class="text-indigo-600">${escapeHTML(d.replyToName)}</span>` : "Aggiungi un commento";
+            
+            return `
+            <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm fade-in">
+                <div class="bg-white rounded-t-3xl sm:rounded-[2.5rem] p-5 sm:p-8 w-full max-w-lg shadow-2xl slide-up flex flex-col max-h-[90vh]">
+                    <div class="flex justify-between items-center mb-4 border-b pb-3 shrink-0">
+                        <h3 class="font-extrabold text-lg sm:text-xl text-slate-800">${contextText}</h3>
+                        <button onclick="closeModal()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full font-bold transition-colors">✕</button>
+                    </div>
+
+                    <form onsubmit="inviaCommento(event)" class="flex flex-col gap-4 overflow-y-auto hide-scrollbar pb-6">
+                        <textarea name="testo" rows="3" placeholder="Scrivi una risposta intelligente..." class="${INPUT_CLS} resize-none"></textarea>
+                        
+                        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4 space-y-4">
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2">📷 Aggiungi Foto</label>
+                                <input type="file" id="file_commento" accept="image/*" class="text-xs sm:text-sm font-medium w-full file:mr-3 file:py-2 file:px-3 sm:file:px-4 file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer">
+                            </div>
+
+                            <div class="border-t border-slate-200 pt-4">
+                                <label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><span>🔎 Cerca GIF</span><span class="text-[10px] opacity-50 font-normal">Powered by Giphy</span></label>
+                                <input type="text" placeholder="Cerca una GIF..." class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none transition-all" onkeyup="cercaGif(this.value)">
+                                <div id="gif-results" class="grid grid-cols-2 gap-2 mt-3 h-32 overflow-y-auto hide-scrollbar rounded-xl bg-slate-100 border border-slate-200/50 p-2 relative">
+                                    <div class="col-span-2 text-center text-xs font-medium text-slate-400 py-4 absolute inset-0 flex items-center justify-center">Cerca qualcosa per far apparire le GIF</div>
+                                </div>
+                                <input type="hidden" id="selected_gif_url" name="gifUrl">
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btnInviaCommento" class="w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 transition-transform active:scale-95 text-sm sm:text-base mt-2">Pubblica Risposta</button>
+                    </form>
                 </div>
             </div>`;
         }
@@ -794,21 +1136,37 @@
             const bookRecs = state.reviews.filter(r => r.libroId === b.id).sort((a, y) => ((y.upvotes?.length||0)-(y.downvotes?.length||0)) - ((a.upvotes?.length||0)-(a.downvotes?.length||0)));
 
             let recsHtml = '';
-            if(!bookRecs.length) recsHtml = `<p class="text-slate-500 italic text-sm">Ancora nessuna recensione.</p>`;
+            if(!bookRecs.length) recsHtml = `<p class="text-slate-500 italic text-sm text-center py-4 bg-slate-50 rounded-2xl border border-slate-100">Nessuna recensione presente.</p>`;
             else {
-                recsHtml = `<div class="space-y-4">${bookRecs.map(r => {
+                recsHtml = `<div class="space-y-6">${bookRecs.map(r => {
                     const dataStr = r.data ? new Date(r.data.toMillis()).toLocaleDateString() : '';
                     const badgeHtml = r.badgeUtente ? `<span class="ml-2 text-[10px] font-black uppercase px-2 py-1 bg-amber-400 text-amber-900 rounded-lg border border-amber-300 shadow-sm align-middle">${escapeHTML(r.badgeUtente)}</span>` : '';
+                    const avatarHtml = r.avatar ? `<img src="${escapeHTML(r.avatar)}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover shadow-sm border border-slate-200 shrink-0">` : `<div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold shrink-0">${r.nomeUtente.charAt(0).toUpperCase()}</div>`;
+                    
                     return `
-                    <div class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-100 flex flex-col gap-3">
-                        <div class="flex justify-between items-start">
-                            <div><span class="font-extrabold text-sm sm:text-base text-slate-800">${escapeHTML(r.nomeUtente)}</span>${badgeHtml}<span class="block text-xs font-bold text-slate-400 mt-0.5">${dataStr}</span></div>
-                            <div class="scale-75 origin-top-right">${renderStars(r.voto)}</div>
+                    <div class="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start gap-4 mb-4">
+                            <div class="flex gap-3">
+                                ${avatarHtml}
+                                <div>
+                                    <div class="flex flex-wrap items-center gap-1.5"><span class="font-extrabold text-sm sm:text-base text-slate-800">${escapeHTML(r.nomeUtente)}</span>${badgeHtml}</div>
+                                    <span class="block text-[10px] sm:text-xs font-bold text-slate-400 mt-0.5">${dataStr}</span>
+                                </div>
+                            </div>
+                            <div class="scale-75 sm:scale-90 origin-top-right shrink-0">${renderStars(r.voto)}</div>
                         </div>
-                        ${r.commento ? `<p class="text-xs sm:text-sm font-medium text-slate-600 italic">"${escapeHTML(r.commento)}"</p>` : ''}
-                        <div class="flex gap-2 mt-2">
-                            <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs flex items-center gap-1.5 py-1.5 px-3 rounded-lg font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white' : 'bg-white border text-slate-500'}">👍 ${r.upvotes?.length||0}</button>
-                            <button onclick="votaRecensione('${r.id}', 'down')" class="text-xs flex items-center gap-1.5 py-1.5 px-3 rounded-lg font-bold transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white' : 'bg-white border text-slate-500'}">👎 ${r.downvotes?.length||0}</button>
+                        
+                        ${r.commento ? `<p class="text-sm sm:text-base font-medium text-slate-700 mb-3 break-words leading-relaxed">${escapeHTML(r.commento)}</p>` : ''}
+                        ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" class="rounded-2xl max-w-full sm:max-w-md shadow-sm mb-4 border border-slate-100">` : ''}
+                        
+                        <div class="flex flex-wrap gap-2 items-center border-t border-slate-100 pt-3">
+                            <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-1.5 px-3 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button>
+                            <button onclick="votaRecensione('${r.id}', 'down')" class="text-xs sm:text-sm flex items-center gap-1.5 py-1.5 px-3 rounded-xl font-bold transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👎 ${r.downvotes?.length||0}</button>
+                            <button onclick="apriRisposta('${r.id}', null, '${escapeHTML(r.nomeUtente)}')" class="text-xs sm:text-sm font-extrabold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-4 py-1.5 rounded-xl transition-colors ml-auto flex items-center gap-2 border border-indigo-100"><span class="text-lg leading-none">💬</span> Rispondi</button>
+                        </div>
+                        
+                        <div class="mt-4 pt-2 border-t border-slate-100">
+                            ${buildCommentTree(r.id, null)}
                         </div>
                     </div>`;
                 }).join('')}</div>`;
@@ -816,26 +1174,33 @@
 
             return `
             <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/70 backdrop-blur-sm fade-in">
-                <div class="bg-white w-full h-[90vh] sm:h-auto sm:max-h-[90vh] sm:max-w-2xl rounded-t-3xl sm:rounded-3xl flex flex-col shadow-2xl slide-up overflow-hidden relative">
+                <div class="bg-slate-50 w-full h-[95vh] sm:h-auto sm:max-h-[90vh] sm:max-w-3xl rounded-t-3xl sm:rounded-3xl flex flex-col shadow-2xl slide-up overflow-hidden relative">
                     <button onclick="closeModal()" class="absolute top-4 right-4 z-50 w-10 h-10 bg-black/50 backdrop-blur-md text-white rounded-full flex items-center justify-center font-bold text-xl hover:bg-black/70 transition-colors">✕</button>
-                    <div class="overflow-y-auto w-full hide-scrollbar flex-1 pb-20 sm:pb-0">
-                        <div class="w-full h-64 sm:h-80 bg-slate-100 relative flex items-center justify-center overflow-hidden shrink-0">
-                            ${b.copertina ? `<img src="${escapeHTML(b.copertina)}" class="absolute inset-0 w-full h-full object-cover opacity-30 blur-xl scale-110"><img src="${escapeHTML(b.copertina)}" class="relative z-10 w-full h-full object-contain p-4 drop-shadow-2xl">` : `<div class="text-7xl z-10 opacity-50">📖</div>`}
-                            <div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent z-10"></div>
+                    <div class="overflow-y-auto w-full hide-scrollbar flex-1 pb-20 sm:pb-0 relative">
+                        
+                        <div class="w-full h-48 sm:h-64 bg-slate-900 relative flex items-center justify-center overflow-hidden shrink-0">
+                            ${b.copertina ? `<img src="${escapeHTML(b.copertina)}" class="absolute inset-0 w-full h-full object-cover opacity-40 blur-2xl scale-125"><img src="${escapeHTML(b.copertina)}" class="relative z-10 w-full h-full object-contain p-4 drop-shadow-2xl">` : `<div class="text-7xl z-10 opacity-30 text-white">📖</div>`}
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-transparent z-10"></div>
                         </div>
-                        <div class="px-6 sm:px-8 py-4 sm:py-6 relative z-20 -mt-6 sm:-mt-8">
-                            <span class="px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider ${b.stato === 'disponibile' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} shadow-sm border border-white block w-max mb-3">${b.stato}</span>
-                            <h2 class="text-2xl sm:text-3xl font-black text-slate-800 leading-tight mb-1">${escapeHTML(b.titolo)}</h2>
-                            <p class="text-sm sm:text-base font-bold text-indigo-600 mb-4">${escapeHTML(b.autore)} ${b.data_pubblicazione ? `<span class="text-slate-400 font-medium ml-2">&bull; ${escapeHTML(b.data_pubblicazione)}</span>` : ''}</p>
-                            <div class="flex items-center gap-2 bg-slate-50 border border-slate-100 px-4 py-3 rounded-2xl w-max mb-6">${renderStars(b.rating_media)} <span class="text-xs sm:text-sm font-bold text-slate-400">(${b.numero_recensioni || 0} voti)</span></div>
-                            <h3 class="font-extrabold text-slate-800 text-lg mb-2">Trama</h3>
-                            <p class="text-sm sm:text-base text-slate-600 leading-relaxed mb-8">${b.trama ? escapeHTML(b.trama).replace(/\n/g, '<br>') : '<span class="italic opacity-50">Nessuna trama inserita.</span>'}</p>
-                            <hr class="border-slate-100 mb-8">
-                            <h3 class="font-extrabold text-slate-800 text-lg mb-4">Recensioni e Commenti</h3>
+
+                        <div class="px-5 sm:px-8 py-4 sm:py-6 relative z-20 -mt-8 sm:-mt-10">
+                            <div class="bg-white p-5 sm:p-8 rounded-3xl shadow-xl border border-slate-100 mb-8 relative">
+                                <span class="absolute -top-3 left-6 sm:left-8 px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider ${b.stato === 'disponibile' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} shadow-sm border border-white block w-max">${b.stato}</span>
+                                <h2 class="text-2xl sm:text-4xl font-black text-slate-800 leading-tight mb-2 mt-2">${escapeHTML(b.titolo)}</h2>
+                                <p class="text-sm sm:text-base font-bold text-indigo-600 mb-4 flex items-center flex-wrap gap-2">${escapeHTML(b.autore)} ${b.data_pubblicazione ? `<span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md text-xs">&bull; ${escapeHTML(b.data_pubblicazione)}</span>` : ''}</p>
+                                <div class="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-3 rounded-2xl w-max mb-6 shadow-inner">${renderStars(b.rating_media)} <span class="text-xs sm:text-sm font-bold text-slate-400">(${b.numero_recensioni || 0} voti)</span></div>
+                                <h3 class="font-extrabold text-slate-800 text-lg mb-2">Trama</h3>
+                                <p class="text-sm sm:text-base text-slate-600 leading-relaxed">${b.trama ? escapeHTML(b.trama).replace(/\n/g, '<br>') : '<span class="italic opacity-50">Nessuna trama inserita.</span>'}</p>
+                            </div>
+                            
+                            <div class="flex items-center gap-3 mb-6">
+                                <h3 class="font-black text-slate-800 text-xl sm:text-2xl">Recensioni e Discussioni</h3>
+                                <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">${bookRecs.length}</span>
+                            </div>
                             ${recsHtml}
                         </div>
                     </div>
-                    ${b.stato === 'disponibile' ? `<div class="sticky bottom-0 left-0 w-full p-4 sm:p-6 bg-white/90 backdrop-blur-md border-t border-slate-100"><button onclick="richiediPrestito('${b.id}', '${escapeHTML(b.titolo)}'); closeModal();" class="w-full bg-slate-900 text-white font-extrabold text-sm sm:text-base py-4 rounded-2xl hover:bg-indigo-600 transition-colors shadow-xl active:scale-[0.98]">Richiedi Prestito</button></div>` : ''}
+                    ${b.stato === 'disponibile' ? `<div class="sticky bottom-0 left-0 w-full p-4 sm:p-5 bg-white/95 backdrop-blur-md border-t border-slate-200 flex"><button onclick="richiediPrestito('${b.id}', '${escapeHTML(b.titolo)}'); closeModal();" class="flex-1 bg-slate-900 text-white font-extrabold text-sm sm:text-base py-4 rounded-2xl hover:bg-indigo-600 transition-colors shadow-2xl shadow-indigo-900/20 active:scale-[0.98]">Richiedi Prestito</button></div>` : ''}
                 </div>
             </div>`;
         }
@@ -857,8 +1222,14 @@
                 <div class="star-cb-group">
                     <input type="radio" id="r5" name="voto" value="5"/><label for="r5">★</label><input type="radio" id="r4" name="voto" value="4"/><label for="r4">★</label><input type="radio" id="r3" name="voto" value="3"/><label for="r3">★</label><input type="radio" id="r2" name="voto" value="2"/><label for="r2">★</label><input type="radio" id="r1" name="voto" value="1"/><label for="r1">★</label>
                 </div>
-                <textarea name="commento" rows="4" placeholder="Cosa ne pensi?" class="${INPUT_CLS}"></textarea>
-                <div class="flex gap-2 sm:gap-3"><button type="button" onclick="closeModal()" class="flex-1 py-3 sm:py-4 rounded-xl font-bold bg-slate-100 text-sm sm:text-base">Annulla</button><button type="submit" class="flex-1 py-3 sm:py-4 rounded-xl font-bold text-white bg-amber-500 shadow-lg shadow-amber-500/30 text-sm sm:text-base">Pubblica</button></div>
+                <textarea name="commento" rows="4" placeholder="Cosa ne pensi?" class="${INPUT_CLS} resize-none"></textarea>
+                
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4 text-left">
+                    <label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2">📷 Aggiungi Foto (Opzionale)</label>
+                    <input type="file" id="file_recensione" accept="image/*" class="text-xs sm:text-sm font-medium w-full file:mr-3 file:py-2 file:px-3 sm:file:px-4 file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer">
+                </div>
+
+                <div class="flex gap-2 sm:gap-3"><button type="button" onclick="closeModal()" class="flex-1 py-3 sm:py-4 rounded-xl font-bold bg-slate-100 text-sm sm:text-base">Annulla</button><button type="submit" class="flex-1 py-3 sm:py-4 rounded-xl font-bold text-white bg-amber-500 shadow-lg shadow-amber-500/30 text-sm sm:text-base transition-transform active:scale-95">Pubblica</button></div>
             </form></div></div>`;
         }
         return '';
@@ -894,13 +1265,43 @@
         if (state.selectedReviewBookId) {
             const b = state.books.find(x => x.id === state.selectedReviewBookId);
             const recs = state.reviews.filter(r => r.libroId === b.id).sort((a, y) => ((y.upvotes?.length||0)-(y.downvotes?.length||0)) - ((a.upvotes?.length||0)-(a.downvotes?.length||0)));
-            let h = `<div class="mb-6 px-4 sm:px-0"><button onclick="chiudiRecensioni()" class="text-indigo-600 font-extrabold text-sm sm:text-base hover:underline bg-indigo-50 px-4 py-2 rounded-xl">← Torna indietro</button></div><h2 class="text-2xl sm:text-3xl font-extrabold mb-6 sm:mb-8 px-4 sm:px-0">Recensioni: ${escapeHTML(b?.titolo)}</h2>`;
+            let h = `<div class="mb-6 px-4 sm:px-0"><button onclick="chiudiRecensioni()" class="text-indigo-600 font-extrabold text-sm sm:text-base hover:underline bg-indigo-50 px-4 py-2 rounded-xl">← Torna indietro</button></div><h2 class="text-2xl sm:text-3xl font-extrabold mb-6 sm:mb-8 px-4 sm:px-0">Discussioni: ${escapeHTML(b?.titolo)}</h2>`;
             if(!recs.length) h += `<div class="p-8 sm:p-10 mx-4 sm:mx-0 text-center bg-white rounded-3xl border shadow-sm"><p class="font-bold">Nessuna recensione.</p></div>`;
             else {
-                h += `<div class="space-y-4 sm:space-y-6 px-4 sm:px-0">${recs.map(r => {
+                h += `<div class="space-y-6 px-4 sm:px-0">${recs.map(r => {
                     const dataStr = r.data ? new Date(r.data.toMillis()).toLocaleDateString() : '';
                     const badgeHtml = r.badgeUtente ? `<span class="ml-2 text-[10px] sm:text-[11px] font-black uppercase px-2 py-1 bg-amber-400 text-amber-900 rounded-lg border border-amber-300 shadow-sm align-middle">${escapeHTML(r.badgeUtente)}</span>` : '';
-                    return `<div class="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border flex flex-col md:flex-row gap-4 sm:gap-6"><div class="flex-1"><div class="mb-2 sm:mb-3 flex items-center flex-wrap gap-1"><span class="font-extrabold text-base sm:text-lg text-slate-800">${escapeHTML(r.nomeUtente)}</span>${badgeHtml}<span class="text-[10px] sm:text-xs font-bold text-slate-400 ml-2">${dataStr}</span></div><div class="mb-3 sm:mb-4 scale-90 sm:scale-100 origin-left">${renderStars(r.voto)}</div>${r.commento ? `<p class="bg-slate-50 p-4 sm:p-5 rounded-2xl border text-xs sm:text-sm font-medium italic">"${escapeHTML(r.commento)}"</p>` : ''}${state.isAdmin ? `<div class="mt-3 sm:mt-4 flex gap-2"><button onclick="modificaRecensioneAdmin('${r.id}')" class="text-[10px] sm:text-xs font-bold px-3 py-1.5 bg-slate-100 rounded-lg">Modifica</button><button onclick="eliminaRecensione('${r.id}', '${r.libroId}')" class="text-[10px] sm:text-xs font-bold px-3 py-1.5 bg-red-100 text-red-600 rounded-lg">Elimina</button></div>` : ''}</div><div class="flex md:flex-col items-center justify-start md:justify-center gap-2 sm:gap-3 md:border-l md:pl-6 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100"><button onclick="votaRecensione('${r.id}', 'up')" class="flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 px-4 rounded-xl font-bold text-sm sm:text-base transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'}">👍 ${r.upvotes?.length||0}</button><button onclick="votaRecensione('${r.id}', 'down')" class="flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 px-4 rounded-xl font-bold text-sm sm:text-base transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-500'}">👎 ${r.downvotes?.length||0}</button></div></div>`;
+                    const avatarHtml = r.avatar ? `<img src="${escapeHTML(r.avatar)}" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover shadow-sm border border-slate-200 shrink-0">` : `<div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold shrink-0">${r.nomeUtente.charAt(0).toUpperCase()}</div>`;
+                    
+                    return `
+                    <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-200">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center gap-3">
+                                ${avatarHtml}
+                                <div>
+                                    <div class="flex items-center flex-wrap gap-1"><span class="font-extrabold text-base sm:text-lg text-slate-800">${escapeHTML(r.nomeUtente)}</span>${badgeHtml}</div>
+                                    <div class="text-[10px] sm:text-xs font-bold text-slate-400 mt-0.5">${dataStr}</div>
+                                </div>
+                            </div>
+                            <div class="scale-90 sm:scale-100 origin-top-right shrink-0">${renderStars(r.voto)}</div>
+                        </div>
+                        
+                        ${r.commento ? `<p class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-100 text-sm sm:text-base font-medium italic text-slate-700 mb-3">${escapeHTML(r.commento)}</p>` : ''}
+                        ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" class="rounded-2xl max-w-full sm:max-w-md shadow-sm mb-4 border border-slate-100">` : ''}
+                        
+                        <!-- Barra Azioni fissa sotto la recensione -->
+                        <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 pt-2">
+                            <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button>
+                            <button onclick="votaRecensione('${r.id}', 'down')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👎 ${r.downvotes?.length||0}</button>
+                            <button onclick="apriRisposta('${r.id}', null, '${escapeHTML(r.nomeUtente)}')" class="text-xs sm:text-sm font-extrabold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-xl transition-colors ml-auto flex items-center gap-2 border border-indigo-100"><span class="text-lg leading-none">💬</span> Rispondi</button>
+                            ${state.isAdmin ? `<button onclick="eliminaRecensione('${r.id}', '${r.libroId}')" class="text-[10px] sm:text-xs font-bold px-3 py-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200">Elimina</button>` : ''}
+                        </div>
+
+                        <!-- Cascata Stile Reddit -->
+                        <div class="mt-5 border-t border-slate-100 pt-2">
+                            ${buildCommentTree(r.id, null)}
+                        </div>
+                    </div>`;
                 }).join('')}</div>`;
             }
             return h;
@@ -912,18 +1313,18 @@
 
         let h = '';
         if(libriDaRec.length > 0) {
-            h += `<div class="mb-10 sm:mb-12 px-4 sm:px-0"><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">✍ Da Recensire</h2><div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">${libriDaRec.map(b => `<div class="bg-indigo-50 p-5 sm:p-6 rounded-3xl border border-indigo-100 flex flex-col justify-between items-start gap-4"><div><h4 class="font-bold text-indigo-900 text-base sm:text-lg">${escapeHTML(b.titolo)}</h4><p class="text-indigo-600 text-xs sm:text-sm">${escapeHTML(b.autore)}</p></div><button onclick="openModal('recensisci', {id: '${b.id}', titolo: '${escapeHTML(b.titolo)}'})" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-sm sm:text-base">Scrivi Recensione</button></div>`).join('')}</div></div>`;
+            h += `<div class="mb-10 sm:mb-12 px-4 sm:px-0"><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">✍ Da Recensire</h2><div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">${libriDaRec.map(b => `<div class="bg-indigo-50 p-5 sm:p-6 rounded-3xl border border-indigo-100 flex flex-col justify-between items-start gap-4"><div><h4 class="font-bold text-indigo-900 text-base sm:text-lg">${escapeHTML(b.titolo)}</h4><p class="text-indigo-600 text-xs sm:text-sm">${escapeHTML(b.autore)}</p></div><button onclick="openModal('recensisci', {id: '${b.id}', titolo: '${escapeHTML(b.titolo)}'})" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-sm sm:text-base shadow-lg shadow-indigo-600/30 hover:scale-105 transition-transform">Scrivi Recensione</button></div>`).join('')}</div></div>`;
         }
 
         const revBooksIds = [...new Set(state.reviews.map(r => r.libroId))];
         const revBooks = state.books.filter(b => revBooksIds.includes(b.id));
         
-        h += `<h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6 px-4 sm:px-0">📂 Esplora Recensioni</h2>`;
+        h += `<h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6 px-4 sm:px-0">📂 Esplora Recensioni e Discussioni</h2>`;
         if(!revBooks.length) h += `<div class="text-center p-10 sm:p-12 mx-4 sm:mx-0 bg-white rounded-3xl border"><p class="font-bold text-sm sm:text-base text-slate-500">Nessuna recensione.</p></div>`;
         else {
             h += `<div class="grid gap-4 sm:gap-6 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 px-4 sm:px-0">${revBooks.map(b => {
-                const count = state.reviews.filter(r => r.libroId === b.id).length;
-                return `<div onclick="apriRecensioni('${b.id}')" class="bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden border hover:shadow-xl cursor-pointer group flex flex-col"><div class="h-32 sm:h-56 bg-slate-800 relative overflow-hidden flex items-center justify-center">${b.copertina ? `<img src="${escapeHTML(b.copertina)}" class="absolute inset-0 w-full h-full object-cover opacity-40 blur-xl scale-125 transition-transform duration-700 group-hover:scale-150"><img src="${escapeHTML(b.copertina)}" class="relative z-10 w-full h-full object-contain p-2 sm:p-3 group-hover:scale-105 transition-transform duration-300 drop-shadow-xl">` : `<div class="grid place-items-center h-full text-4xl sm:text-5xl z-10 text-white opacity-50">📖</div>`}<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent z-10 pointer-events-none"></div><div class="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 z-20 bg-black/60 backdrop-blur-md text-white font-bold text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl shadow-lg">💬 ${count} Voti</div></div><div class="p-3 sm:p-5 flex-1"><h4 class="font-extrabold text-slate-800 text-sm sm:text-lg leading-tight line-clamp-2">${escapeHTML(b.titolo)}</h4><div class="mt-1 sm:mt-2 scale-75 sm:scale-100 origin-left">${renderStars(b.rating_media)}</div></div></div>`;
+                const countRecs = state.reviews.filter(r => r.libroId === b.id).length;
+                return `<div onclick="apriRecensioni('${b.id}')" class="bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden border hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group flex flex-col"><div class="h-32 sm:h-56 bg-slate-800 relative overflow-hidden flex items-center justify-center">${b.copertina ? `<img src="${escapeHTML(b.copertina)}" class="absolute inset-0 w-full h-full object-cover opacity-40 blur-xl scale-125 transition-transform duration-700 group-hover:scale-150"><img src="${escapeHTML(b.copertina)}" class="relative z-10 w-full h-full object-contain p-2 sm:p-3 group-hover:scale-105 transition-transform duration-300 drop-shadow-xl">` : `<div class="grid place-items-center h-full text-4xl sm:text-5xl z-10 text-white opacity-50">📖</div>`}<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent z-10 pointer-events-none"></div><div class="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 z-20 bg-black/60 backdrop-blur-md text-white font-bold text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl shadow-lg">💬 ${countRecs} Voti</div></div><div class="p-3 sm:p-5 flex-1"><h4 class="font-extrabold text-slate-800 text-sm sm:text-lg leading-tight line-clamp-2">${escapeHTML(b.titolo)}</h4><div class="mt-1 sm:mt-2 scale-75 sm:scale-100 origin-left">${renderStars(b.rating_media)}</div></div></div>`;
             }).join('')}</div>`;
         }
         return h;
@@ -932,7 +1333,7 @@
     function prestitiView() {
         const inPrestito = state.books.filter(b => b.noleggiato_da_uid === state.user.uid);
         if(!inPrestito.length) return `<div class="text-center p-10 sm:p-16 mx-4 sm:mx-0 bg-white rounded-3xl border"><span class="text-4xl sm:text-5xl block mb-4">🎒</span><p class="font-bold text-sm sm:text-base">Nessun libro in prestito.</p></div>`;
-        return `<div class="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 px-4 sm:px-0">${inPrestito.map(b => `<div class="bg-white p-5 sm:p-6 rounded-3xl border flex flex-col gap-4 sm:gap-5"><h4 class="font-extrabold text-lg sm:text-xl">${escapeHTML(b.titolo)}</h4><div class="bg-slate-50 p-4 sm:p-5 rounded-2xl border"><p class="text-[10px] sm:text-xs font-black uppercase text-slate-400 mb-1 sm:mb-2">Tempo Rimanente</p><div class="text-lg sm:text-xl font-bold text-slate-700 cd" data-exp="${b.scadenza}">${tempoRimanente(b.scadenza)}</div></div></div>`).join('')}</div>`;
+        return `<div class="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 px-4 sm:px-0">${inPrestito.map(b => `<div class="bg-white p-5 sm:p-6 rounded-3xl border flex flex-col gap-4 sm:gap-5 hover:shadow-xl transition-shadow"><h4 class="font-extrabold text-lg sm:text-xl">${escapeHTML(b.titolo)}</h4><div class="bg-slate-50 p-4 sm:p-5 rounded-2xl border"><p class="text-[10px] sm:text-xs font-black uppercase text-slate-400 mb-1 sm:mb-2">Tempo Rimanente</p><div class="text-lg sm:text-xl font-bold text-slate-700 cd" data-exp="${b.scadenza}">${tempoRimanente(b.scadenza)}</div></div></div>`).join('')}</div>`;
     }
 
     function proponiView() {
@@ -945,7 +1346,7 @@
                 <div class="flex items-center gap-3 sm:gap-4 my-2"><div class="h-px flex-1 bg-slate-200"></div><span class="text-[10px] sm:text-xs font-bold uppercase text-slate-400">Oppure URL</span><div class="h-px flex-1 bg-slate-200"></div></div>
                 <div><input name="url_copertina" type="url" placeholder="https://..." class="${INPUT_CLS}"></div>
             </div>
-            <button id="btnProponi" type="submit" class="w-full mt-6 bg-indigo-600 text-white font-extrabold py-3.5 sm:py-4 rounded-xl sm:rounded-2xl text-sm sm:text-base">Invia Proposta</button>
+            <button id="btnProponi" type="submit" class="w-full mt-6 bg-indigo-600 text-white font-extrabold py-3.5 sm:py-4 rounded-xl sm:rounded-2xl text-sm sm:text-base hover:scale-[1.02] transition-transform shadow-xl shadow-indigo-600/30">Invia Proposta</button>
         </form>`;
     }
 
@@ -956,31 +1357,31 @@
             </section>
             
             <section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">Catalogo & Prestiti</h2>
-                <div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Libro</th><th class="p-3 sm:p-5">Stato</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">
-                    ${state.books.map(b => `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3 max-w-[150px] sm:max-w-xs truncate">${b.copertina ? `<img src="${b.copertina}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover shrink-0">` : `<div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-slate-200 flex items-center justify-center text-sm sm:text-lg shrink-0">📖</div>`} <span class="truncate">${escapeHTML(b.titolo)}</span></td><td class="p-3 sm:p-5"><span class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-[9px] sm:text-xs font-black uppercase ${b.stato==='noleggiato'?'bg-amber-100 text-amber-700':'bg-emerald-100 text-emerald-700'}">${b.stato}</span></td>
+                <div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto shadow-sm"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Libro</th><th class="p-3 sm:p-5">Stato</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">
+                    ${state.books.map(b => `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3 max-w-[150px] sm:max-w-xs truncate">${b.copertina ? `<img src="${b.copertina}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover shrink-0 border border-slate-200">` : `<div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-slate-200 flex items-center justify-center text-sm sm:text-lg shrink-0">📖</div>`} <span class="truncate">${escapeHTML(b.titolo)}</span></td><td class="p-3 sm:p-5"><span class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-[9px] sm:text-xs font-black uppercase ${b.stato==='noleggiato'?'bg-amber-100 text-amber-700':'bg-emerald-100 text-emerald-700'}">${b.stato}</span></td>
                     <td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">
-                        ${b.stato==='noleggiato'?`<button onclick="prolungaPrestito('${b.id}', ${b.scadenza})" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-100 text-emerald-700 rounded-md sm:rounded-lg font-bold">+ G</button><button onclick="restituisciLibro('${b.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-indigo-100 text-indigo-700 rounded-md sm:rounded-lg font-bold">Fine</button>`:''}
-                        <button onclick='openModal("modificaLibro", ${JSON.stringify(b).replace(/'/g, "&#39;")})' class="px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 text-slate-600 rounded-md sm:rounded-lg font-bold">Mod</button>
-                        <button onclick="eliminaLibro('${b.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-rose-100 text-rose-600 rounded-md sm:rounded-lg font-bold">Elim</button>
+                        ${b.stato==='noleggiato'?`<button onclick="prolungaPrestito('${b.id}', ${b.scadenza})" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-100 text-emerald-700 rounded-md sm:rounded-lg font-bold hover:bg-emerald-200">+ G</button><button onclick="restituisciLibro('${b.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-indigo-100 text-indigo-700 rounded-md sm:rounded-lg font-bold hover:bg-indigo-200">Fine</button>`:''}
+                        <button onclick='openModal("modificaLibro", ${JSON.stringify(b).replace(/'/g, "&#39;")})' class="px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 text-slate-600 rounded-md sm:rounded-lg font-bold hover:bg-slate-200">Mod</button>
+                        <button onclick="eliminaLibro('${b.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-rose-100 text-rose-600 rounded-md sm:rounded-lg font-bold hover:bg-rose-200">Elim</button>
                     </td></tr>`).join('')}
                 </tbody></table></div>
             </section>
 
-            <section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">Utenti</h2>
-                <div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Utente</th><th class="p-3 sm:p-5">Email</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">
+            <section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">Utenti Registrati</h2>
+                <div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto shadow-sm"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Utente</th><th class="p-3 sm:p-5">Email</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">
                     ${state.users.map(u => {
-                        const isBanned = bannedDevices.includes(u.deviceId);
-                        return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3"><div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-indigo-100 text-indigo-700 grid place-items-center text-xs sm:text-sm font-bold shrink-0">${u.nome.charAt(0).toUpperCase()}</div><span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span> ${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
-                        <td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">
-                            ${state.isGod ? `
-                                <button onclick="openModal('sguardoDivino', '${u.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-100 text-purple-700 font-bold rounded-md sm:rounded-lg" title="Sguardo Divino">👁</button>
-                                <button onclick="assegnaBadge('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-pink-100 text-pink-700 font-bold rounded-md sm:rounded-lg" title="Assegna Badge">🏷️</button>
-                                ${u.ruolo==='admin'?`<button onclick="cambiaRuolo('${u.id}', 'utente')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-amber-100 text-amber-700 font-bold rounded-md sm:rounded-lg" title="Rimuovi Admin">↓</button>`:`<button onclick="cambiaRuolo('${u.id}', 'admin')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-100 text-emerald-700 font-bold rounded-md sm:rounded-lg" title="Promuovi Admin">↑</button>`}
-                                <button onclick="toggleBanDispositivo('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 ${isBanned ? 'bg-green-900 text-green-100 shadow-green-900/20' : 'bg-red-900 text-red-100 shadow-red-900/20'} font-bold rounded-md sm:rounded-lg shadow-md" title="${isBanned ? 'Sblocca Dispositivo' : 'Banna Dispositivo'}">${isBanned ? '🟢' : '🔨'}</button>
-                            ` : ''}
-                            <button onclick="modificaUtente('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 text-slate-600 rounded-md sm:rounded-lg font-bold">Mod</button>
-                            <button onclick="eliminaUtente('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-rose-100 text-rose-600 rounded-md sm:rounded-lg font-bold">Elimina</button>
-                        </td></tr>`;
+                        const avatarHtml = u.avatar ? `<img src="${escapeHTML(u.avatar)}" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover shrink-0">` : `<div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-indigo-100 text-indigo-700 grid place-items-center text-xs sm:text-sm font-bold shrink-0">${u.nome.charAt(0).toUpperCase()}</div>`;
+                        return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3">${avatarHtml}<span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span> ${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
+                    <td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">
+                        ${state.isGod ? `
+                            <button onclick="openModal('sguardoDivino', '${u.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Sguardo Divino">👁</button>
+                            <button onclick="assegnaBadge('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-pink-100 hover:bg-pink-200 text-pink-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Assegna Badge">🏷️</button>
+                            ${u.ruolo==='admin'?`<button onclick="cambiaRuolo('${u.id}', 'utente')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Rimuovi Admin">↓</button>`:`<button onclick="cambiaRuolo('${u.id}', 'admin')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Promuovi Admin">↑</button>`}
+                            <button onclick="banDispositivo('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-red-900 hover:bg-red-800 text-red-100 font-bold rounded-md sm:rounded-lg shadow-md shadow-red-900/20 transition-colors" title="Banna Dispositivo PC/Telefono">🔨</button>
+                        ` : ''}
+                        <button onclick="modificaUtente('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md sm:rounded-lg font-bold transition-colors">Mod</button>
+                        <button onclick="eliminaUtente('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-600 rounded-md sm:rounded-lg font-bold transition-colors">Elimina</button>
+                    </td></tr>`;
                     }).join('')}
                 </tbody></table></div>
             </section>
@@ -1002,7 +1403,7 @@
                     <span class="text-2xl">${serverState.attivo ? '🛑' : '✅'}</span> ${serverState.attivo ? 'Spegni Server per Tutti' : 'Riaccendi Server'}
                 </button>
                 <button onclick="chiudiAltreVersioni()" class="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 font-bold p-4 sm:p-5 rounded-2xl backdrop-blur-sm border border-blue-500/50 flex items-center justify-center gap-2 text-sm sm:text-base transition-colors shadow-lg shadow-black/50">
-                    <span class="text-2xl">🔒</span> Isola questa Sessione (Chiudi vecchi link)
+                    <span class="text-2xl">🔒</span> Isola questa Sessione (Apocalisse vecchi link)
                 </button>
             </div>
 
@@ -1052,7 +1453,7 @@
                         <input id="email" type="email" placeholder="Email" required class="${INPUT_CLS}">
                         <input id="password" type="password" placeholder="Password (min 6 caratteri)" required class="${INPUT_CLS}">
                         <p id="errorBox" class="text-red-500 text-xs sm:text-sm font-bold text-center h-4 sm:h-5"></p>
-                        <button id="authSubmitBtn" type="submit" class="w-full text-white font-extrabold py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-lg transition-all active:scale-95 text-sm sm:text-base ${state.authMode === 'register' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-700'}">
+                        <button id="authSubmitBtn" type="submit" class="w-full text-white font-extrabold py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-lg transition-all active:scale-95 text-sm sm:text-base ${state.authMode === 'register' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/30'}">
                             ${state.authMode === 'register' ? 'Crea Account' : 'Accedi'}
                         </button>
                     </form>
@@ -1077,19 +1478,25 @@
             }
         }
 
-        const btnClass = id => `flex items-center justify-center shrink-0 gap-1.5 sm:gap-2 px-4 py-2 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl font-extrabold transition-all duration-300 text-xs sm:text-base ${state.tab === id ? 'bg-slate-900 text-white shadow-lg sm:shadow-xl sm:scale-105' : 'bg-white text-slate-500 hover:bg-slate-50 border'}`;
+        const btnClass = id => `flex items-center justify-center shrink-0 gap-1.5 sm:gap-2 px-4 py-2 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl font-extrabold transition-all duration-300 text-xs sm:text-base ${state.tab === id ? 'bg-slate-900 text-white shadow-lg sm:shadow-xl sm:scale-105' : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'}`;
         const content = { catalogo: catalogoView, prestiti: prestitiView, proponi: proponiView, recensioni: recensioniView, admin: adminView, god: godView }[state.tab === "admin" && !state.isAdmin ? "catalogo" : state.tab]();
         
         const animationClass = animate ? 'fade-in' : '';
+        const currentAvatar = state.userData.avatar ? `<img src="${escapeHTML(state.userData.avatar)}" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover shadow-sm">` : `<div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs sm:text-sm font-bold shadow-sm">${(state.userData.nome || state.user.displayName || 'U').charAt(0).toUpperCase()}</div>`;
 
         appDiv.innerHTML = `
         <nav class="sticky top-0 z-40 glass-panel border-b border-slate-200/60 px-4 sm:px-6 py-3 sm:py-4 shadow-sm">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <span class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2 sm:gap-3"><span class="text-2xl sm:text-3xl drop-shadow-sm">📚</span> <span>2ALD</span></span>
+                <span class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2 sm:gap-3"><span class="text-2xl sm:text-3xl drop-shadow-sm hover:rotate-12 transition-transform cursor-pointer">📚</span> <span>2ALD</span></span>
                 <div class="flex items-center gap-2 sm:gap-4">
-                    ${!state.isAdmin ? `<button onclick="diventaAdmin()" class="text-[10px] sm:text-sm font-extrabold text-amber-600 bg-amber-50 hover:bg-amber-100 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl uppercase sm:capitalize tracking-wide border border-amber-200/50">Admin</button>` : `<button onclick="esciDaAdmin()" class="text-[10px] sm:text-sm font-extrabold ${state.isGod ? 'text-purple-600 bg-purple-50 hover:bg-purple-100 border-purple-200/50' : 'text-rose-600 bg-rose-50 hover:bg-rose-100 border-rose-200/50'} px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl uppercase sm:capitalize tracking-wide border shadow-sm">${state.isGod ? 'Esci da Dio' : 'Esci da Admin'}</button>`}
-                    <div class="flex items-center gap-2 sm:gap-3 bg-slate-100/80 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl border"><div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs sm:text-sm font-bold shadow-sm">${(state.userData?.nome || state.user.displayName || 'U').charAt(0).toUpperCase()}</div><span class="text-xs sm:text-sm font-bold text-slate-700 hidden md:flex items-center">${escapeHTML(state.userData?.nome || state.user.displayName)} ${state.userData.badge ? `<span class="ml-1.5 text-[9px] uppercase font-black px-1.5 py-0.5 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm">${escapeHTML(state.userData.badge)}</span>` : ''}</span></div>
-                    <button onclick="logout()" class="bg-white border-2 text-slate-500 hover:bg-slate-50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-xs sm:text-base">Esci</button>
+                    ${!state.isAdmin ? `<button onclick="diventaAdmin()" class="text-[10px] sm:text-sm font-extrabold text-amber-600 bg-amber-50 hover:bg-amber-100 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl uppercase sm:capitalize tracking-wide border border-amber-200/50 transition-colors">Admin</button>` : `<button onclick="esciDaAdmin()" class="text-[10px] sm:text-sm font-extrabold ${state.isGod ? 'text-purple-600 bg-purple-50 hover:bg-purple-100 border-purple-200/50' : 'text-rose-600 bg-rose-50 hover:bg-rose-100 border-rose-200/50'} px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl uppercase sm:capitalize tracking-wide border shadow-sm transition-colors">${state.isGod ? 'Esci da Dio' : 'Esci da Admin'}</button>`}
+                    
+                    <button onclick="openModal('profilo')" class="flex items-center gap-2 sm:gap-3 bg-slate-100/80 hover:bg-slate-200/80 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-full border border-slate-200 transition-colors shadow-sm cursor-pointer group" title="Modifica Profilo">
+                        ${currentAvatar}
+                        <span class="text-xs sm:text-sm font-bold text-slate-700 hidden md:flex items-center group-hover:text-indigo-600 transition-colors">${escapeHTML(state.userData.nome || state.user.displayName)} ${state.userData.badge ? `<span class="ml-1.5 text-[9px] uppercase font-black px-1.5 py-0.5 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm">${escapeHTML(state.userData.badge)}</span>` : ''}</span>
+                    </button>
+                    
+                    <button onclick="logout()" class="bg-white border-2 border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-rose-500 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-colors shadow-sm">Esci</button>
                 </div>
             </div>
         </nav>
@@ -1098,9 +1505,9 @@
             <div class="flex flex-nowrap sm:flex-wrap gap-2 sm:gap-3 items-center border-b pb-4 sm:pb-8 px-4 sm:px-6 overflow-x-auto hide-scrollbar snap-x">
                 <button onclick="cambiaTab('catalogo')" class="${btnClass('catalogo')} snap-start">📖 Catalogo</button>
                 <button onclick="cambiaTab('prestiti')" class="${btnClass('prestiti')} snap-start">🎒 I Miei Libri</button>
-                <button onclick="cambiaTab('recensioni')" class="${btnClass('recensioni')} snap-start">⭐ Recensioni</button>
+                <button onclick="cambiaTab('recensioni')" class="${btnClass('recensioni')} snap-start">⭐ Recensioni & Social</button>
                 <button onclick="cambiaTab('proponi')" class="${btnClass('proponi')} snap-start">💡 Proponi</button>
-                ${state.isAdmin ? `<button onclick="cambiaTab('admin')" class="${btnClass('admin')} snap-start !bg-amber-400 !text-white !border-amber-400">⚙ <span class="hidden sm:inline">Admin</span></button>` : ''}
+                ${state.isAdmin ? `<button onclick="cambiaTab('admin')" class="${btnClass('admin')} snap-start !bg-amber-400 !text-white !border-amber-400 shadow-amber-400/30">⚙ <span class="hidden sm:inline">Admin</span></button>` : ''}
                 ${state.isGod ? `<button onclick="cambiaTab('god')" class="${btnClass('god')} snap-start !bg-purple-600 !text-white !border-purple-600 shadow-purple-600/30">⚡ <span class="hidden sm:inline">L'Olimpo</span></button>` : ''}
                 <div class="w-1 shrink-0 sm:hidden"></div>
             </div>
