@@ -39,10 +39,18 @@
 </head>
 <body class="text-slate-800 antialiased selection:bg-indigo-200 min-h-screen pb-20">
 
+    <!-- SCHERMATA BLOCCO SERVER -->
     <div id="server-overlay" class="hidden fixed inset-0 z-[99999] bg-black/95 backdrop-blur-xl text-white flex flex-col items-center justify-center font-bold text-center p-6 fade-in">
         <span class="text-7xl mb-6">🛑</span>
         <h1 id="server-overlay-title" class="text-4xl sm:text-5xl mb-4 font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">SERVER SPENTO</h1>
         <p id="server-overlay-msg" class="text-slate-400 text-lg sm:text-xl">Accesso temporaneamente bloccato.</p>
+    </div>
+
+    <!-- SCHERMATA BAN DISPOSITIVO -->
+    <div id="ban-overlay" class="hidden fixed inset-0 z-[99999] bg-red-950 backdrop-blur-3xl text-red-500 flex flex-col items-center justify-center font-bold text-center p-6 fade-in">
+        <span class="text-7xl mb-6">🔨</span>
+        <h1 class="text-4xl sm:text-5xl mb-4 font-black text-red-600 drop-shadow-lg">DISPOSITIVO BANNATO</h1>
+        <p class="text-red-400 text-lg sm:text-xl">Questo dispositivo ha violato le regole ed è stato bloccato in modo permanente.</p>
     </div>
 
     <div id="app" class="min-h-screen">
@@ -75,6 +83,13 @@
     const GOD_HASH = "VmVudGl0cmUyMyE="; 
     const LOCAL_SESSION_ID = Math.random().toString(36).substring(2);
 
+    // GENERAZIONE DEVICE ID PER IL BAN HARDWARE
+    let LOCAL_DEVICE_ID = localStorage.getItem("libreria_device_id");
+    if (!LOCAL_DEVICE_ID) {
+        LOCAL_DEVICE_ID = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        localStorage.setItem("libreria_device_id", LOCAL_DEVICE_ID);
+    }
+
     let state = {
         user: null,
         userData: { libri_letti: [], badge: null, volte_admin: 0 }, 
@@ -94,6 +109,7 @@
     };
 
     let serverState = { attivo: true, versione_attiva: null };
+    let bannedDevices = [];
 
     const $ = id => document.getElementById(id);
     const escapeHTML = str => String(str || "").replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag]));
@@ -130,12 +146,27 @@
         if (sessionStorage.getItem("adminLoggato") === "true") state.isAdmin = true;
         if (sessionStorage.getItem("godLoggato") === "true") { state.isAdmin = true; state.isGod = true; }
 
+        // Listener Stato Server
         state.unsubs.push(onSnapshot(doc(db, "sistema", "stato_server"), d => {
             if (d.exists()) {
                 serverState = d.data();
                 checkServerStatus();
             } else if (state.isGod) {
                 setDoc(doc(db, "sistema", "stato_server"), { attivo: true, versione_attiva: null });
+            }
+        }));
+
+        // LISTENER BLACKLIST DISPOSITIVI
+        state.unsubs.push(onSnapshot(doc(db, "sistema", "blacklist"), d => {
+            if (d.exists()) {
+                bannedDevices = d.data().devices || [];
+                if (bannedDevices.includes(LOCAL_DEVICE_ID) && !state.isGod) {
+                    $('ban-overlay').classList.remove('hidden');
+                } else {
+                    $('ban-overlay').classList.add('hidden');
+                }
+            } else if (state.isGod) {
+                setDoc(doc(db, "sistema", "blacklist"), { devices: [] });
             }
         }));
 
@@ -216,7 +247,7 @@
 
         try {
             if (isRegister) {
-                // 1. Controlli Locali
+                // 1. Controlli Locali (Filtri)
                 const emailRegex = /^[a-zA-Z0-9._%+-]{3,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
                 if(!emailRegex.test(email)) throw new Error("Devi inserire un'email reale e valida.");
                 const fakeDomains = ['temp-mail.org', '10minutemail.com', 'guerrillamail.com', 'mailinator.com', 'yopmail.com'];
@@ -269,6 +300,7 @@
 
                 // 4. Tutto perfetto. Salviamo nel database.
                 await updateProfile(cred.user, { displayName: nome });
+                // SALVA IL DEVICE ID NEL DATABASE QUANDO SI REGISTRA
                 await setDoc(doc(db, "utenti", cred.user.uid), { 
                     nome: nome, 
                     email: email, 
@@ -276,7 +308,8 @@
                     storico_admin: false, 
                     libri_letti: [], 
                     badge: null, 
-                    lastActive: serverTimestamp() 
+                    lastActive: serverTimestamp(),
+                    deviceId: LOCAL_DEVICE_ID
                 });
 
             } else {
@@ -291,6 +324,9 @@
                     // Se non esiste nel database, distruggiamo le credenziali Auth residue!
                     await cred.user.delete();
                     throw new Error("Il tuo account era stato rimosso. L'email è stata ora sbloccata: vai su 'Registrati' per ricrearlo.");
+                } else {
+                    // Aggiorna il dispositivo usato per l'ultimo login
+                    await updateDoc(docRef, { deviceId: LOCAL_DEVICE_ID });
                 }
             }
         } catch (error) {
@@ -427,6 +463,21 @@
             const recensioniUtente = state.reviews.filter(r => r.uid === uid);
             for (let r of recensioniUtente) { await updateDoc(doc(db, "recensioni", r.id), { badgeUtente: badgeVal }); }
             mostraAlert(`Badge aggiornato per ${nomeUtente} ovunque!`);
+        }
+    };
+
+    // FUNZIONE BAN DISPOSITIVO
+    window.banDispositivo = async (uid, nome) => {
+        if(await chiediConferma(`🔨 BAN DISPOSITIVO\n\nSicuro di voler BANNARE il telefono/PC di ${nome}?\nNon potrà più accedere né creare account da questo dispositivo.`)) {
+            const u = state.users.find(x => x.id === uid);
+            if (u && u.deviceId) {
+                await setDoc(doc(db, "sistema", "blacklist"), { devices: arrayUnion(u.deviceId) }, { merge: true });
+                // Eliminiamo anche l'account dal database per pulizia
+                await window.eliminaUtente(uid, nome);
+                mostraAlert(`Dispositivo di ${nome} bannato per sempre. Account rimosso.`);
+            } else {
+                mostraAlert("Impossibile trovare l'ID del dispositivo per questo utente. Fagli fare il login di nuovo per tracciarlo.");
+            }
         }
     };
 
@@ -835,7 +886,7 @@
 
         let h = '';
         if(libriDaRec.length > 0) {
-            h += `<div class="mb-10 sm:mb-12 px-4 sm:px-0"><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">✍️ Da Recensire</h2><div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">${libriDaRec.map(b => `<div class="bg-indigo-50 p-5 sm:p-6 rounded-3xl border border-indigo-100 flex flex-col justify-between items-start gap-4"><div><h4 class="font-bold text-indigo-900 text-base sm:text-lg">${escapeHTML(b.titolo)}</h4><p class="text-indigo-600 text-xs sm:text-sm">${escapeHTML(b.autore)}</p></div><button onclick="openModal('recensisci', {id: '${b.id}', titolo: '${escapeHTML(b.titolo)}'})" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-sm sm:text-base">Scrivi Recensione</button></div>`).join('')}</div></div>`;
+            h += `<div class="mb-10 sm:mb-12 px-4 sm:px-0"><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">✍️️ Da Recensire</h2><div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">${libriDaRec.map(b => `<div class="bg-indigo-50 p-5 sm:p-6 rounded-3xl border border-indigo-100 flex flex-col justify-between items-start gap-4"><div><h4 class="font-bold text-indigo-900 text-base sm:text-lg">${escapeHTML(b.titolo)}</h4><p class="text-indigo-600 text-xs sm:text-sm">${escapeHTML(b.autore)}</p></div><button onclick="openModal('recensisci', {id: '${b.id}', titolo: '${escapeHTML(b.titolo)}'})" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-sm sm:text-base">Scrivi Recensione</button></div>`).join('')}</div></div>`;
         }
 
         const revBooksIds = [...new Set(state.reviews.map(r => r.libroId))];
@@ -893,9 +944,14 @@
                 <div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Utente</th><th class="p-3 sm:p-5">Email</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">
                     ${state.users.map(u => `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3"><div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-indigo-100 text-indigo-700 grid place-items-center text-xs sm:text-sm font-bold shrink-0">${u.nome.charAt(0).toUpperCase()}</div><span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span> ${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
                     <td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">
-                        ${state.isGod ? `<button onclick="sguardoDivino('${u.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-100 text-purple-700 font-bold rounded-md sm:rounded-lg">👁</button><button onclick="assegnaBadge('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-pink-100 text-pink-700 font-bold rounded-md sm:rounded-lg">🏷️</button>${u.ruolo==='admin'?`<button onclick="cambiaRuolo('${u.id}', 'utente')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-amber-100 text-amber-700 font-bold rounded-md sm:rounded-lg">↓</button>`:`<button onclick="cambiaRuolo('${u.id}', 'admin')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-100 text-emerald-700 font-bold rounded-md sm:rounded-lg">↑</button>`}` : ''}
+                        ${state.isGod ? `
+                            <button onclick="sguardoDivino('${u.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-100 text-purple-700 font-bold rounded-md sm:rounded-lg" title="Sguardo Divino">👁</button>
+                            <button onclick="assegnaBadge('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-pink-100 text-pink-700 font-bold rounded-md sm:rounded-lg" title="Assegna Badge">🏷️</button>
+                            ${u.ruolo==='admin'?`<button onclick="cambiaRuolo('${u.id}', 'utente')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-amber-100 text-amber-700 font-bold rounded-md sm:rounded-lg" title="Rimuovi Admin">↓</button>`:`<button onclick="cambiaRuolo('${u.id}', 'admin')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-100 text-emerald-700 font-bold rounded-md sm:rounded-lg" title="Promuovi Admin">↑</button>`}
+                            <button onclick="banDispositivo('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-red-900 text-red-100 font-bold rounded-md sm:rounded-lg shadow-md shadow-red-900/20" title="Banna Dispositivo PC/Telefono">🔨</button>
+                        ` : ''}
                         <button onclick="modificaUtente('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 text-slate-600 rounded-md sm:rounded-lg font-bold">Mod</button>
-                        <button onclick="eliminaUtente('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-rose-100 text-rose-600 rounded-md sm:rounded-lg font-bold">Elimina</button>
+                        <button onclick="eliminaUtente('${u.id}', '${escapeHTML(u.nome)}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-rose-100 text-rose-600 rounded-md sm:rounded-lg font-bold">Resetta</button>
                     </td></tr>`).join('')}
                 </tbody></table></div>
             </section>
@@ -925,7 +981,7 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-10 relative z-10">
                 <button onclick="voceDiDio()" class="bg-white/5 hover:bg-white/10 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-white/10 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">📢</span> Messaggio</button>
                 <button onclick="miracoloApprovazione()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-emerald-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">✨</span> Miracolo</button>
-                <button onclick="amnistiaGenerale()" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-blue-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">🕊️</span> Amnistia</button>
+                <button onclick="amnistiaGenerale()" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-blue-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">🕊️️</span> Amnistia</button>
                 <button onclick="apocalisse()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-rose-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">💀</span> Apocalisse</button>
             </div>
 
