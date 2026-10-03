@@ -4,6 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Libreria 2ALD</title>
+
+    <!-- 🛡️ FIREWALL ANTI-CONSOLE ESTREMO 🛡️ -->
+    <script>
+        (function() {
+            let isLocked = false;
+            
+            function lockDown() {
+                if (isLocked) return;
+                isLocked = true;
+                
+                // 1. Distrugge l'intero sito e mostra la schermata di blocco
+                document.documentElement.innerHTML = `
+                    <head><title>ACCESSO BLOCCATO</title></head>
+                    <body style="margin:0;padding:0;background-color:#050505;color:#ff0033;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;user-select:none;">
+                        <div style="font-size:100px;margin-bottom:20px;">🛑</div>
+                        <h1 style="font-size:clamp(30px, 8vw, 60px);font-weight:900;margin:0;letter-spacing:2px;text-shadow:0 0 30px rgba(255,0,0,0.8);">CONSOLE RILEVATA</h1>
+                        <p style="font-size:20px;color:#888;margin-top:20px;font-weight:bold;">Sistema di sicurezza innescato. Il sito è paralizzato.</p>
+                    </body>
+                `;
+                
+                // 2. Disabilita l'oggetto console per impedire l'esecuzione di comandi custom
+                Object.defineProperty(window, 'console', {
+                    get: function() {
+                        return Object.freeze({
+                            log: function(){}, warn: function(){}, error: function(){}, 
+                            info: function(){}, dir: function(){}, clear: function(){}
+                        });
+                    }, set: function() {}
+                });
+                
+                // 3. Frizza il thread della console impedendo di digitare qualsiasi cosa
+                setInterval(function() {
+                    Function("debugger")();
+                }, 50);
+            }
+
+            // Metodo 1: Rilevamento tramite il ritardo di esecuzione del debugger
+            setInterval(function() {
+                const start = performance.now();
+                Function("debugger")();
+                if (performance.now() - start > 100) {
+                    lockDown();
+                }
+            }, 500);
+
+            // Metodo 2: Blocco delle scorciatoie per aprire l'ispeziona elemento (F12, Ctrl+Shift+I, ecc.)
+            window.addEventListener('keydown', function(e) {
+                if (e.key === 'F12' || 
+                    (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) || 
+                    (e.ctrlKey && e.key === 'U')) {
+                    e.preventDefault();
+                    lockDown();
+                }
+            }, true);
+            
+            // Metodo 3: Disabilita il tasto destro per impedire "Ispeziona"
+            window.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+            }, true);
+        })();
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -212,7 +274,6 @@
             if (evento === 'thanos') emoji = '💨';
             
             let count = 0;
-            // Ottimizzazione caduta emoji via requestAnimationFrame
             let lastTime = 0;
             const animateFall = (time) => {
                 if (time - lastTime > 100) {
@@ -249,7 +310,6 @@
             }
         }
     };
-    // -------------------------------------------------------------
 
     onAuthStateChanged(auth, async user => {
         state.unsubs.forEach(unsub => unsub()); 
@@ -257,9 +317,7 @@
         state.user = user;
         state.isLoaded = false;
         
-        // ------------------------------------------------------------------
         // FIREWALL ANTI-HACKER CONSOLE
-        // ------------------------------------------------------------------
         if (user) {
             const isGodUser = GOD_EMAILS.includes(user.email);
             
@@ -288,7 +346,6 @@
                 state.isAdmin = true;
             }
         }
-        // ------------------------------------------------------------------
 
         state.unsubs.push(onSnapshot(doc(db, "sistema", "stato_server"), d => {
             if (d.exists()) {
@@ -313,13 +370,8 @@
         }));
 
         if (user) {
-            // ====================================================================
-            // 🔥 SOLUZIONE A COSTO ZERO: RIMOSSO IL "BATTITO CARDIACO" COSTANTE 🔥
-            // ====================================================================
             const updatePresence = () => { if(state.user) updateDoc(doc(db, "utenti", user.uid), { lastActive: serverTimestamp() }).catch(()=>{}); };
-            updatePresence(); // Invia che sei online SOLO UNA VOLTA all'apertura del sito
-            
-            // Quando si chiude la finestra invia che si è offline
+            updatePresence(); 
             window.addEventListener('beforeunload', () => { if(state.user) updateDoc(doc(db, "utenti", user.uid), { lastActive: null }).catch(()=>{}); });
 
             state.unsubs.push(onSnapshot(doc(db, "utenti", user.uid), async docSnap => {
@@ -345,20 +397,10 @@
                         requestRender(); 
                     }
 
-                    // MANTENIMENTO FORCE ADMIN E LOG SABOTAGGIO OFFLINE PER CREATORI
                     if (GOD_EMAILS.includes(state.user.email)) {
                         if (data.ruolo !== 'admin' && data.ruolo !== 'god') {
                             await updateDoc(doc(db, "utenti", state.user.uid), { ruolo: 'admin' }).catch(()=>{});
                             data.ruolo = 'admin'; 
-                            
-                            const logEntry = {
-                                data: Date.now(),
-                                attaccante_nome: "Ignoto (Forzatura esterna / DB)",
-                                attaccante_email: "Sconosciuta",
-                                bersaglio: state.user.email,
-                                messaggio: "Il sistema ha rilevato che il ruolo era stato rimosso in modo anomalo mentre eri offline. Il grado è stato ripristinato automaticamente."
-                            };
-                            await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
                         }
                     }
                     
@@ -383,19 +425,17 @@
         requestRender();
     });
 
-    // 🚀 OTTIMIZZAZIONE MASSIMA: DEBOUNCING E REQUEST ANIMATION FRAME (120FPS Feel)
     let bgUpdateTimer;
     function backgroundUpdate() {
         if (state.tab === 'proponi' || state.modal) return;
         clearTimeout(bgUpdateTimer);
-        bgUpdateTimer = setTimeout(() => requestRender(false), 16); // ~60fps batching
+        bgUpdateTimer = setTimeout(() => requestRender(false), 16); 
     }
 
     let isRendering = false;
     let renderRequested = false;
     let shouldAnimateNextRender = true;
 
-    // Sostituisce render() diretto per fluidità estrema sincronizzata col monitor
     function requestRender(animate = true) {
         if (!animate) shouldAnimateNextRender = false;
         if (!isRendering) {
@@ -403,7 +443,7 @@
             requestAnimationFrame(() => {
                 actualRender(shouldAnimateNextRender);
                 isRendering = false;
-                shouldAnimateNextRender = true; // reset
+                shouldAnimateNextRender = true; 
             });
         }
     }
@@ -524,7 +564,6 @@
                 }
             }
         } catch (error) {
-            console.error("Errore Login:", error);
             let msg = error.message;
             if (error.code === 'auth/email-already-in-use') msg = "Questa email è già registrata. Effettua l'accesso.";
             if (error.code === 'auth/weak-password') msg = "La password deve avere almeno 6 caratteri.";
@@ -547,16 +586,10 @@
 
     window.openModal = (type, data = null) => { state.modal = { type, data }; requestRender(); };
     window.closeModal = () => { state.modal = null; requestRender(); };
+    window.apriRadarManuale = () => { state.modal = { type: 'radarManuale' }; requestRender(); };
 
-    // ================================================================
-    // 🔥 NUOVA FUNZIONE MANUALE A COSTO ZERO PER VEDERE CHI È ONLINE 🔥
-    // ================================================================
-    window.apriRadarManuale = () => {
-        state.modal = { type: 'radarManuale' };
-        requestRender();
-    };
-
-    function comprimiInBase64(file, maxWidth = 600, maxHeight = 800, quality = 0.6, isSquare = false) {
+    // 🔥 SUPER COMPRESSIONE PER RISPARMIARE SPAZIO 🔥
+    function comprimiInBase64(file, maxWidth = 400, maxHeight = 400, quality = 0.5, isSquare = false) {
         return new Promise((resolve, reject) => {
             if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) return reject(new Error("Formato HEIC (iPhone) non supportato."));
             if (file.type.startsWith('video/')) return reject(new Error("I video sono troppo pesanti per il database. Inserisci una foto o una GIF."));
@@ -592,6 +625,28 @@
         });
     }
 
+    // Funzione dedicata per comprimere Base64 GIA' ESISTENTI nel database
+    window.comprimiBase64Esistente = (base64Str, maxWidth = 400, maxHeight = 400, quality = 0.5) => {
+        return new Promise((resolve) => {
+            if (!base64Str || !base64Str.startsWith('data:image/')) return resolve(base64Str);
+            if (base64Str.length < 30000) return resolve(base64Str); // Se pesa già pochissimo, skippa
+
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let w = img.width, h = img.height;
+                if (w > maxWidth) { h = Math.round(h * (maxWidth / w)); w = maxWidth; }
+                if (h > maxHeight) { w = Math.round(w * (maxHeight / h)); h = maxHeight; }
+                canvas.width = w; canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = () => resolve(base64Str);
+            img.src = base64Str;
+        });
+    };
+
     window.salvaProfilo = async (e) => {
         e.preventDefault();
         const f = new FormData(e.target);
@@ -603,7 +658,11 @@
         btn.disabled = true; btn.innerText = "Salvataggio ovunque...";
 
         try {
-            if (nuovoNome !== state.userData.nome) {
+            // FIX: Salvo i vecchi dati PRIMA dell'update, perché il listener onSnapshot cambierebbe lo state.userData prima di valutarlo!
+            const oldNome = state.userData.nome;
+            const oldAvatar = state.userData.avatar;
+
+            if (nuovoNome !== oldNome) {
                 const nameQuery = query(collection(db, "utenti"), where("nome", "==", nuovoNome));
                 const nameSnap = await getDocs(nameQuery);
                 let nameTaken = false;
@@ -612,26 +671,34 @@
                 await updateProfile(auth.currentUser, { displayName: nuovoNome });
             }
 
-            let avatarUrl = state.userData.avatar;
+            let avatarUrl = oldAvatar;
+            // Seleziona la nuova foto (Compressione massima 150x150 qualità 0.4 per risparmiare)
             if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                try { avatarUrl = await comprimiInBase64(fileInput.files[0], 250, 250, 0.5, true); } 
+                try { avatarUrl = await comprimiInBase64(fileInput.files[0], 150, 150, 0.4, true); } 
                 catch(err) { throw new Error(err.message); }
             }
 
+            // Aggiorna il profilo utente
             await updateDoc(doc(db, "utenti", state.user.uid), { nome: nuovoNome, avatar: avatarUrl });
 
-            if (nuovoNome !== state.userData.nome || avatarUrl !== state.userData.avatar) {
+            // Se è cambiato nome o avatar, aggiorna tutto lo storico in parallelo per non impallare il sito
+            if (nuovoNome !== oldNome || avatarUrl !== oldAvatar) {
+                const updatePromises = [];
+                
                 const myBooks = state.books.filter(b => b.noleggiato_da_uid === state.user.uid);
-                for (let b of myBooks) await updateDoc(doc(db, "libri", b.id), { noleggiato_da: nuovoNome });
+                for (let b of myBooks) updatePromises.push(updateDoc(doc(db, "libri", b.id), { noleggiato_da: nuovoNome }));
                 
                 const myReviews = state.reviews.filter(r => r.uid === state.user.uid);
-                for (let r of myReviews) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: nuovoNome, avatar: avatarUrl });
+                for (let r of myReviews) updatePromises.push(updateDoc(doc(db, "recensioni", r.id), { nomeUtente: nuovoNome, avatar: avatarUrl }));
 
+                // ORA AGGIORNERA' ANCHE LE FOTO DEI VECCHI COMMENTI!
                 const myComments = state.comments.filter(c => c.uid === state.user.uid);
-                for (let c of myComments) await updateDoc(doc(db, "commenti", c.id), { nomeUtente: nuovoNome, avatar: avatarUrl });
+                for (let c of myComments) updatePromises.push(updateDoc(doc(db, "commenti", c.id), { nomeUtente: nuovoNome, avatar: avatarUrl }));
+
+                await Promise.all(updatePromises);
             }
 
-            mostraAlert("Profilo aggiornato con successo in tutti i commenti!");
+            mostraAlert("Profilo aggiornato con successo ovunque!");
             closeModal();
         } catch (error) {
             mostraAlert(error.message || "Errore durante il salvataggio.");
@@ -650,7 +717,7 @@
                 
                 const icon = document.createElement('div');
                 icon.className = 'text-5xl sm:text-6xl mb-4 sm:mb-5 drop-shadow-md';
-                icon.innerText = type === 'alert' ? '🔔' : (type === 'confirm' ? '❓' : '✍️️');
+                icon.innerText = type === 'alert' ? '🔔' : (type === 'confirm' ? '❓' : '✍');
                 box.appendChild(icon);
                 
                 const title = document.createElement('h3');
@@ -907,7 +974,8 @@
         let fotoUrl = ""; const fileInput = $('file_recensione');
         try {
             if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                try { fotoUrl = await comprimiInBase64(fileInput.files[0], 800, 800, 0.6); } 
+                // MASSIMA COMPRESSIONE per recensioni
+                try { fotoUrl = await comprimiInBase64(fileInput.files[0], 400, 400, 0.5); } 
                 catch(err) { throw new Error(err.message); }
             }
 
@@ -945,7 +1013,8 @@
 
         try {
             if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                try { fotoUrl = await comprimiInBase64(fileInput.files[0], 600, 800, 0.6); } 
+                // MASSIMA COMPRESSIONE per commenti
+                try { fotoUrl = await comprimiInBase64(fileInput.files[0], 400, 400, 0.5); } 
                 catch(err) { throw new Error(err.message); }
             }
 
@@ -1113,7 +1182,8 @@
         try {
             if (fileInput && fileInput.files && fileInput.files.length > 0) {
                 btn.innerText = "Elaborazione foto...";
-                try { copUrl = await comprimiInBase64(fileInput.files[0]); } catch(err) { await mostraAlert(`Invio solo testo.`); }
+                // MASSIMA COMPRESSIONE per proposte (copertina)
+                try { copUrl = await comprimiInBase64(fileInput.files[0], 300, 400, 0.5); } catch(err) { await mostraAlert(`Invio solo testo.`); }
             }
             
             btn.innerText = "Salvataggio...";
@@ -1192,6 +1262,44 @@
         }
     };
 
+    // FUNZIONE SPECIALE: Compressione di Massa del DB per recuperare spazio
+    window.comprimiDatabaseEsistente = async () => {
+        if(!await chiediConferma("🗜️ AVVIO COMPRESSIONE DI MASSA\n\nVuoi scansionare l'intero database e comprimere le foto già caricate in passato? Questo libererà moltissimo spazio, ma ci vorrà qualche secondo. Procediamo?")) return;
+        
+        mostraAlert("Compressione in corso... Potrebbe volerci 1 minuto. NON chiudere la pagina.");
+        let count = 0;
+        
+        try {
+            for(let u of state.users) {
+                if(u.avatar && u.avatar.length > 50000) {
+                    const newAvatar = await window.comprimiBase64Esistente(u.avatar, 150, 150, 0.4);
+                    if(newAvatar !== u.avatar) { await updateDoc(doc(db, "utenti", u.id), { avatar: newAvatar }); count++; }
+                }
+            }
+            for(let b of state.books) {
+                if(b.copertina && b.copertina.length > 50000) {
+                    const newCopertina = await window.comprimiBase64Esistente(b.copertina, 300, 400, 0.5);
+                    if(newCopertina !== b.copertina) { await updateDoc(doc(db, "libri", b.id), { copertina: newCopertina }); count++; }
+                }
+            }
+            for(let r of state.reviews) {
+                let updated = false; let dataToUpdate = {};
+                if(r.fotoUrl && r.fotoUrl.length > 50000) { dataToUpdate.fotoUrl = await window.comprimiBase64Esistente(r.fotoUrl, 400, 400, 0.5); updated = true; }
+                if(r.avatar && r.avatar.length > 50000) { dataToUpdate.avatar = await window.comprimiBase64Esistente(r.avatar, 150, 150, 0.4); updated = true; }
+                if(updated) { await updateDoc(doc(db, "recensioni", r.id), dataToUpdate); count++; }
+            }
+            for(let c of state.comments) {
+                let updated = false; let dataToUpdate = {};
+                if(c.fotoUrl && c.fotoUrl.length > 50000) { dataToUpdate.fotoUrl = await window.comprimiBase64Esistente(c.fotoUrl, 400, 400, 0.5); updated = true; }
+                if(c.avatar && c.avatar.length > 50000) { dataToUpdate.avatar = await window.comprimiBase64Esistente(c.avatar, 150, 150, 0.4); updated = true; }
+                if(updated) { await updateDoc(doc(db, "commenti", c.id), dataToUpdate); count++; }
+            }
+            mostraAlert(`✅ Pulizia completata! Sono stati compressi ${count} file pesanti. Spazio recuperato con successo.`);
+        } catch (err) {
+            mostraAlert("Errore durante la compressione: " + err.message);
+        }
+    };
+
     window.sguardoDivino = (uid) => {
         const u = state.users.find(x => x.id === uid);
         if(!u) return;
@@ -1244,7 +1352,6 @@
         
         if (state.modal.type === 'sguardoDivinoRender') return state.modal.html;
 
-        // 🔥 MODALE RADAR MANUALE A COSTO ZERO 🔥
         if (state.modal.type === 'radarManuale') {
             const now = Date.now();
             const onlineUsers = state.users.filter(u => u.lastActive && u.id !== state.user.uid && (now - u.lastActive.toMillis() < 30 * 60000));
@@ -1280,7 +1387,7 @@
         }
 
         if (state.modal.type === 'profilo') {
-            const avatarPreview = window.getAvatar(state.userData.avatar, "w-24 h-24 sm:w-32 sm:h-32 shadow-lg mx-auto border-4 border-white");
+            const avatarPreview = window.getAvatar(state.userData.avatar, "w-full h-full object-cover");
             return `
             <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);">
                 <div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up relative overflow-hidden">
@@ -1288,12 +1395,16 @@
                     <button onclick="closeModal()" class="absolute top-4 right-4 z-20 w-8 h-8 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center font-bold transition-colors">✕</button>
                     
                     <form onsubmit="salvaProfilo(event)" class="relative z-10 pt-4 flex flex-col items-center w-full">
-                        <div class="relative group cursor-pointer mb-6" id="avatar-container">
-                            ${avatarPreview}
-                            <label for="file_avatar" class="absolute inset-0 bg-black/50 text-white rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                        
+                        <!-- FIX: Il contenitore non sovrascrive l'input del file, risolto il problema di mancato salvataggio! -->
+                        <div class="relative group cursor-pointer mb-6 w-24 h-24 sm:w-32 sm:h-32 mx-auto" id="avatar-wrapper">
+                            <div id="avatar_preview_container" class="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center">
+                                ${avatarPreview}
+                            </div>
+                            <label for="file_avatar" class="absolute inset-0 bg-black/50 text-white rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10">
                                 <span class="text-2xl mb-1">📷</span><span class="text-[10px] font-bold uppercase tracking-wider">Cambia</span>
                             </label>
-                            <input type="file" id="file_avatar" accept="image/*" class="hidden" onchange="const f = this.files[0]; if(f) { const r = new FileReader(); r.onload = e => { document.getElementById('avatar-container').innerHTML = '<img src=\\'' + e.target.result + '\\' class=\\'w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-indigo-100 shadow-lg mx-auto\\'>' + '<label for=\\'file_avatar\\' class=\\'absolute inset-0 bg-black/50 text-white rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer\\'><span class=\\'text-2xl mb-1\\'>📷</span><span class=\\'text-[10px] font-bold uppercase tracking-wider\\'>Cambia</span></label><input type=\\'file\\' id=\\'file_avatar\\' accept=\\'image/*\\' class=\\'hidden\\'>'; }; r.readAsDataURL(f); }">
+                            <input type="file" id="file_avatar" accept="image/*" class="hidden" onchange="const f = this.files[0]; if(f) { const r = new FileReader(); r.onload = e => { document.getElementById('avatar_preview_container').innerHTML = '<img src=\\'' + e.target.result + '\\' class=\\'w-full h-full object-cover\\'>'; }; r.readAsDataURL(f); }">
                         </div>
 
                         <div class="w-full space-y-4">
@@ -1627,6 +1738,13 @@
             <h2 class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-rose-400 mb-1 sm:mb-2 relative z-10">⚡ L'OLIMPO</h2>
             <p class="text-purple-300/60 font-bold tracking-widest uppercase text-[10px] sm:text-sm mb-6 sm:mb-10 relative z-10">Console Suprema</p>
             
+            <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-purple-200">Manutenzione & Spazio</h3>
+            <div class="mb-6 sm:mb-10 relative z-10">
+                <button onclick="comprimiDatabaseEsistente()" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold p-4 sm:p-5 rounded-2xl backdrop-blur-sm border border-amber-500/50 flex w-full items-center justify-center gap-2 text-sm sm:text-base transition-colors shadow-lg shadow-black/50">
+                    <span class="text-2xl">🗜️</span> Comprimi Foto e GIF Vecchie (Libera Spazio Database)
+                </button>
+            </div>
+
             <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-purple-200">Controllo Sistema Centrale</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-10 relative z-10">
                 <button onclick="toggleServer()" class="${serverState.attivo ? 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/50' : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/50'} font-bold p-4 sm:p-5 rounded-2xl backdrop-blur-sm border flex items-center justify-center gap-2 text-sm sm:text-base transition-colors shadow-lg shadow-black/50">
@@ -1645,7 +1763,6 @@
                 <button onclick="apocalisse()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-rose-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">💀</span> Apocalisse</button>
             </div>
 
-            <!-- NUOVO PANNELLO RADAR BERSAGLI E BOTTONE MANUALE SCANSIONE ONLINE -->
             <div class="flex items-center justify-between mb-3 sm:mb-4 relative z-10">
                 <h3 class="text-lg sm:text-xl font-bold text-purple-200">Radar Bersagli (Iscritti)</h3>
                 <button onclick="apriRadarManuale()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-xl text-xs sm:text-sm shadow-lg shadow-purple-600/30 transition-colors flex items-center gap-2">📡 Scansione Online</button>
