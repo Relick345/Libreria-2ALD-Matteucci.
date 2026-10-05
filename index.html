@@ -199,6 +199,38 @@
     const DAY = 86400000;
     const INPUT_CLS = "w-full rounded-2xl border-2 border-slate-200 px-3 sm:px-4 py-2.5 sm:py-3.5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all font-medium bg-slate-50 focus:bg-white text-sm sm:text-base";
 
+    // -------------------------------------------------------------
+    // 🛡️ SISTEMA DI AUTORIZZAZIONE ESTREMO CONTRO HACKER CONSOLE 🛡️
+    // Essendo scoped nel modulo, la console non può manipolarle.
+    // -------------------------------------------------------------
+    function verificaAdmin() {
+        if (!state.user) return false;
+        if (GOD_EMAILS.includes(state.user.email)) return true;
+        if (state.userData && (state.userData.ruolo === 'admin' || state.userData.ruolo === 'god')) return true;
+        return false;
+    }
+
+    function verificaGod() {
+        if (!state.user) return false;
+        if (GOD_EMAILS.includes(state.user.email)) return true;
+        return false;
+    }
+
+    async function logSabotaggio(azione) {
+        if (!state.user) return;
+        const logEntry = {
+            data: Date.now(),
+            attaccante_nome: (state.userData && state.userData.nome) ? state.userData.nome : (state.user.displayName || "Sconosciuto"),
+            attaccante_email: state.user.email,
+            bersaglio: "SISTEMA - HACKING CONSOLE",
+            messaggio: `Ha tentato di forzare il comando protetto: [${azione}] tramite la console del browser.`
+        };
+        try {
+            await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
+        } catch(e) {}
+        mostraAlert("⛔ ACCESSO NEGATO: Azione bloccata dal server. Il tuo tentativo di intrusione è stato registrato nei sabotaggi!");
+    }
+
     // Generatore Omino Grigio in altissima qualità (CON LAZY LOADING)
     window.getAvatar = (url, classes = "w-8 h-8") => {
         if (url && url.length > 10) {
@@ -214,7 +246,10 @@
 
     function checkServerStatus() {
         const overlay = $('server-overlay');
-        if (state.isGod) {
+        const isGodEmail = state.user && GOD_EMAILS.includes(state.user.email);
+        
+        // I creatori supremi by-passano SEMPRE la schermata server spento
+        if (state.isGod || isGodEmail) {
             overlay.classList.add('hidden');
             return;
         }
@@ -317,6 +352,8 @@
         state.user = user;
         state.isLoaded = false;
         
+        checkServerStatus(); // Re-valuta l'accesso nel caso in cui un creatore si sia appena loggato
+
         // FIREWALL ANTI-HACKER CONSOLE
         if (user) {
             const isGodUser = GOD_EMAILS.includes(user.email);
@@ -331,16 +368,7 @@
                     state.isAdmin = false;
                     state.isGod = false;
                     
-                    const logEntry = {
-                        data: Date.now(),
-                        attaccante_nome: user.displayName || "Sconosciuto",
-                        attaccante_email: user.email,
-                        bersaglio: "SISTEMA - HACKING CONSOLE",
-                        messaggio: "Ha incollato script nella console per forzare l'accesso alla Modalità Dio. Azione bloccata."
-                    };
-                    setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
-                    
-                    setTimeout(() => alert("⛔ ACCESSO NEGATO: Rilevato tentativo di aggirare la sicurezza tramite Console! Le autorità di sistema sono state allertate."), 500);
+                    logSabotaggio("Falsa modalità Dio (Console session)");
                 }
             } else if (sessionStorage.getItem("adminLoggato") === "true") {
                 state.isAdmin = true;
@@ -382,17 +410,7 @@
                     if (!GOD_EMAILS.includes(user.email) && data.ruolo !== 'admin' && data.ruolo !== 'god' && state.isAdmin) {
                         state.isAdmin = false;
                         sessionStorage.removeItem("adminLoggato");
-                        
-                        const logEntry = {
-                            data: Date.now(),
-                            attaccante_nome: data.nome || user.displayName || "Sconosciuto",
-                            attaccante_email: user.email,
-                            bersaglio: "SISTEMA - HACKING CONSOLE",
-                            messaggio: "Ha incollato script nella console per fingersi Admin. Azione bloccata."
-                        };
-                        setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
-                        
-                        setTimeout(() => alert("⛔ ACCESSO NEGATO: Tentativo di falso login Admin tramite Console rilevato. Registrato."), 500);
+                        logSabotaggio("Falso login Admin (Console Role Spoofing)");
                         if(state.tab === 'admin') state.tab = 'catalogo';
                         requestRender(); 
                     }
@@ -409,6 +427,7 @@
                     state.userData = data;
                     state.isLoaded = true;
                     if(!state.userData.libri_letti) state.userData.libri_letti = [];
+                    checkServerStatus(); // Re-valuta in caso di cambi ruolo improvvisi
                     if (oldBadge !== data.badge || oldAvatar !== data.avatar) backgroundUpdate();
                 } else if (state.isLoaded) {
                     logout();
@@ -586,7 +605,11 @@
 
     window.openModal = (type, data = null) => { state.modal = { type, data }; requestRender(); };
     window.closeModal = () => { state.modal = null; requestRender(); };
-    window.apriRadarManuale = () => { state.modal = { type: 'radarManuale' }; requestRender(); };
+    
+    window.apriRadarManuale = () => { 
+        if (!verificaGod()) return logSabotaggio("apriRadarManuale");
+        state.modal = { type: 'radarManuale' }; requestRender(); 
+    };
 
     // 🔥 SUPER COMPRESSIONE PER RISPARMIARE SPAZIO 🔥
     function comprimiInBase64(file, maxWidth = 400, maxHeight = 400, quality = 0.5, isSquare = false) {
@@ -658,7 +681,6 @@
         btn.disabled = true; btn.innerText = "Salvataggio ovunque...";
 
         try {
-            // FIX: Salvo i vecchi dati PRIMA dell'update, perché il listener onSnapshot cambierebbe lo state.userData prima di valutarlo!
             const oldNome = state.userData.nome;
             const oldAvatar = state.userData.avatar;
 
@@ -672,16 +694,13 @@
             }
 
             let avatarUrl = oldAvatar;
-            // Seleziona la nuova foto (Compressione massima 150x150 qualità 0.4 per risparmiare)
             if (fileInput && fileInput.files && fileInput.files.length > 0) {
                 try { avatarUrl = await comprimiInBase64(fileInput.files[0], 150, 150, 0.4, true); } 
                 catch(err) { throw new Error(err.message); }
             }
 
-            // Aggiorna il profilo utente
             await updateDoc(doc(db, "utenti", state.user.uid), { nome: nuovoNome, avatar: avatarUrl });
 
-            // Se è cambiato nome o avatar, aggiorna tutto lo storico in parallelo per non impallare il sito
             if (nuovoNome !== oldNome || avatarUrl !== oldAvatar) {
                 const updatePromises = [];
                 
@@ -691,7 +710,6 @@
                 const myReviews = state.reviews.filter(r => r.uid === state.user.uid);
                 for (let r of myReviews) updatePromises.push(updateDoc(doc(db, "recensioni", r.id), { nomeUtente: nuovoNome, avatar: avatarUrl }));
 
-                // ORA AGGIORNERA' ANCHE LE FOTO DEI VECCHI COMMENTI!
                 const myComments = state.comments.filter(c => c.uid === state.user.uid);
                 for (let c of myComments) updatePromises.push(updateDoc(doc(db, "commenti", c.id), { nomeUtente: nuovoNome, avatar: avatarUrl }));
 
@@ -750,6 +768,8 @@
     window.chiediInput = (msg, defaultVal = "", type = "text") => CustomUI.show(msg, 'prompt', defaultVal, type);
     
     window.pulisciAllarmi = async () => {
+        if (!verificaGod()) return logSabotaggio("pulisciAllarmi");
+        
         if(await chiediConferma("Sei sicuro di voler eliminare tutto il registro dei sabotaggi?")) {
             await setDoc(doc(db, "sistema", "sicurezza"), { log: [] }, { merge: true });
             mostraAlert("Registro di sicurezza pulito.");
@@ -773,6 +793,7 @@
         const isGodEmail = GOD_EMAILS.includes(state.user.email);
         
         if (!isGodEmail && state.userData.ruolo !== 'admin' && state.userData.ruolo !== 'god') {
+            logSabotaggio("diventaAdmin (Bypass check)");
             return mostraAlert("Accesso Negato. Non hai il ruolo di Amministratore nel Database. Fatti promuovere da qualcun altro.");
         }
         
@@ -801,6 +822,8 @@
     };
 
     window.cambiaRuolo = async (uid, ruolo) => { 
+        if (!verificaAdmin()) return logSabotaggio("cambiaRuolo");
+        
         const u = state.users.find(x => x.id === uid);
         if (u && GOD_EMAILS.includes(u.email)) {
             const logEntry = {
@@ -818,6 +841,8 @@
     };
 
     window.modificaUtente = async (uid, nomeAttuale) => {
+        if (!verificaAdmin()) return logSabotaggio("modificaUtente");
+        
         const nuovoNome = await chiediInput(`Modifica il nome di ${nomeAttuale}:`, nomeAttuale);
         if (nuovoNome && nuovoNome.trim() !== "" && nuovoNome !== nomeAttuale) {
             const nameQuery = query(collection(db, "utenti"), where("nome", "==", nuovoNome.trim()));
@@ -837,6 +862,8 @@
     };
 
     window.eliminaUtente = async (uid, nome) => {
+        if (!verificaAdmin()) return logSabotaggio("eliminaUtente");
+        
         const u = state.users.find(x => x.id === uid);
         if (u && GOD_EMAILS.includes(u.email)) {
             const logEntry = {
@@ -863,6 +890,8 @@
     };
 
     window.assegnaBadge = async (uid, nomeUtente) => {
+        if (!verificaAdmin()) return logSabotaggio("assegnaBadge");
+        
         const badge = await chiediInput(`Assegna un badge a ${nomeUtente} (Es. 🤡 Re dei Troll). Lascia vuoto per rimuovere:`, "");
         if(badge !== null) {
             const badgeVal = badge.trim();
@@ -877,6 +906,8 @@
     };
 
     window.banDispositivo = async (uid, nome) => {
+        if (!verificaAdmin()) return logSabotaggio("banDispositivo");
+        
         const u = state.users.find(x => x.id === uid);
         if (!u || !u.deviceId) return mostraAlert("Impossibile trovare l'ID del dispositivo. L'utente deve rifare l'accesso per essere tracciato.");
         
@@ -908,6 +939,7 @@
     };
 
     window.approvaProposta = async (reqId) => {
+        if (!verificaAdmin()) return logSabotaggio("approvaProposta");
         const req = state.requests.find(x => x.id === reqId);
         if(!req) return;
         await addDoc(collection(db, "libri"), { ...req.dati, stato: 'disponibile', rating_media: 0, numero_recensioni: 0 });
@@ -916,6 +948,7 @@
     };
 
     window.approvaPrestito = async (reqId) => {
+        if (!verificaAdmin()) return logSabotaggio("approvaPrestito");
         const req = state.requests.find(x => x.id === reqId);
         if(!req) return;
         const giorni = parseInt(await chiediInput(`Per quanti giorni vuoi prestare il libro a ${req.richiedente}?`, "30", "number"));
@@ -926,9 +959,13 @@
         mostraAlert("Prestito approvato!");
     };
 
-    window.rifiutaRichiesta = async (reqId) => { await updateDoc(doc(db, "richieste", reqId), { stato: 'rifiutato' }); };
+    window.rifiutaRichiesta = async (reqId) => { 
+        if (!verificaAdmin()) return logSabotaggio("rifiutaRichiesta");
+        await updateDoc(doc(db, "richieste", reqId), { stato: 'rifiutato' }); 
+    };
 
     window.restituisciLibro = async (libroId) => {
+        if (!verificaAdmin()) return logSabotaggio("restituisciLibro");
         if(await chiediConferma("Terminare il prestito? Il libro tornerà disponibile e l'utente potrà recensirlo.")) {
             const b = state.books.find(x => x.id === libroId);
             if(b && b.noleggiato_da_uid) await updateDoc(doc(db, "utenti", b.noleggiato_da_uid), { libri_letti: arrayUnion(libroId) });
@@ -937,17 +974,22 @@
     };
 
     window.prolungaPrestito = async (libroId, scadenzaAttuale) => {
+        if (!verificaAdmin()) return logSabotaggio("prolungaPrestito");
         const giorni = parseInt(await chiediInput("Quanti giorni in più?", "15", "number"));
         if (!giorni || giorni < 1) return;
         await updateDoc(doc(db, "libri", libroId), { scadenza: scadenzaAttuale + (giorni * 86400000) });
     };
 
     window.eliminaLibro = async (libroId) => {
+        if (!verificaAdmin()) return logSabotaggio("eliminaLibro");
         if(await chiediConferma("Eliminare definitivamente questo libro dal database?")) await deleteDoc(doc(db, "libri", libroId));
     };
 
     window.salvaModificaLibro = async (e, id) => {
-        e.preventDefault(); const f = new FormData(e.target);
+        e.preventDefault(); 
+        if (!verificaAdmin()) return logSabotaggio("salvaModificaLibro");
+        
+        const f = new FormData(e.target);
         await updateDoc(doc(db, "libri", id), { titolo: f.get('titolo'), autore: f.get('autore'), trama: f.get('trama'), data_pubblicazione: f.get('data_pubblicazione') });
         closeModal(); mostraAlert("Libro aggiornato!");
     };
@@ -1033,6 +1075,10 @@
     };
 
     window.eliminaCommento = async (commentoId) => {
+        const c = state.comments.find(x => x.id === commentoId);
+        if (!c) return;
+        if (!verificaAdmin() && c.uid !== state.user.uid) return logSabotaggio("eliminaCommento");
+        
         if(await chiediConferma("Sicuro di voler eliminare questa risposta?")) await deleteDoc(doc(db, "commenti", commentoId));
     };
 
@@ -1055,12 +1101,16 @@
     window.votaCommento = (id, tipo) => window.vota(id, tipo, "commenti");
 
     window.modificaRecensioneAdmin = async (recId) => {
+        if (!verificaAdmin()) return logSabotaggio("modificaRecensioneAdmin");
+        
         const r = state.reviews.find(x => x.id === recId); if (!r) return;
         const nuovo = await chiediInput(`Modifica commento di ${r.nomeUtente}:`, r.commento || "");
         if (nuovo !== null && nuovo !== r.commento) { await updateDoc(doc(db, "recensioni", recId), { commento: nuovo.trim() }); mostraAlert("Recensione modificata!"); }
     };
 
     window.eliminaRecensione = async (recId, libroId) => {
+        if (!verificaAdmin()) return logSabotaggio("eliminaRecensione");
+        
         if (await chiediConferma("Eliminare questa recensione?")) {
             await deleteDoc(doc(db, "recensioni", recId));
             const snap = await getDocs(query(collection(db, "recensioni"), where("libroId", "==", libroId)));
@@ -1203,12 +1253,16 @@
     };
 
     window.toggleServer = async () => {
+        if (!verificaGod()) return logSabotaggio("toggleServer");
+        
         const newState = !serverState.attivo;
         await updateDoc(doc(db, "sistema", "stato_server"), { attivo: newState });
         mostraAlert(newState ? "✅ Server Riattivato." : "🛑 Server Spento.");
     };
 
     window.chiudiAltreVersioni = async () => {
+        if (!verificaGod()) return logSabotaggio("chiudiAltreVersioni");
+        
         if(await chiediConferma("Tutti i link attualmente aperti dagli altri verranno bloccati. Sicuro?")) {
             await updateDoc(doc(db, "sistema", "stato_server"), { last_force_reload: Date.now() });
             mostraAlert("🔒 Vecchi link isolati. La tua sessione al momento del riavvio sarà pulita.");
@@ -1216,6 +1270,8 @@
     };
 
     window.invocaPotere = async (potere) => {
+        if (!verificaGod()) return logSabotaggio("invocaPotere");
+        
         const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value);
         if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio (Tutti o un utente specifico)!");
         await setDoc(doc(db, "sistema", "caos"), { evento: potere, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
@@ -1223,6 +1279,8 @@
     };
 
     window.voceDiDio = async () => {
+        if (!verificaGod()) return logSabotaggio("voceDiDio");
+        
         const msg = await chiediInput("Scrivi il messaggio globale:", "");
         if(!msg) return;
         const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value);
@@ -1232,6 +1290,8 @@
     };
 
     window.miracoloApprovazione = async () => {
+        if (!verificaGod()) return logSabotaggio("miracoloApprovazione");
+        
         if(await chiediConferma("✨ MIRACOLO: Approvare tutte le richieste in attesa?")) {
             for(let r of state.requests) {
                 if(r.tipo === 'nuovo_libro') await window.approvaProposta(r.id);
@@ -1242,6 +1302,8 @@
     };
 
     window.amnistiaGenerale = async () => {
+        if (!verificaGod()) return logSabotaggio("amnistiaGenerale");
+        
         if(await chiediConferma("🕊️ AMNISTIA: Restituire forzatamente tutti i libri in prestito?")) {
             const p = state.books.filter(b => b.stato === 'noleggiato');
             for(let b of p) {
@@ -1253,6 +1315,8 @@
     };
 
     window.apocalisse = async () => {
+        if (!verificaGod()) return logSabotaggio("apocalisse");
+        
         if(await chiediConferma("💀 APOCALISSE: Eliminare TUTTE le richieste, RECENSIONI e COMMENTI?")) {
             for(let r of state.requests) await window.rifiutaRichiesta(r.id); 
             for(let r of state.reviews) await deleteDoc(doc(db, "recensioni", r.id));
@@ -1264,6 +1328,8 @@
 
     // FUNZIONE SPECIALE: Compressione di Massa del DB per recuperare spazio
     window.comprimiDatabaseEsistente = async () => {
+        if (!verificaGod()) return logSabotaggio("comprimiDatabaseEsistente");
+        
         if(!await chiediConferma("🗜️ AVVIO COMPRESSIONE DI MASSA\n\nVuoi scansionare l'intero database e comprimere le foto già caricate in passato? Questo libererà moltissimo spazio, ma ci vorrà qualche secondo. Procediamo?")) return;
         
         mostraAlert("Compressione in corso... Potrebbe volerci 1 minuto. NON chiudere la pagina.");
@@ -1301,6 +1367,8 @@
     };
 
     window.sguardoDivino = (uid) => {
+        if (!verificaGod()) return logSabotaggio("sguardoDivino");
+        
         const u = state.users.find(x => x.id === uid);
         if(!u) return;
         const p = state.books.filter(b => b.noleggiato_da_uid === uid);
@@ -1713,7 +1781,7 @@
             <section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">Utenti Registrati</h2>
                 <div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto shadow-sm"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Utente</th><th class="p-3 sm:p-5">Email</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">
                     ${state.users.map(u => {
-                        return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3">${window.getAvatar(u.avatar, "w-6 h-6 sm:w-8 sm:h-8")}<span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span> ${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
+                        return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3">${window.getAvatar(u.avatar, "w-6 h-6 sm:w-8 sm:h-8")}<span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span>${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
                     <td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">
                         ${state.isGod ? `
                             <button onclick="sguardoDivino('${u.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Sguardo Divino">👁</button>
@@ -1878,3 +1946,4 @@
 </script>
 </body>
 </html>
+```eof
