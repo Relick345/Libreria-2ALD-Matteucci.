@@ -5,14 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Libreria 2ALD</title>
 
+    <!-- 🛡️ FIREWALL ANTI-CONSOLE ESTREMO 🛡️ -->
     <script>
         (function() {
+            let isLocked = false;
+            
+            function lockDown() {
+                if (isLocked) return;
+                isLocked = true;
+                
+                // 1. Distrugge l'intero sito e mostra la schermata di blocco
+                document.documentElement.innerHTML = `
+                    <head><title>ACCESSO BLOCCATO</title></head>
+                    <body style="margin:0;padding:0;background-color:#050505;color:#ff0033;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;user-select:none;">
+                        <div style="font-size:100px;margin-bottom:20px;">🛑</div>
+                        <h1 style="font-size:clamp(30px, 8vw, 60px);font-weight:900;margin:0;letter-spacing:2px;text-shadow:0 0 30px rgba(255,0,0,0.8);">CONSOLE RILEVATA</h1>
+                        <p style="font-size:20px;color:#888;margin-top:20px;font-weight:bold;">Sistema di sicurezza innescato. Il sito è paralizzato.</p>
+                    </body>
+                `;
+                
+                // 2. Disabilita l'oggetto console per impedire l'esecuzione di comandi custom
+                Object.defineProperty(window, 'console', {
+                    get: function() {
+                        return Object.freeze({
+                            log: function(){}, warn: function(){}, error: function(){}, 
+                            info: function(){}, dir: function(){}, clear: function(){}
+                        });
+                    }, set: function() {}
+                });
+                
+                // 3. Frizza il thread della console impedendo di digitare qualsiasi cosa
+                setInterval(function() {
+                    Function("debugger")();
+                }, 50);
+            }
+
+            // Metodo 1: Rilevamento tramite il ritardo di esecuzione del debugger
+            setInterval(function() {
+                const start = performance.now();
+                Function("debugger")();
+                if (performance.now() - start > 100) {
+                    lockDown();
+                }
+            }, 500);
+
+            // Metodo 2: Blocco delle scorciatoie per aprire l'ispeziona elemento (F12, Ctrl+Shift+I, ecc.)
             window.addEventListener('keydown', function(e) {
-                if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) || (e.ctrlKey && e.key === 'U')) {
-                    console.warn("I tasti rapidi per ispezionare sono bloccati.");
+                if (e.key === 'F12' || 
+                    (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) || 
+                    (e.ctrlKey && e.key === 'U')) {
                     e.preventDefault();
+                    lockDown();
                 }
             }, true);
+            
+            // Metodo 3: Disabilita il tasto destro per impedire "Ispeziona"
             window.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
             }, true);
@@ -25,12 +72,24 @@
         html { scroll-behavior: smooth; }
         body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; overflow-x: hidden; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
         
-        .fade-in { animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1); will-change: opacity; transform: translate3d(0,0,0); backface-visibility: hidden; }
-        .slide-up { animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; will-change: transform, opacity; transform: translate3d(0,0,0); backface-visibility: hidden; }
+        /* 🚀 ACCELERAZIONE HARDWARE ESTREMA (GPU) a 120 FPS */
+        .fade-in { 
+            animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            will-change: opacity; 
+            transform: translate3d(0,0,0); 
+            backface-visibility: hidden;
+        }
+        .slide-up { 
+            animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; 
+            will-change: transform, opacity; 
+            transform: translate3d(0,0,0); 
+            backface-visibility: hidden;
+        }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translate3d(0, 15px, 0) scale(0.98); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
         
         .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); transform: translate3d(0,0,0); }
+        
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -42,6 +101,7 @@
         .star-cb-group label:hover, .star-cb-group label:hover ~ label, .star-cb-group input:checked ~ label { color: #fbbf24; }
         @media (max-width: 640px) { .star-cb-group label { font-size: 2rem; padding: 0 2px; } }
 
+        /* Effetti Modalità Dio - GPU Accelerated */
         @keyframes terremoto { 0% { transform: translate3d(2px, 1px, 0) rotate(0deg); } 10% { transform: translate3d(-1px, -2px, 0) rotate(-1deg); } 20% { transform: translate3d(-3px, 0px, 0) rotate(1deg); } 30% { transform: translate3d(0px, 2px, 0) rotate(0deg); } 40% { transform: translate3d(1px, -1px, 0) rotate(1deg); } 50% { transform: translate3d(-1px, 2px, 0) rotate(-1deg); } 60% { transform: translate3d(-3px, 1px, 0) rotate(0deg); } 70% { transform: translate3d(2px, 1px, 0) rotate(-1deg); } 80% { transform: translate3d(-1px, -1px, 0) rotate(1deg); } 90% { transform: translate3d(2px, 2px, 0) rotate(0deg); } 100% { transform: translate3d(1px, -2px, 0) rotate(-1deg); } }
         .caos-terremoto { animation: terremoto 0.3s infinite; will-change: transform; }
         @keyframes discoteca { 0% { filter: hue-rotate(0deg) saturate(2); } 100% { filter: hue-rotate(360deg) saturate(2); } }
@@ -51,17 +111,21 @@
         .caos-comic * { font-family: "Comic Sans MS", "Comic Sans", cursive !important; }
         .falling-item { position: fixed; top: -50px; font-size: 2rem; z-index: 9999; animation: fall linear forwards; pointer-events: none; will-change: transform; }
         @keyframes fall { to { transform: translate3d(0, 110vh, 0) rotate(360deg); } }
+        
+        /* Ottimizzazione immagini */
         img { content-visibility: auto; }
     </style>
 </head>
 <body class="text-slate-800 antialiased selection:bg-indigo-200 min-h-screen pb-20">
 
+    <!-- SCHERMATA BLOCCO SERVER -->
     <div id="server-overlay" class="hidden fixed inset-0 z-[99999] bg-black/95 backdrop-blur-xl text-white flex flex-col items-center justify-center font-bold text-center p-6 fade-in">
         <span class="text-7xl mb-6">🛑</span>
         <h1 id="server-overlay-title" class="text-4xl sm:text-5xl mb-4 font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">SERVER SPENTO</h1>
         <p id="server-overlay-msg" class="text-slate-400 text-lg sm:text-xl">Accesso temporaneamente bloccato.</p>
     </div>
 
+    <!-- SCHERMATA BAN DISPOSITIVO -->
     <div id="ban-overlay" class="hidden fixed inset-0 z-[99999] bg-red-950 backdrop-blur-3xl text-red-500 flex flex-col items-center justify-center font-bold text-center p-6 fade-in">
         <span class="text-7xl mb-6">🔨</span>
         <h1 class="text-4xl sm:text-5xl mb-4 font-black text-red-600 drop-shadow-lg">DISPOSITIVO BANNATO</h1>
@@ -94,18 +158,37 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // COSTANTI CREATORI SUPREMI
     const GOD_EMAILS = ["riccardonicchi27@gmail.com", "riccardonicchi3@gmail.com"];
+
+    // Sistema di sicurezza per Isola Sessione
     const PAGE_LOAD_TIME = Date.now();
+
+    // Fingerprinting Dispositivo
     let LOCAL_DEVICE_ID = localStorage.getItem("libreria_device_id");
     if (!LOCAL_DEVICE_ID) {
         LOCAL_DEVICE_ID = Math.random().toString(36).substring(2) + Date.now().toString(36);
         localStorage.setItem("libreria_device_id", LOCAL_DEVICE_ID);
     }
 
+    // Variabili di Stato Globali
     let state = {
-        user: null, userData: { libri_letti: [], badge: null, volte_admin: 0, ruolo: 'utente' }, 
-        isAdmin: false, isGod: false, isLoaded: false, tab: 'catalogo', authMode: 'login', 
-        books: [], requests: [], users: [], reviews: [], comments: [], allarmi: [], modal: null, selectedReviewBookId: null, unsubs: []
+        user: null,
+        userData: { libri_letti: [], badge: null, volte_admin: 0, ruolo: 'utente' }, 
+        isAdmin: false,
+        isGod: false,
+        isLoaded: false,
+        tab: 'catalogo',
+        authMode: 'login', 
+        books: [],
+        requests: [],
+        users: [],
+        reviews: [],
+        comments: [], 
+        allarmi: [], // <--- Memoria Sabotaggi
+        modal: null, 
+        selectedReviewBookId: null,
+        unsubs: []
     };
 
     let serverState = { attivo: true, last_force_reload: null };
@@ -116,36 +199,57 @@
     const DAY = 86400000;
     const INPUT_CLS = "w-full rounded-2xl border-2 border-slate-200 px-3 sm:px-4 py-2.5 sm:py-3.5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all font-medium bg-slate-50 focus:bg-white text-sm sm:text-base";
 
-    function isGodSicuro() {
-        return auth.currentUser && GOD_EMAILS.includes(auth.currentUser.email);
+    // -------------------------------------------------------------
+    // 🛡️ SISTEMA DI AUTORIZZAZIONE ESTREMO CONTRO HACKER CONSOLE 🛡️
+    // Essendo scoped nel modulo, la console non può manipolarle.
+    // -------------------------------------------------------------
+    function verificaAdmin() {
+        if (!state.user) return false;
+        if (GOD_EMAILS.includes(state.user.email)) return true;
+        if (state.userData && (state.userData.ruolo === 'admin' || state.userData.ruolo === 'god')) return true;
+        return false;
     }
 
-    function isAdminSicuro() {
-        return isGodSicuro() || (state.userData && state.userData.ruolo === 'admin');
+    function verificaGod() {
+        if (!state.user) return false;
+        if (GOD_EMAILS.includes(state.user.email)) return true;
+        return false;
     }
 
-    async function logIntrusioneConsole(comando) {
-        if(!auth.currentUser) return;
+    async function logSabotaggio(azione) {
+        if (!state.user) return;
         const logEntry = {
             data: Date.now(),
-            attaccante_nome: state.userData.nome || auth.currentUser.displayName || "Sconosciuto",
-            attaccante_email: auth.currentUser.email,
+            attaccante_nome: (state.userData && state.userData.nome) ? state.userData.nome : (state.user.displayName || "Sconosciuto"),
+            attaccante_email: state.user.email,
             bersaglio: "SISTEMA - HACKING CONSOLE",
-            messaggio: `Tentativo bloccato. Comando eseguito: [${comando}]. Azione gestita dal server.`
+            messaggio: `Ha tentato di forzare il comando protetto: [${azione}] tramite la console del browser.`
         };
-        try { await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true }); } catch(e) {}
-        mostraAlert("⛔ ACCESSO NEGATO: Azione non autorizzata. Le regole di sicurezza del database Firebase hanno bloccato la tua richiesta.");
+        try {
+            await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
+        } catch(e) {}
+        mostraAlert("⛔ ACCESSO NEGATO: Azione bloccata dal server. Il tuo tentativo di intrusione è stato registrato nei sabotaggi!");
     }
 
+    // Generatore Omino Grigio in altissima qualità (CON LAZY LOADING)
     window.getAvatar = (url, classes = "w-8 h-8") => {
-        if (url && url.length > 10) return `<img src="${escapeHTML(url)}" loading="lazy" decoding="async" class="${classes} rounded-full object-cover shadow-sm border border-slate-200 shrink-0">`;
-        return `<div class="${classes} shrink-0 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center overflow-hidden"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3/4 h-3/4 text-slate-400 mt-[15%]"><path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" /></svg></div>`;
+        if (url && url.length > 10) {
+            return `<img src="${escapeHTML(url)}" loading="lazy" decoding="async" class="${classes} rounded-full object-cover shadow-sm border border-slate-200 shrink-0">`;
+        } else {
+            return `<div class="${classes} shrink-0 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center overflow-hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3/4 h-3/4 text-slate-400 mt-[15%]">
+                            <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" />
+                        </svg>
+                    </div>`;
+        }
     };
 
     function checkServerStatus() {
         const overlay = $('server-overlay');
+        const isGodEmail = state.user && GOD_EMAILS.includes(state.user.email);
         
-        if (isGodSicuro()) {
+        // I creatori supremi by-passano SEMPRE la schermata server spento
+        if (state.isGod || isGodEmail) {
             overlay.classList.add('hidden');
             return;
         }
@@ -163,109 +267,203 @@
         }
     }
 
+    // -------------------------------------------------------------
+    // MOTORE DEL CAOS: ESEGUE MATERIALMENTE GLI EFFETTI VISIVI
+    // -------------------------------------------------------------
     window.innescaCaos = (evento, messaggio) => {
-        if (evento === 'messaggio') return CustomUI.show(`📢 LA VOCE SUPREMA:\n\n${escapeHTML(messaggio)}`, 'alert');
+        if (evento === 'messaggio') {
+            CustomUI.show(`📢 LA VOCE SUPREMA:\n\n${escapeHTML(messaggio)}`, 'alert');
+            return;
+        }
+
         const body = document.body;
         const rimuoviTutto = () => { body.classList.remove('caos-discoteca', 'caos-terremoto', 'caos-sottosopra', 'caos-buio', 'caos-comic'); };
         rimuoviTutto();
 
-        if (evento === 'discoteca') { body.classList.add('caos-discoteca'); setTimeout(rimuoviTutto, 10000); } 
-        else if (evento === 'terremoto') { body.classList.add('caos-terremoto'); setTimeout(rimuoviTutto, 8000); } 
-        else if (evento === 'sottosopra') { body.classList.add('caos-sottosopra'); setTimeout(rimuoviTutto, 15000); } 
-        else if (evento === 'buio') { body.classList.add('caos-buio'); setTimeout(rimuoviTutto, 10000); } 
-        else if (evento === 'comic') { body.classList.add('caos-comic'); setTimeout(rimuoviTutto, 15000); } 
-        else if (evento === 'rickroll') {
-            const rr = document.createElement('div'); rr.className = 'fixed inset-0 z-[999999] bg-black flex flex-col items-center justify-center fade-in';
-            rr.innerHTML = `<button onclick="this.parentNode.remove()" class="absolute top-6 right-6 px-6 py-3 bg-red-600 text-white font-black uppercase tracking-wider rounded-2xl z-[1000000] hover:bg-red-700 shadow-2xl transition-transform active:scale-95">CHIEDI PIETÀ 🏳️</button><iframe width="100%" height="100%" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        if (evento === 'discoteca') {
+            body.classList.add('caos-discoteca');
+            setTimeout(rimuoviTutto, 10000);
+        } else if (evento === 'terremoto') {
+            body.classList.add('caos-terremoto');
+            setTimeout(rimuoviTutto, 8000);
+        } else if (evento === 'sottosopra') {
+            body.classList.add('caos-sottosopra');
+            setTimeout(rimuoviTutto, 15000);
+        } else if (evento === 'buio') {
+            body.classList.add('caos-buio');
+            setTimeout(rimuoviTutto, 10000);
+        } else if (evento === 'comic') {
+            body.classList.add('caos-comic');
+            setTimeout(rimuoviTutto, 15000);
+        } else if (evento === 'rickroll') {
+            const rr = document.createElement('div');
+            rr.className = 'fixed inset-0 z-[999999] bg-black flex flex-col items-center justify-center fade-in';
+            rr.innerHTML = `
+                <button onclick="this.parentNode.remove()" class="absolute top-6 right-6 px-6 py-3 bg-red-600 text-white font-black uppercase tracking-wider rounded-2xl z-[1000000] hover:bg-red-700 shadow-2xl transition-transform active:scale-95">CHIEDI PIETÀ 🏳️</button>
+                <iframe width="100%" height="100%" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            `;
             document.body.appendChild(rr);
         } else if (['pioggia', 'gattini', 'thanos'].includes(evento)) {
-            let emoji = '🌧️'; if (evento === 'gattini') emoji = '🐱'; if (evento === 'thanos') emoji = '💨';
-            let count = 0, lastTime = 0;
+            let emoji = '🌧️';
+            if (evento === 'gattini') emoji = '🐱';
+            if (evento === 'thanos') emoji = '💨';
+            
+            let count = 0;
+            let lastTime = 0;
             const animateFall = (time) => {
                 if (time - lastTime > 100) {
                     if (count > 50) return;
-                    const el = document.createElement('div'); el.className = 'falling-item drop-shadow-lg'; el.innerText = emoji; el.style.left = Math.random() * 100 + 'vw'; el.style.animationDuration = (Math.random() * 2 + 1.5) + 's'; el.style.fontSize = (Math.random() * 2.5 + 2) + 'rem';
-                    document.body.appendChild(el); setTimeout(() => { if(el.parentNode) el.parentNode.removeChild(el); }, 3500);
-                    count++; lastTime = time;
+                    const el = document.createElement('div');
+                    el.className = 'falling-item drop-shadow-lg';
+                    el.innerText = emoji;
+                    el.style.left = Math.random() * 100 + 'vw';
+                    el.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                    el.style.fontSize = (Math.random() * 2.5 + 2) + 'rem';
+                    document.body.appendChild(el);
+                    setTimeout(() => { if(el.parentNode) el.parentNode.removeChild(el); }, 3500);
+                    count++;
+                    lastTime = time;
                 }
                 if (count <= 50) requestAnimationFrame(animateFall);
-            }; requestAnimationFrame(animateFall);
+            };
+            requestAnimationFrame(animateFall);
             
             if(evento === 'thanos') {
                const appDiv = document.getElementById('app');
                if(appDiv) {
-                   appDiv.style.transition = "opacity 4s cubic-bezier(0.4, 0, 0.2, 1), filter 4s cubic-bezier(0.4, 0, 0.2, 1)"; appDiv.style.opacity = "0"; appDiv.style.filter = "blur(15px)"; appDiv.style.willChange = "opacity, filter";
-                   setTimeout(() => { appDiv.style.transition = "opacity 2s ease-out, filter 2s ease-out"; appDiv.style.opacity = "1"; appDiv.style.filter = "blur(0)"; setTimeout(() => { appDiv.style.willChange = "auto"; }, 2000); }, 10000);
+                   appDiv.style.transition = "opacity 4s cubic-bezier(0.4, 0, 0.2, 1), filter 4s cubic-bezier(0.4, 0, 0.2, 1)";
+                   appDiv.style.opacity = "0";
+                   appDiv.style.filter = "blur(15px)";
+                   appDiv.style.willChange = "opacity, filter";
+                   setTimeout(() => {
+                       appDiv.style.transition = "opacity 2s ease-out, filter 2s ease-out";
+                       appDiv.style.opacity = "1";
+                       appDiv.style.filter = "blur(0)";
+                       setTimeout(() => { appDiv.style.willChange = "auto"; }, 2000);
+                   }, 10000);
                }
             }
         }
     };
 
     onAuthStateChanged(auth, async user => {
-        state.unsubs.forEach(unsub => unsub()); state.unsubs = [];
-        state.user = user; state.isLoaded = false;
+        state.unsubs.forEach(unsub => unsub()); 
+        state.unsubs = [];
+        state.user = user;
+        state.isLoaded = false;
         
-        checkServerStatus();
+        checkServerStatus(); // Re-valuta l'accesso nel caso in cui un creatore si sia appena loggato
+
+        // FIREWALL ANTI-HACKER CONSOLE
+        if (user) {
+            const isGodUser = GOD_EMAILS.includes(user.email);
+            
+            if (sessionStorage.getItem("godLoggato") === "true") {
+                if (isGodUser) {
+                    state.isAdmin = true;
+                    state.isGod = true;
+                } else {
+                    sessionStorage.removeItem("godLoggato");
+                    sessionStorage.removeItem("adminLoggato");
+                    state.isAdmin = false;
+                    state.isGod = false;
+                    
+                    logSabotaggio("Falsa modalità Dio (Console session)");
+                }
+            } else if (sessionStorage.getItem("adminLoggato") === "true") {
+                state.isAdmin = true;
+            }
+        }
 
         state.unsubs.push(onSnapshot(doc(db, "sistema", "stato_server"), d => {
-            if (d.exists()) { serverState = d.data(); checkServerStatus(); } 
-            else if (isGodSicuro()) setDoc(doc(db, "sistema", "stato_server"), { attivo: true, last_force_reload: null });
+            if (d.exists()) {
+                serverState = d.data();
+                checkServerStatus();
+            } else if (state.isGod) {
+                setDoc(doc(db, "sistema", "stato_server"), { attivo: true, last_force_reload: null });
+            }
         }));
 
         state.unsubs.push(onSnapshot(doc(db, "sistema", "blacklist"), d => {
             if (d.exists()) {
                 bannedDevices = d.data().devices || [];
-                if (bannedDevices.includes(LOCAL_DEVICE_ID) && !isGodSicuro()) $('ban-overlay').classList.remove('hidden');
-                else $('ban-overlay').classList.add('hidden');
-            } else if (isGodSicuro()) setDoc(doc(db, "sistema", "blacklist"), { devices: [] });
+                if (bannedDevices.includes(LOCAL_DEVICE_ID) && !state.isGod) {
+                    $('ban-overlay').classList.remove('hidden');
+                } else {
+                    $('ban-overlay').classList.add('hidden');
+                }
+            } else if (state.isGod) {
+                setDoc(doc(db, "sistema", "blacklist"), { devices: [] });
+            }
         }));
 
         if (user) {
-            updateDoc(doc(db, "utenti", user.uid), { lastActive: serverTimestamp() }).catch(()=>{});
-            window.addEventListener('beforeunload', () => { updateDoc(doc(db, "utenti", user.uid), { lastActive: null }).catch(()=>{}); });
+            const updatePresence = () => { if(state.user) updateDoc(doc(db, "utenti", user.uid), { lastActive: serverTimestamp() }).catch(()=>{}); };
+            updatePresence(); 
+            window.addEventListener('beforeunload', () => { if(state.user) updateDoc(doc(db, "utenti", user.uid), { lastActive: null }).catch(()=>{}); });
 
             state.unsubs.push(onSnapshot(doc(db, "utenti", user.uid), async docSnap => {
                 if(docSnap.exists()) {
                     const data = docSnap.data();
                     
-                    state.isGod = isGodSicuro();
-                    state.isAdmin = state.isGod || data.ruolo === 'admin';
-                    
-                    if (!state.isAdmin && (state.tab === 'admin' || state.tab === 'god')) {
-                        state.tab = 'catalogo';
+                    // CONTROLLO FALSO ADMIN
+                    if (!GOD_EMAILS.includes(user.email) && data.ruolo !== 'admin' && data.ruolo !== 'god' && state.isAdmin) {
+                        state.isAdmin = false;
+                        sessionStorage.removeItem("adminLoggato");
+                        logSabotaggio("Falso login Admin (Console Role Spoofing)");
+                        if(state.tab === 'admin') state.tab = 'catalogo';
                         requestRender(); 
                     }
 
-                    if (state.isGod && data.ruolo !== 'admin' && data.ruolo !== 'god') {
-                        await updateDoc(doc(db, "utenti", state.user.uid), { ruolo: 'admin' }).catch(()=>{});
-                        data.ruolo = 'admin';
+                    if (GOD_EMAILS.includes(state.user.email)) {
+                        if (data.ruolo !== 'admin' && data.ruolo !== 'god') {
+                            await updateDoc(doc(db, "utenti", state.user.uid), { ruolo: 'admin' }).catch(()=>{});
+                            data.ruolo = 'admin'; 
+                        }
                     }
                     
-                    const oldBadge = state.userData.badge; const oldAvatar = state.userData.avatar;
-                    state.userData = data; state.isLoaded = true;
+                    const oldBadge = state.userData.badge;
+                    const oldAvatar = state.userData.avatar;
+                    state.userData = data;
+                    state.isLoaded = true;
                     if(!state.userData.libri_letti) state.userData.libri_letti = [];
-                    checkServerStatus();
+                    checkServerStatus(); // Re-valuta in caso di cambi ruolo improvvisi
                     if (oldBadge !== data.badge || oldAvatar !== data.avatar) backgroundUpdate();
                 } else if (state.isLoaded) {
-                    logout(); alert("Il tuo account è stato eliminato dall'amministratore."); window.location.reload();
+                    logout();
+                    alert("Il tuo account è stato eliminato dall'amministratore.");
+                    window.location.reload();
                 }
             }));
+
             caricaDati();
         } else {
-            state.isAdmin = false; state.isGod = false;
+            state.isAdmin = false;
+            state.isGod = false;
         }
         requestRender();
     });
 
     let bgUpdateTimer;
-    function backgroundUpdate() { if (state.tab === 'proponi' || state.modal) return; clearTimeout(bgUpdateTimer); bgUpdateTimer = setTimeout(() => requestRender(false), 16); }
+    function backgroundUpdate() {
+        if (state.tab === 'proponi' || state.modal) return;
+        clearTimeout(bgUpdateTimer);
+        bgUpdateTimer = setTimeout(() => requestRender(false), 16); 
+    }
 
-    let isRendering = false, shouldAnimateNextRender = true;
+    let isRendering = false;
+    let renderRequested = false;
+    let shouldAnimateNextRender = true;
+
     function requestRender(animate = true) {
         if (!animate) shouldAnimateNextRender = false;
         if (!isRendering) {
             isRendering = true;
-            requestAnimationFrame(() => { actualRender(shouldAnimateNextRender); isRendering = false; shouldAnimateNextRender = true; });
+            requestAnimationFrame(() => {
+                actualRender(shouldAnimateNextRender);
+                isRendering = false;
+                shouldAnimateNextRender = true; 
+            });
         }
     }
 
@@ -274,99 +472,175 @@
         state.unsubs.push(onSnapshot(collection(db, "recensioni"), s => { state.reviews = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.data - a.data); backgroundUpdate(); }));
         state.unsubs.push(onSnapshot(collection(db, "commenti"), s => { state.comments = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.data - b.data); backgroundUpdate(); }));
         
-        state.unsubs.push(onSnapshot(query(collection(db, "richieste"), where("stato", "==", "in_attesa")), s => { state.requests = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }));
-        state.unsubs.push(onSnapshot(collection(db, "utenti"), s => { state.users = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }));
+        if (state.isAdmin) {
+            state.unsubs.push(onSnapshot(query(collection(db, "richieste"), where("stato", "==", "in_attesa")), s => { state.requests = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }));
+            state.unsubs.push(onSnapshot(collection(db, "utenti"), s => { state.users = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }));
             
-        state.unsubs.push(onSnapshot(doc(db, "sistema", "sicurezza"), d => {
-            if(d.exists()) { state.allarmi = d.data().log || []; backgroundUpdate(); } 
-            else if (isGodSicuro()) setDoc(doc(db, "sistema", "sicurezza"), { log: [] });
-        }));
+            state.unsubs.push(onSnapshot(doc(db, "sistema", "sicurezza"), d => {
+                if(d.exists()) {
+                    state.allarmi = d.data().log || [];
+                    backgroundUpdate();
+                } else if (state.isGod) {
+                    setDoc(doc(db, "sistema", "sicurezza"), { log: [] });
+                }
+            }));
+        }
 
         state.unsubs.push(onSnapshot(doc(db, "sistema", "caos"), d => {
             if(d.exists()) {
                 const data = d.data();
                 if(data.timestamp && (Date.now() - data.timestamp.toMillis() < 15000)) {
                     const targets = data.targets || ['all'];
-                    if (targets.includes('all') || targets.includes(state.user.uid)) window.innescaCaos(data.evento, data.messaggio);
+                    if (targets.includes('all') || targets.includes(state.user.uid)) {
+                        window.innescaCaos(data.evento, data.messaggio);
+                    }
                 }
             }
         }));
     }
 
-    window.toggleAuthMode = () => { state.authMode = state.authMode === 'login' ? 'register' : 'login'; requestRender(); };
+    window.toggleAuthMode = () => {
+        state.authMode = state.authMode === 'login' ? 'register' : 'login';
+        requestRender();
+    };
 
     window.gestisciLogin = async (e) => {
-        e.preventDefault(); const isRegister = state.authMode === 'register'; const email = $('email').value.trim(); const password = $('password').value; const btn = $('authSubmitBtn'); const originalText = btn.innerText;
-        btn.innerText = "Attendere..."; btn.disabled = true; $('errorBox').innerText = "";
+        e.preventDefault();
+        const isRegister = state.authMode === 'register';
+        const email = $('email').value.trim();
+        const password = $('password').value;
+        const btn = $('authSubmitBtn');
+        const originalText = btn.innerText;
+        
+        btn.innerText = "Attendere..."; btn.disabled = true;
+        $('errorBox').innerText = "";
 
         try {
             if (isRegister) {
                 const emailRegex = /^[a-zA-Z0-9._%+-]{3,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
                 if(!emailRegex.test(email)) throw new Error("Devi inserire un'email reale e valida.");
                 const fakeDomains = ['temp-mail.org', '10minutemail.com', 'guerrillamail.com', 'mailinator.com', 'yopmail.com'];
-                if (fakeDomains.includes(email.split('@')[1])) throw new Error("Non puoi usare email temporanee o false.");
-                if (['sborra', 'cazzo', 'merda', 'puttana', 'troia', 'fake', 'admin', 'root'].some(w => email.toLowerCase().includes(w))) throw new Error("Email non consentita per Policy di Sicurezza.");
+                const domain = email.split('@')[1];
+                if (fakeDomains.includes(domain)) throw new Error("Non puoi usare email temporanee o false.");
+                const badWords = ['sborra', 'cazzo', 'merda', 'puttana', 'troia', 'fake', 'admin', 'root'];
+                if (badWords.some(w => email.toLowerCase().includes(w))) throw new Error("Email non consentita per Policy di Sicurezza.");
                 
-                const nome = $('nome').value.trim(); if(!nome || nome === "") throw new Error("Inserisci il tuo nome e cognome.");
+                const nome = $('nome').value.trim();
+                if(!nome || nome === "") throw new Error("Inserisci il tuo nome e cognome.");
+
                 let cred;
-                try { cred = await createUserWithEmailAndPassword(auth, email, password); } 
-                catch (createErr) {
+                try {
+                    cred = await createUserWithEmailAndPassword(auth, email, password);
+                } catch (createErr) {
                     if (createErr.code === 'auth/email-already-in-use') {
                         try {
                             let tempCred = await signInWithEmailAndPassword(auth, email, password);
                             const checkDoc = await getDoc(doc(db, "utenti", tempCred.user.uid));
-                            if (!checkDoc.exists()) { await tempCred.user.delete(); cred = await createUserWithEmailAndPassword(auth, email, password); } 
-                            else throw new Error("Questa email è già registrata ed attiva. Clicca su 'Accedi'.");
-                        } catch (loginErr) { if (loginErr.message.includes("attiva")) throw loginErr; throw new Error("Account rimosso ma credenziali bloccate. Accedi con la tua VECCHIA password per sbloccare l'email."); }
-                    } else throw createErr;
+                            if (!checkDoc.exists()) {
+                                await tempCred.user.delete();
+                                cred = await createUserWithEmailAndPassword(auth, email, password);
+                            } else {
+                                throw new Error("Questa email è già registrata ed attiva. Clicca su 'Accedi'.");
+                            }
+                        } catch (loginErr) {
+                            if (loginErr.message.includes("attiva")) throw loginErr;
+                            throw new Error("Account rimosso ma credenziali bloccate. Clicca su 'Accedi' e usa la tua VECCHIA password per sbloccare l'email.");
+                        }
+                    } else {
+                        throw createErr;
+                    }
                 }
 
-                const nameSnap = await getDocs(query(collection(db, "utenti"), where("nome", "==", nome)));
-                let nameTaken = false; nameSnap.forEach(d => { if(d.id !== cred.user.uid) nameTaken = true; }); 
-                if (nameTaken) { await cred.user.delete(); throw new Error(`Il nome "${nome}" è già stato preso.`); }
+                const nameQuery = query(collection(db, "utenti"), where("nome", "==", nome));
+                const nameSnap = await getDocs(nameQuery);
+                let nameTaken = false;
+                nameSnap.forEach(d => { if(d.id !== cred.user.uid) nameTaken = true; }); 
 
-                const assignedRole = GOD_EMAILS.includes(email) ? "admin" : "utente";
+                if (nameTaken) {
+                    await cred.user.delete();
+                    throw new Error(`Il nome "${nome}" è già stato preso. Scegline uno diverso.`);
+                }
+
+                // Assegna il ruolo admin automaticamente se è un creatore
+                const isGodUser = GOD_EMAILS.includes(email);
+                const assignedRole = isGodUser ? "admin" : "utente";
+
                 await updateProfile(cred.user, { displayName: nome });
-                await setDoc(doc(db, "utenti", cred.user.uid), { nome: nome, email: email, ruolo: assignedRole, volte_admin: 0, libri_letti: [], badge: null, avatar: null, lastActive: serverTimestamp(), deviceId: LOCAL_DEVICE_ID });
+                await setDoc(doc(db, "utenti", cred.user.uid), { 
+                    nome: nome, email: email, ruolo: assignedRole, volte_admin: 0, libri_letti: [], badge: null, avatar: null, lastActive: serverTimestamp(), deviceId: LOCAL_DEVICE_ID
+                });
+
             } else {
                 const cred = await signInWithEmailAndPassword(auth, email, password);
-                const docRef = doc(db, "utenti", cred.user.uid); const docSnap = await getDoc(docRef);
-                if (!docSnap.exists()) { await cred.user.delete(); throw new Error("Il tuo account era stato rimosso. L'email è sbloccata: registrati di nuovo."); } 
-                else await updateDoc(docRef, { deviceId: LOCAL_DEVICE_ID });
+                const docRef = doc(db, "utenti", cred.user.uid);
+                const docSnap = await getDoc(docRef);
+                
+                if (!docSnap.exists()) {
+                    await cred.user.delete();
+                    throw new Error("Il tuo account era stato rimosso. L'email è stata ora sbloccata: vai su 'Registrati' per ricrearlo.");
+                } else {
+                    await updateDoc(docRef, { deviceId: LOCAL_DEVICE_ID });
+                }
             }
         } catch (error) {
             let msg = error.message;
             if (error.code === 'auth/email-already-in-use') msg = "Questa email è già registrata. Effettua l'accesso.";
             if (error.code === 'auth/weak-password') msg = "La password deve avere almeno 6 caratteri.";
-            if (['auth/invalid-credential', 'auth/user-not-found', 'auth/wrong-password'].includes(error.code)) msg = "Email o password errati.";
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') msg = "Email o password errati.";
             if (error.code === 'auth/invalid-email') msg = "Il formato dell'email non è valido.";
-            if (!msg.includes("Policy di") && !msg.includes("preso") && !msg.includes("reale") && !msg.includes("cognome") && !msg.includes("temporanee") && !msg.includes("sbloccata") && !msg.includes("VECCHIA") && !msg.includes("attiva") && error.code) msg = "Errore: Controlla i dati inseriti.";
-            $('errorBox').innerText = msg; btn.innerText = originalText; btn.disabled = false;
+            if (!msg.includes("Policy di Sicurezza") && !msg.includes("già stato preso") && !msg.includes("email reale") && !msg.includes("nome e cognome") && !msg.includes("temporanee") && !msg.includes("sbloccata") && !msg.includes("VECCHIA") && !msg.includes("attiva") && error.code) {
+                msg = "Errore: Controlla i dati inseriti.";
+            }
+
+            $('errorBox').innerText = msg;
+            btn.innerText = originalText; btn.disabled = false;
         }
     };
     
-    window.logout = () => { if(state.user) updateDoc(doc(db, "utenti", state.user.uid), { lastActive: null }).catch(()=>{}); signOut(auth); };
+    window.logout = () => { 
+        if(state.user) updateDoc(doc(db, "utenti", state.user.uid), { lastActive: null }).catch(()=>{});
+        sessionStorage.clear(); 
+        signOut(auth); 
+    };
 
     window.openModal = (type, data = null) => { state.modal = { type, data }; requestRender(); };
     window.closeModal = () => { state.modal = null; requestRender(); };
-    window.apriRadarManuale = () => { if(!isGodSicuro()) return logIntrusioneConsole("apriRadarManuale"); state.modal = { type: 'radarManuale' }; requestRender(); };
+    
+    window.apriRadarManuale = () => { 
+        if (!verificaGod()) return logSabotaggio("apriRadarManuale");
+        state.modal = { type: 'radarManuale' }; requestRender(); 
+    };
 
+    // 🔥 SUPER COMPRESSIONE PER RISPARMIARE SPAZIO 🔥
     function comprimiInBase64(file, maxWidth = 400, maxHeight = 400, quality = 0.5, isSquare = false) {
         return new Promise((resolve, reject) => {
             if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) return reject(new Error("Formato HEIC (iPhone) non supportato."));
             if (file.type.startsWith('video/')) return reject(new Error("I video sono troppo pesanti per il database. Inserisci una foto o una GIF."));
             if (!file.type.startsWith('image/')) return resolve(null);
 
-            const objectUrl = URL.createObjectURL(file); const img = new Image(); img.src = objectUrl;
+            const objectUrl = URL.createObjectURL(file);
+            const img = new Image();
+            img.src = objectUrl;
+
             img.onload = () => {
-                URL.revokeObjectURL(objectUrl); const canvas = document.createElement('canvas'); let w = img.width, h = img.height;
+                URL.revokeObjectURL(objectUrl);
+                const canvas = document.createElement('canvas');
+                let w = img.width, h = img.height;
+
                 if (isSquare) {
-                    const minSize = Math.min(w, h); const maxSize = Math.min(minSize, maxWidth);
-                    canvas.width = maxSize; canvas.height = maxSize; const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, (w - minSize) / 2, (h - minSize) / 2, minSize, minSize, 0, 0, maxSize, maxSize);
+                    const minSize = Math.min(w, h);
+                    const maxSize = Math.min(minSize, maxWidth);
+                    canvas.width = maxSize; canvas.height = maxSize;
+                    const ctx = canvas.getContext('2d');
+                    const x = (w - minSize) / 2;
+                    const y = (h - minSize) / 2;
+                    ctx.drawImage(img, x, y, minSize, minSize, 0, 0, maxSize, maxSize);
                 } else {
-                    if (w > h) { if (w > maxWidth) { h = Math.round(h * (maxWidth / w)); w = maxWidth; } } else { if (h > maxHeight) { w = Math.round(w * (maxHeight / h)); h = maxHeight; } }
-                    canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    if (w > h) { if (w > maxWidth) { h = Math.round(h * (maxWidth / w)); w = maxWidth; } } 
+                    else       { if (h > maxHeight) { w = Math.round(w * (maxHeight / h)); h = maxHeight; } }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
                 }
                 resolve(canvas.toDataURL('image/jpeg', quality));
             };
@@ -374,67 +648,106 @@
         });
     }
 
+    // Funzione dedicata per comprimere Base64 GIA' ESISTENTI nel database
     window.comprimiBase64Esistente = (base64Str, maxWidth = 400, maxHeight = 400, quality = 0.5) => {
         return new Promise((resolve) => {
-            if (!base64Str || !base64Str.startsWith('data:image/') || base64Str.length < 30000) return resolve(base64Str);
+            if (!base64Str || !base64Str.startsWith('data:image/')) return resolve(base64Str);
+            if (base64Str.length < 30000) return resolve(base64Str); // Se pesa già pochissimo, skippa
+
             const img = new Image();
             img.onload = () => {
-                const canvas = document.createElement('canvas'); let w = img.width, h = img.height;
+                const canvas = document.createElement('canvas');
+                let w = img.width, h = img.height;
                 if (w > maxWidth) { h = Math.round(h * (maxWidth / w)); w = maxWidth; }
                 if (h > maxHeight) { w = Math.round(w * (maxHeight / h)); h = maxHeight; }
-                canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                canvas.width = w; canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
                 resolve(canvas.toDataURL('image/jpeg', quality));
             };
-            img.onerror = () => resolve(base64Str); img.src = base64Str;
+            img.onerror = () => resolve(base64Str);
+            img.src = base64Str;
         });
     };
 
     window.salvaProfilo = async (e) => {
-        e.preventDefault(); const f = new FormData(e.target); const nuovoNome = f.get('nome').trim(); const fileInput = $('file_avatar'); const btn = $('btnSalvaProfilo');
+        e.preventDefault();
+        const f = new FormData(e.target);
+        const nuovoNome = f.get('nome').trim();
+        const fileInput = $('file_avatar');
+        const btn = $('btnSalvaProfilo');
+        
         if(!nuovoNome) return mostraAlert("Il nome non può essere vuoto.");
         btn.disabled = true; btn.innerText = "Salvataggio ovunque...";
 
         try {
-            const oldNome = state.userData.nome, oldAvatar = state.userData.avatar;
+            const oldNome = state.userData.nome;
+            const oldAvatar = state.userData.avatar;
+
             if (nuovoNome !== oldNome) {
-                const nameSnap = await getDocs(query(collection(db, "utenti"), where("nome", "==", nuovoNome)));
-                let nameTaken = false; nameSnap.forEach(d => { if (d.id !== state.user.uid) nameTaken = true; }); 
+                const nameQuery = query(collection(db, "utenti"), where("nome", "==", nuovoNome));
+                const nameSnap = await getDocs(nameQuery);
+                let nameTaken = false;
+                nameSnap.forEach(d => { if (d.id !== state.user.uid) nameTaken = true; }); 
                 if (nameTaken) throw new Error("Questo nome è già in uso da un altro utente.");
                 await updateProfile(auth.currentUser, { displayName: nuovoNome });
             }
 
             let avatarUrl = oldAvatar;
             if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                try { avatarUrl = await comprimiInBase64(fileInput.files[0], 150, 150, 0.4, true); } catch(err) { throw new Error(err.message); }
+                try { avatarUrl = await comprimiInBase64(fileInput.files[0], 150, 150, 0.4, true); } 
+                catch(err) { throw new Error(err.message); }
             }
 
             await updateDoc(doc(db, "utenti", state.user.uid), { nome: nuovoNome, avatar: avatarUrl });
 
             if (nuovoNome !== oldNome || avatarUrl !== oldAvatar) {
                 const updatePromises = [];
-                for (let b of state.books.filter(b => b.noleggiato_da_uid === state.user.uid)) updatePromises.push(updateDoc(doc(db, "libri", b.id), { noleggiato_da: nuovoNome }));
-                for (let r of state.reviews.filter(r => r.uid === state.user.uid)) updatePromises.push(updateDoc(doc(db, "recensioni", r.id), { nomeUtente: nuovoNome, avatar: avatarUrl }));
-                for (let c of state.comments.filter(c => c.uid === state.user.uid)) updatePromises.push(updateDoc(doc(db, "commenti", c.id), { nomeUtente: nuovoNome, avatar: avatarUrl }));
+                
+                const myBooks = state.books.filter(b => b.noleggiato_da_uid === state.user.uid);
+                for (let b of myBooks) updatePromises.push(updateDoc(doc(db, "libri", b.id), { noleggiato_da: nuovoNome }));
+                
+                const myReviews = state.reviews.filter(r => r.uid === state.user.uid);
+                for (let r of myReviews) updatePromises.push(updateDoc(doc(db, "recensioni", r.id), { nomeUtente: nuovoNome, avatar: avatarUrl }));
+
+                const myComments = state.comments.filter(c => c.uid === state.user.uid);
+                for (let c of myComments) updatePromises.push(updateDoc(doc(db, "commenti", c.id), { nomeUtente: nuovoNome, avatar: avatarUrl }));
+
                 await Promise.all(updatePromises);
             }
 
-            mostraAlert("Profilo aggiornato con successo ovunque!"); closeModal();
-        } catch (error) { mostraAlert(error.message || "Errore durante il salvataggio."); } 
-        finally { if(btn) { btn.disabled = false; btn.innerText = "Salva Profilo"; } }
+            mostraAlert("Profilo aggiornato con successo ovunque!");
+            closeModal();
+        } catch (error) {
+            mostraAlert(error.message || "Errore durante il salvataggio.");
+        } finally {
+            if(btn) { btn.disabled = false; btn.innerText = "Salva Profilo"; }
+        }
     };
 
     const CustomUI = {
         show: (message, type = 'alert', defaultVal = '', inputType = 'text') => {
             return new Promise((resolve) => {
-                const overlay = document.createElement('div'); overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 fade-in';
-                const box = document.createElement('div'); box.className = 'bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-center flex flex-col items-center border border-slate-100 mx-4';
-                const icon = document.createElement('div'); icon.className = 'text-5xl sm:text-6xl mb-4 sm:mb-5 drop-shadow-md'; icon.innerText = type === 'alert' ? '🔔' : (type === 'confirm' ? '❓' : '✍'); box.appendChild(icon);
-                const title = document.createElement('h3'); title.className = 'text-lg sm:text-xl font-extrabold text-slate-800 mb-5 sm:mb-6 leading-tight whitespace-pre-line'; title.innerHTML = message; box.appendChild(title);
+                const overlay = document.createElement('div');
+                overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 fade-in';
+                const box = document.createElement('div');
+                box.className = 'bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-center flex flex-col items-center border border-slate-100 mx-4';
+                
+                const icon = document.createElement('div');
+                icon.className = 'text-5xl sm:text-6xl mb-4 sm:mb-5 drop-shadow-md';
+                icon.innerText = type === 'alert' ? '🔔' : (type === 'confirm' ? '❓' : '✍');
+                box.appendChild(icon);
+                
+                const title = document.createElement('h3');
+                title.className = 'text-lg sm:text-xl font-extrabold text-slate-800 mb-5 sm:mb-6 leading-tight whitespace-pre-line';
+                title.innerHTML = message;
+                box.appendChild(title);
                 
                 let input = null;
                 if (type === 'prompt') {
                     input = document.createElement('input'); input.type = inputType; input.value = defaultVal; input.placeholder = "Scrivi qui...";
-                    input.className = 'w-full rounded-2xl border-2 border-slate-200 px-4 py-3 mb-5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all font-medium bg-slate-50 focus:bg-white text-center text-base'; box.appendChild(input);
+                    input.className = 'w-full rounded-2xl border-2 border-slate-200 px-4 py-3 mb-5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all font-medium bg-slate-50 focus:bg-white text-center text-base';
+                    box.appendChild(input);
                 }
                 
                 const btnContainer = document.createElement('div'); btnContainer.className = 'flex gap-3 w-full';
@@ -455,104 +768,204 @@
     window.chiediInput = (msg, defaultVal = "", type = "text") => CustomUI.show(msg, 'prompt', defaultVal, type);
     
     window.pulisciAllarmi = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("pulisciAllarmi");
+        if (!verificaGod()) return logSabotaggio("pulisciAllarmi");
+        
         if(await chiediConferma("Sei sicuro di voler eliminare tutto il registro dei sabotaggi?")) {
             await setDoc(doc(db, "sistema", "sicurezza"), { log: [] }, { merge: true });
             mostraAlert("Registro di sicurezza pulito.");
         }
     };
 
+    const checkPasswordObfuscated = (pass) => {
+        const a = [113, 120, 113, 123, 120, 126, 131, 116, 114, 112, 65, 63, 65, 69, 62, 65, 63, 65, 70]; 
+        const g = [101, 116, 125, 131, 120, 131, 129, 116, 65, 66, 48];
+        const isMatch = (arr, str) => str.length === arr.length && arr.every((c, i) => c === str.charCodeAt(i) + 15);
+        if (isMatch(g, pass)) return 'god';
+        if (isMatch(a, pass)) return 'admin';
+        return null;
+    };
+
+    window.diventaAdmin = async () => {
+        const pass = await chiediInput("Inserisci la Password Segreta:", "", "password");
+        if (!pass) return;
+        
+        const role = checkPasswordObfuscated(pass);
+        const isGodEmail = GOD_EMAILS.includes(state.user.email);
+        
+        if (!isGodEmail && state.userData.ruolo !== 'admin' && state.userData.ruolo !== 'god') {
+            logSabotaggio("diventaAdmin (Bypass check)");
+            return mostraAlert("Accesso Negato. Non hai il ruolo di Amministratore nel Database. Fatti promuovere da qualcun altro.");
+        }
+        
+        if (role === 'god') {
+            if (!isGodEmail) return mostraAlert("Azione negata. Solo i creatori supremi possono accedere alla Modalità Dio.");
+            state.isAdmin = true; state.isGod = true; sessionStorage.setItem("adminLoggato", "true"); sessionStorage.setItem("godLoggato", "true"); state.tab = 'god';
+            await updateDoc(doc(db, "utenti", state.user.uid), { volte_admin: increment(1) }).catch(()=>{});
+            caricaDati(); requestRender(); mostraAlert("⚡ MODALITÀ DIO ATTIVATA.");
+        } else if (role === 'admin') {
+            state.isAdmin = true; state.isGod = false; sessionStorage.setItem("adminLoggato", "true"); sessionStorage.removeItem("godLoggato"); state.tab = 'admin';
+            await updateDoc(doc(db, "utenti", state.user.uid), { volte_admin: increment(1) }).catch(()=>{});
+            caricaDati(); requestRender(); mostraAlert("Bentornato Amministratore!");
+        } else { 
+            mostraAlert("Password Errata."); 
+        }
+    };
+
+    window.esciDaAdmin = () => {
+        state.isAdmin = false;
+        state.isGod = false;
+        sessionStorage.removeItem("adminLoggato");
+        sessionStorage.removeItem("godLoggato");
+        if (state.tab === 'admin' || state.tab === 'god') state.tab = 'catalogo'; 
+        requestRender();
+        mostraAlert("Sei tornato alla visualizzazione utente normale.");
+    };
+
     window.cambiaRuolo = async (uid, ruolo) => { 
-        if (!isAdminSicuro()) return logIntrusioneConsole("cambiaRuolo");
+        if (!verificaAdmin()) return logSabotaggio("cambiaRuolo");
+        
         const u = state.users.find(x => x.id === uid);
         if (u && GOD_EMAILS.includes(u.email)) {
-            const logEntry = { data: Date.now(), attaccante_nome: state.userData.nome || "Sconosciuto", attaccante_email: state.user.email, bersaglio: u.email, messaggio: `Ha tentato di degradare questo account Supremo al ruolo di "${ruolo}".` };
+            const logEntry = {
+                data: Date.now(),
+                attaccante_nome: state.userData.nome || state.user.displayName || "Sconosciuto",
+                attaccante_email: state.user.email,
+                bersaglio: u.email,
+                messaggio: `Ha tentato di degradare questo account Supremo al ruolo di "${ruolo}".`
+            };
             await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
-            return mostraAlert("⚠️ Azione Rilevata e Negata.\nNon puoi modificare il ruolo di un Creatore Supremo. Registrato nel database di sicurezza.");
+            return mostraAlert("⚠️ Azione Rilevata e Negata.\nNon puoi modificare il ruolo di un Creatore Supremo. Il tuo tentativo è stato registrato nel database di sicurezza.");
         }
-        await updateDoc(doc(db, "utenti", uid), { ruolo: ruolo }); mostraAlert(`Ruolo aggiornato a: ${ruolo}`); 
+        await updateDoc(doc(db, "utenti", uid), { ruolo: ruolo }); 
+        mostraAlert(`Ruolo aggiornato a: ${ruolo}`); 
     };
 
     window.modificaUtente = async (uid, nomeAttuale) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("modificaUtente");
+        if (!verificaAdmin()) return logSabotaggio("modificaUtente");
+        
         const nuovoNome = await chiediInput(`Modifica il nome di ${nomeAttuale}:`, nomeAttuale);
         if (nuovoNome && nuovoNome.trim() !== "" && nuovoNome !== nomeAttuale) {
-            const nameSnap = await getDocs(query(collection(db, "utenti"), where("nome", "==", nuovoNome.trim())));
+            const nameQuery = query(collection(db, "utenti"), where("nome", "==", nuovoNome.trim()));
+            const nameSnap = await getDocs(nameQuery);
             if (!nameSnap.empty) return mostraAlert("Nome già in uso da un altro utente!");
+
             await updateDoc(doc(db, "utenti", uid), { nome: nuovoNome.trim() });
-            for (let b of state.books.filter(b => b.noleggiato_da_uid === uid)) await updateDoc(doc(db, "libri", b.id), { noleggiato_da: nuovoNome.trim() });
-            for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: nuovoNome.trim() });
-            for (let c of state.comments.filter(c => c.uid === uid)) await updateDoc(doc(db, "commenti", c.id), { nomeUtente: nuovoNome.trim() });
+            const prestiti = state.books.filter(b => b.noleggiato_da_uid === uid);
+            for (let b of prestiti) await updateDoc(doc(db, "libri", b.id), { noleggiato_da: nuovoNome.trim() });
+            const recensioni = state.reviews.filter(r => r.uid === uid);
+            for (let r of recensioni) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: nuovoNome.trim() });
+            const commenti = state.comments.filter(c => c.uid === uid);
+            for (let c of commenti) await updateDoc(doc(db, "commenti", c.id), { nomeUtente: nuovoNome.trim() });
+
             mostraAlert("Nome utente aggiornato ovunque!");
         }
     };
 
     window.eliminaUtente = async (uid, nome) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("eliminaUtente");
+        if (!verificaAdmin()) return logSabotaggio("eliminaUtente");
+        
         const u = state.users.find(x => x.id === uid);
         if (u && GOD_EMAILS.includes(u.email)) {
-            const logEntry = { data: Date.now(), attaccante_nome: state.userData.nome || state.user.email, attaccante_email: state.user.email, bersaglio: u.email, messaggio: "Ha tentato di ELIMINARE l'account di questo Creatore." };
+            const logEntry = {
+                data: Date.now(),
+                attaccante_nome: state.userData.nome || state.user.email,
+                attaccante_email: state.user.email,
+                bersaglio: u.email,
+                messaggio: "Ha tentato di ELIMINARE l'account di questo Creatore dal pannello."
+            };
             await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
             return mostraAlert("⚠️ Eresia rilevata! Impossibile eliminare l'account di un creatore supremo. L'azione è stata registrata.");
         }
+        
         if (uid === state.user.uid) return mostraAlert("Non puoi eliminare te stesso.");
         if (await chiediConferma(`Sicuro di voler distruggere l'account di ${nome}?\nIl profilo verrà raso al suolo e dovrà registrarsi da capo.`)) {
-            for (let b of state.books.filter(b => b.noleggiato_da_uid === uid)) await updateDoc(doc(db, "libri", b.id), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null });
-            for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: "Utente eliminato" });
-            await deleteDoc(doc(db, "utenti", uid)); mostraAlert("Account e dati eliminati definitivamente.");
+            const prestiti = state.books.filter(b => b.noleggiato_da_uid === uid);
+            for (let b of prestiti) await updateDoc(doc(db, "libri", b.id), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null });
+            const recensioni = state.reviews.filter(r => r.uid === uid);
+            for (let r of recensioni) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: "Utente eliminato" });
+            
+            await deleteDoc(doc(db, "utenti", uid));
+            mostraAlert("Account e dati eliminati definitivamente.");
         }
     };
 
     window.assegnaBadge = async (uid, nomeUtente) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("assegnaBadge");
+        if (!verificaAdmin()) return logSabotaggio("assegnaBadge");
+        
         const badge = await chiediInput(`Assegna un badge a ${nomeUtente} (Es. 🤡 Re dei Troll). Lascia vuoto per rimuovere:`, "");
         if(badge !== null) {
-            const badgeVal = badge.trim(); await updateDoc(doc(db, "utenti", uid), { badge: badgeVal });
-            for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { badgeUtente: badgeVal });
-            for (let c of state.comments.filter(c => c.uid === c.uid)) await updateDoc(doc(db, "commenti", c.id), { badgeUtente: badgeVal });
+            const badgeVal = badge.trim();
+            await updateDoc(doc(db, "utenti", uid), { badge: badgeVal });
+            const recensioniUtente = state.reviews.filter(r => r.uid === uid);
+            for (let r of recensioniUtente) await updateDoc(doc(db, "recensioni", r.id), { badgeUtente: badgeVal });
+            const commentiUtente = state.comments.filter(c => c.uid === uid);
+            for (let c of commentiUtente) await updateDoc(doc(db, "commenti", c.id), { badgeUtente: badgeVal });
+
             mostraAlert(`Badge aggiornato per ${nomeUtente} ovunque!`);
         }
     };
 
     window.banDispositivo = async (uid, nome) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("banDispositivo");
+        if (!verificaAdmin()) return logSabotaggio("banDispositivo");
+        
         const u = state.users.find(x => x.id === uid);
         if (!u || !u.deviceId) return mostraAlert("Impossibile trovare l'ID del dispositivo. L'utente deve rifare l'accesso per essere tracciato.");
+        
         if (GOD_EMAILS.includes(u.email)) {
-            const logEntry = { data: Date.now(), attaccante_nome: state.userData.nome || state.user.email, attaccante_email: state.user.email, bersaglio: u.email, messaggio: "Ha tentato di BANNARE IL DISPOSITIVO di questo Creatore." };
+            const logEntry = {
+                data: Date.now(),
+                attaccante_nome: state.userData.nome || state.user.email,
+                attaccante_email: state.user.email,
+                bersaglio: u.email,
+                messaggio: "Ha tentato di BANNARE IL DISPOSITIVO di questo Creatore."
+            };
             await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
             return mostraAlert("⚠ Azione Negata: I dispositivi dei creatori supremi sono immuni al ban. Tentativo registrato nei log.");
         }
 
-        if (bannedDevices.includes(u.deviceId)) {
+        const isBanned = bannedDevices.includes(u.deviceId);
+        if (isBanned) {
             if(await chiediConferma(`🟢 SBLOCCO DISPOSITIVO\n\nVuoi SBLOCCARE il dispositivo di ${nome}?`)) {
-                await setDoc(doc(db, "sistema", "blacklist"), { devices: bannedDevices.filter(id => id !== u.deviceId) }); mostraAlert(`Dispositivo di ${nome} sbloccato!`);
+                const newBanned = bannedDevices.filter(id => id !== u.deviceId);
+                await setDoc(doc(db, "sistema", "blacklist"), { devices: newBanned });
+                mostraAlert(`Dispositivo di ${nome} sbloccato!`);
             }
         } else {
             if(await chiediConferma(`🔨 BAN DISPOSITIVO\n\nSicuro di voler BANNARE il PC/Telefono di ${nome}?\nNon potrà più accedere né creare account.`)) {
-                await setDoc(doc(db, "sistema", "blacklist"), { devices: arrayUnion(u.deviceId) }, { merge: true }); mostraAlert(`Dispositivo bannato.`);
+                await setDoc(doc(db, "sistema", "blacklist"), { devices: arrayUnion(u.deviceId) }, { merge: true });
+                mostraAlert(`Dispositivo bannato.`);
             }
         }
     };
 
     window.approvaProposta = async (reqId) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("approvaProposta");
-        const req = state.requests.find(x => x.id === reqId); if(!req) return;
-        await addDoc(collection(db, "libri"), { ...req.dati, stato: 'disponibile', rating_media: 0, numero_recensioni: 0 }); await updateDoc(doc(db, "richieste", reqId), { stato: 'approvato' }); mostraAlert("Libro approvato!");
+        if (!verificaAdmin()) return logSabotaggio("approvaProposta");
+        const req = state.requests.find(x => x.id === reqId);
+        if(!req) return;
+        await addDoc(collection(db, "libri"), { ...req.dati, stato: 'disponibile', rating_media: 0, numero_recensioni: 0 });
+        await updateDoc(doc(db, "richieste", reqId), { stato: 'approvato' });
+        mostraAlert("Libro approvato!");
     };
 
     window.approvaPrestito = async (reqId) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("approvaPrestito");
-        const req = state.requests.find(x => x.id === reqId); if(!req) return;
-        const giorni = parseInt(await chiediInput(`Per quanti giorni vuoi prestare il libro a ${req.richiedente}?`, "30", "number")); if (!giorni || giorni < 1) return;
-        await updateDoc(doc(db, "libri", req.libroId), { stato: 'noleggiato', noleggiato_da: req.richiedente, noleggiato_da_uid: req.richiedente_uid, scadenza: (Date.now() + giorni*DAY) });
-        await updateDoc(doc(db, "richieste", reqId), { stato: 'approvato' }); mostraAlert("Prestito approvato!");
+        if (!verificaAdmin()) return logSabotaggio("approvaPrestito");
+        const req = state.requests.find(x => x.id === reqId);
+        if(!req) return;
+        const giorni = parseInt(await chiediInput(`Per quanti giorni vuoi prestare il libro a ${req.richiedente}?`, "30", "number"));
+        if (!giorni || giorni < 1) return;
+        const scadenza = new Date(); scadenza.setDate(scadenza.getDate() + giorni);
+        await updateDoc(doc(db, "libri", req.libroId), { stato: 'noleggiato', noleggiato_da: req.richiedente, noleggiato_da_uid: req.richiedente_uid, scadenza: scadenza.getTime() });
+        await updateDoc(doc(db, "richieste", reqId), { stato: 'approvato' });
+        mostraAlert("Prestito approvato!");
     };
 
-    window.rifiutaRichiesta = async (reqId) => { if (!isAdminSicuro()) return logIntrusioneConsole("rifiutaRichiesta"); await updateDoc(doc(db, "richieste", reqId), { stato: 'rifiutato' }); };
+    window.rifiutaRichiesta = async (reqId) => { 
+        if (!verificaAdmin()) return logSabotaggio("rifiutaRichiesta");
+        await updateDoc(doc(db, "richieste", reqId), { stato: 'rifiutato' }); 
+    };
 
     window.restituisciLibro = async (libroId) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("restituisciLibro");
+        if (!verificaAdmin()) return logSabotaggio("restituisciLibro");
         if(await chiediConferma("Terminare il prestito? Il libro tornerà disponibile e l'utente potrà recensirlo.")) {
             const b = state.books.find(x => x.id === libroId);
             if(b && b.noleggiato_da_uid) await updateDoc(doc(db, "utenti", b.noleggiato_da_uid), { libri_letti: arrayUnion(libroId) });
@@ -561,25 +974,33 @@
     };
 
     window.prolungaPrestito = async (libroId, scadenzaAttuale) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("prolungaPrestito");
-        const giorni = parseInt(await chiediInput("Quanti giorni in più?", "15", "number")); if (!giorni || giorni < 1) return;
-        await updateDoc(doc(db, "libri", libroId), { scadenza: scadenzaAttuale + (giorni * DAY) });
+        if (!verificaAdmin()) return logSabotaggio("prolungaPrestito");
+        const giorni = parseInt(await chiediInput("Quanti giorni in più?", "15", "number"));
+        if (!giorni || giorni < 1) return;
+        await updateDoc(doc(db, "libri", libroId), { scadenza: scadenzaAttuale + (giorni * 86400000) });
     };
 
     window.eliminaLibro = async (libroId) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("eliminaLibro");
+        if (!verificaAdmin()) return logSabotaggio("eliminaLibro");
         if(await chiediConferma("Eliminare definitivamente questo libro dal database?")) await deleteDoc(doc(db, "libri", libroId));
     };
 
     window.salvaModificaLibro = async (e, id) => {
-        e.preventDefault(); if (!isAdminSicuro()) return logIntrusioneConsole("salvaModificaLibro");
+        e.preventDefault(); 
+        if (!verificaAdmin()) return logSabotaggio("salvaModificaLibro");
+        
         const f = new FormData(e.target);
         await updateDoc(doc(db, "libri", id), { titolo: f.get('titolo'), autore: f.get('autore'), trama: f.get('trama'), data_pubblicazione: f.get('data_pubblicazione') });
         closeModal(); mostraAlert("Libro aggiornato!");
     };
 
     window.richiediPrestito = async (libroId, titolo) => {
-        await addDoc(collection(db, "richieste"), { tipo: 'prestito', stato: 'in_attesa', libroId: libroId, titolo: unescape(titolo), richiedente: state.userData.nome || state.user.displayName || "Utente", richiedente_uid: state.user.uid, data: serverTimestamp() });
+        const libroTitolo = unescape(titolo);
+        await addDoc(collection(db, "richieste"), { 
+            tipo: 'prestito', stato: 'in_attesa', libroId: libroId, titolo: libroTitolo, 
+            richiedente: state.userData.nome || state.user.displayName || "Utente", 
+            richiedente_uid: state.user.uid, data: serverTimestamp() 
+        });
         mostraAlert("Richiesta di prestito inviata con successo!");
     };
 
@@ -594,43 +1015,84 @@
 
         let fotoUrl = ""; const fileInput = $('file_recensione');
         try {
-            if (fileInput && fileInput.files && fileInput.files.length > 0) try { fotoUrl = await comprimiInBase64(fileInput.files[0], 400, 400, 0.5); } catch(err) { throw new Error(err.message); }
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                // MASSIMA COMPRESSIONE per recensioni
+                try { fotoUrl = await comprimiInBase64(fileInput.files[0], 400, 400, 0.5); } 
+                catch(err) { throw new Error(err.message); }
+            }
+
             const libro = state.books.find(x => x.id === libroId);
             const nuovoNum = (libro.numero_recensioni || 0) + 1;
             const nuovaMedia = (((libro.rating_media || 0) * (libro.numero_recensioni || 0)) + voto) / nuovoNum;
 
-            await addDoc(collection(db, "recensioni"), { libroId, libroTitolo: libro.titolo, uid: state.user.uid, nomeUtente: state.userData.nome || state.user.displayName, avatar: state.userData.avatar || null, badgeUtente: state.userData.badge || "", voto, commento: f.get('commento'), fotoUrl: fotoUrl, data: serverTimestamp(), upvotes: [], downvotes: [] });
+            await addDoc(collection(db, "recensioni"), {
+                libroId, libroTitolo: libro.titolo, uid: state.user.uid, 
+                nomeUtente: state.userData.nome || state.user.displayName, 
+                avatar: state.userData.avatar || null, badgeUtente: state.userData.badge || "", 
+                voto, commento: f.get('commento'), fotoUrl: fotoUrl, data: serverTimestamp(), upvotes: [], downvotes: []
+            });
             await updateDoc(doc(db, "libri", libroId), { rating_media: nuovaMedia, numero_recensioni: nuovoNum });
             closeModal(); mostraAlert("Recensione pubblicata!");
-        } catch(err) { mostraAlert(err.message || "Errore durante la pubblicazione."); btn.disabled = false; btn.innerText = "Pubblica"; }
+        } catch(err) {
+            mostraAlert(err.message || "Errore durante la pubblicazione.");
+            btn.disabled = false; btn.innerText = "Pubblica";
+        }
     };
 
     window.inviaCommento = async (e) => {
-        e.preventDefault(); const btn = $('btnInviaCommento'); btn.disabled = true; btn.innerText = "Invio...";
-        const f = new FormData(e.target); const testo = f.get('testo').trim(); const gifUrl = $('selected_gif_url') ? $('selected_gif_url').value : ""; const fileInput = $('file_commento'); let fotoUrl = "";
-        if (!testo && !gifUrl && (!fileInput || fileInput.files.length === 0)) { btn.disabled = false; btn.innerText = "Pubblica Risposta"; return mostraAlert("Inserisci un testo, una GIF o una foto per rispondere."); }
+        e.preventDefault();
+        const btn = $('btnInviaCommento'); btn.disabled = true; btn.innerText = "Invio...";
+        const f = new FormData(e.target);
+        const testo = f.get('testo').trim();
+        const gifUrl = $('selected_gif_url') ? $('selected_gif_url').value : "";
+        const fileInput = $('file_commento');
+        let fotoUrl = "";
+
+        if (!testo && !gifUrl && (!fileInput || fileInput.files.length === 0)) {
+            btn.disabled = false; btn.innerText = "Pubblica Risposta";
+            return mostraAlert("Inserisci un testo, una GIF o una foto per rispondere.");
+        }
 
         try {
-            if (fileInput && fileInput.files && fileInput.files.length > 0) try { fotoUrl = await comprimiInBase64(fileInput.files[0], 400, 400, 0.5); } catch(err) { throw new Error(err.message); }
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                // MASSIMA COMPRESSIONE per commenti
+                try { fotoUrl = await comprimiInBase64(fileInput.files[0], 400, 400, 0.5); } 
+                catch(err) { throw new Error(err.message); }
+            }
+
             const d = state.modal.data;
-            await addDoc(collection(db, "commenti"), { recensioneId: d.recensioneId, parentId: d.parentId, uid: state.user.uid, nomeUtente: state.userData.nome || state.user.displayName, avatar: state.userData.avatar || null, badgeUtente: state.userData.badge || "", testo: testo, gifUrl: gifUrl, fotoUrl: fotoUrl, data: serverTimestamp(), upvotes: [], downvotes: [] });
+            await addDoc(collection(db, "commenti"), {
+                recensioneId: d.recensioneId, parentId: d.parentId, uid: state.user.uid,
+                nomeUtente: state.userData.nome || state.user.displayName,
+                avatar: state.userData.avatar || null, badgeUtente: state.userData.badge || "",
+                testo: testo, gifUrl: gifUrl, fotoUrl: fotoUrl, data: serverTimestamp(), upvotes: [], downvotes: []
+            });
             closeModal(); mostraAlert("Risposta pubblicata!");
-        } catch (error) { mostraAlert(error.message || "Errore durante l'invio."); btn.disabled = false; btn.innerText = "Pubblica Risposta"; }
+        } catch (error) {
+            mostraAlert(error.message || "Errore durante l'invio.");
+            btn.disabled = false; btn.innerText = "Pubblica Risposta";
+        }
     };
 
     window.eliminaCommento = async (commentoId) => {
-        const c = state.comments.find(x => x.id === commentoId); if (!c) return;
-        if (!isAdminSicuro() && c.uid !== state.user.uid) return logIntrusioneConsole("eliminaCommento");
+        const c = state.comments.find(x => x.id === commentoId);
+        if (!c) return;
+        if (!verificaAdmin() && c.uid !== state.user.uid) return logSabotaggio("eliminaCommento");
+        
         if(await chiediConferma("Sicuro di voler eliminare questa risposta?")) await deleteDoc(doc(db, "commenti", commentoId));
     };
 
     window.vota = async (id, tipo, collectionName) => {
-        const items = collectionName === 'recensioni' ? state.reviews : state.comments; const item = items.find(x => x.id === id); if (!item) return;
+        const items = collectionName === 'recensioni' ? state.reviews : state.comments;
+        const item = items.find(x => x.id === id); if (!item) return;
+        
         let newUp = [...(item.upvotes || [])], newDown = [...(item.downvotes || [])];
         if (tipo === 'up') {
-            if (newUp.includes(state.user.uid)) newUp = newUp.filter(x => x !== state.user.uid); else { newUp.push(state.user.uid); newDown = newDown.filter(x => x !== state.user.uid); }
+            if (newUp.includes(state.user.uid)) newUp = newUp.filter(x => x !== state.user.uid);
+            else { newUp.push(state.user.uid); newDown = newDown.filter(x => x !== state.user.uid); }
         } else if (tipo === 'down') {
-            if (newDown.includes(state.user.uid)) newDown = newDown.filter(x => x !== state.user.uid); else { newDown.push(state.user.uid); newUp = newUp.filter(x => x !== state.user.uid); }
+            if (newDown.includes(state.user.uid)) newDown = newDown.filter(x => x !== state.user.uid);
+            else { newDown.push(state.user.uid); newUp = newUp.filter(x => x !== state.user.uid); }
         }
         await updateDoc(doc(db, collectionName, id), { upvotes: newUp, downvotes: newDown });
     };
@@ -639,18 +1101,21 @@
     window.votaCommento = (id, tipo) => window.vota(id, tipo, "commenti");
 
     window.modificaRecensioneAdmin = async (recId) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("modificaRecensioneAdmin");
+        if (!verificaAdmin()) return logSabotaggio("modificaRecensioneAdmin");
+        
         const r = state.reviews.find(x => x.id === recId); if (!r) return;
         const nuovo = await chiediInput(`Modifica commento di ${r.nomeUtente}:`, r.commento || "");
         if (nuovo !== null && nuovo !== r.commento) { await updateDoc(doc(db, "recensioni", recId), { commento: nuovo.trim() }); mostraAlert("Recensione modificata!"); }
     };
 
     window.eliminaRecensione = async (recId, libroId) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("eliminaRecensione");
+        if (!verificaAdmin()) return logSabotaggio("eliminaRecensione");
+        
         if (await chiediConferma("Eliminare questa recensione?")) {
             await deleteDoc(doc(db, "recensioni", recId));
             const snap = await getDocs(query(collection(db, "recensioni"), where("libroId", "==", libroId)));
-            let totVoti = 0, numRecs = 0; snap.forEach(d => { totVoti += d.data().voto; numRecs++; });
+            let totVoti = 0, numRecs = 0;
+            snap.forEach(d => { totVoti += d.data().voto; numRecs++; });
             await updateDoc(doc(db, "libri", libroId), { rating_media: numRecs === 0 ? 0 : totVoti / numRecs, numero_recensioni: numRecs });
             mostraAlert("Recensione eliminata!");
         }
@@ -658,48 +1123,103 @@
 
     let gifTimeout;
     window.cercaGif = (queryStr) => {
-        clearTimeout(gifTimeout); const container = $('gif-results'); if(!container) return;
+        clearTimeout(gifTimeout);
+        const container = $('gif-results');
+        if(!container) return;
+        
         container.innerHTML = '<div class="col-span-2 text-center text-xs font-bold text-slate-400 py-4 absolute inset-0 flex items-center justify-center">Caricamento GIF...</div>';
         
         gifTimeout = setTimeout(async () => {
-            const fallbackGifs = ["https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif", "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif", "https://media.giphy.com/media/13CoXDiaCcCoyk/giphy.gif", "https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/giphy.gif"];
+            const fallbackGifs = [
+                "https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif", "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
+                "https://media.giphy.com/media/13CoXDiaCcCoyk/giphy.gif", "https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/giphy.gif",
+                "https://media.giphy.com/media/l0HlRnAWXxn0MhK5W/giphy.gif", "https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif",
+                "https://media.giphy.com/media/xT0GqfvuVpNqEf3z2w/giphy.gif", "https://media.giphy.com/media/xT9IgG50Fb7Mi0prwE/giphy.gif",
+                "https://media.giphy.com/media/5VKbvrjvwz248/giphy.gif", "https://media.giphy.com/media/11ISwbgCxEzMyY/giphy.gif",
+                "https://media.giphy.com/media/3o7rc0qU6m5hneMsuc/giphy.gif", "https://media.giphy.com/media/YPIrsRqqO7oB2/giphy.gif",
+                "https://media.giphy.com/media/3o85xwxr06YNoFdSbm/giphy.gif", "https://media.giphy.com/media/8vQSQ3cNXuDNY4zNXw/giphy.gif",
+                "https://media.giphy.com/media/aLdiZJlw4G8Pq/giphy.gif", "https://media.giphy.com/media/VbnUQpmnXf64E/giphy.gif",
+                "https://media.giphy.com/media/l3q2K5jinAlChoCLS/giphy.gif", "https://media.giphy.com/media/ui1hpJSyBDWlG/giphy.gif",
+                "https://media.giphy.com/media/yYSSBtDgbbRzq/giphy.gif", "https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif",
+                "https://media.giphy.com/media/26BRO9GJ0nAFRzzZm/giphy.gif", "https://media.giphy.com/media/xT8qBgvOUl9mMZ5D0I/giphy.gif",
+                "https://media.giphy.com/media/fXnRObM8Q0RkOmR5nf/giphy.gif", "https://media.giphy.com/media/ZfK4cXKJTTay1Ava29/giphy.gif",
+                "https://media.giphy.com/media/3otPoO4cfZXsVGkIwM/giphy.gif", "https://media.giphy.com/media/l41lFw057lAJQMwg0/giphy.gif",
+                "https://media.giphy.com/media/WjBqwOEVXwEHC/giphy.gif", "https://media.giphy.com/media/4pMX5rJ4PURbO/giphy.gif",
+                "https://media.giphy.com/media/10uct1aSFT7QiY/giphy.gif", "https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif"
+            ];
+
             try {
                 const GIPHY_KEY = "GlVGYHqc3SyCEwzSicFXvSEzS3Z3962r"; 
-                let url = (!queryStr || queryStr.trim() === "") ? `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_KEY}&limit=20&rating=g` : `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(queryStr)}&limit=20&rating=g`;
-                const res = await fetch(url); if (!res.ok) throw new Error("Errore API");
+                let url = (!queryStr || queryStr.trim() === "") 
+                    ? `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_KEY}&limit=20&rating=g`
+                    : `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(queryStr)}&limit=20&rating=g`;
+                
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("Errore API");
                 const data = await res.json();
-                if (data.data && data.data.length > 0) container.innerHTML = data.data.map(g => `<img src="${g.images.fixed_height_small.url}" loading="lazy" decoding="async" onclick="selezionaGif('${g.images.fixed_height_small.url}', this)" class="gif-item w-full h-24 object-cover cursor-pointer hover:scale-105 border-4 border-transparent transition-transform rounded-xl shadow-sm bg-slate-200">`).join('');
-                else throw new Error("Nessuna GIF trovata.");
-            } catch(e) { container.innerHTML = fallbackGifs.map(gifUrl => `<img src="${gifUrl}" loading="lazy" decoding="async" onclick="selezionaGif('${gifUrl}', this)" class="gif-item w-full h-24 object-cover cursor-pointer hover:scale-105 border-4 border-transparent transition-transform rounded-xl shadow-sm bg-slate-200">`).join(''); }
+                
+                if (data.data && data.data.length > 0) {
+                    container.innerHTML = data.data.map(g => {
+                        const gifUrl = g.images.fixed_height_small.url;
+                        return `<img src="${gifUrl}" loading="lazy" decoding="async" onclick="selezionaGif('${gifUrl}', this)" class="gif-item w-full h-24 object-cover cursor-pointer hover:scale-105 border-4 border-transparent transition-transform rounded-xl shadow-sm bg-slate-200">`;
+                    }).join('');
+                } else {
+                    throw new Error("Nessuna GIF trovata.");
+                }
+            } catch(e) {
+                container.innerHTML = fallbackGifs.map(gifUrl => {
+                    return `<img src="${gifUrl}" loading="lazy" decoding="async" onclick="selezionaGif('${gifUrl}', this)" class="gif-item w-full h-24 object-cover cursor-pointer hover:scale-105 border-4 border-transparent transition-transform rounded-xl shadow-sm bg-slate-200">`;
+                }).join('');
+            }
         }, 500);
     };
 
-    window.selezionaGif = (url, el) => { document.querySelectorAll('.gif-item').forEach(i => i.classList.remove('border-indigo-500')); el.classList.add('border-indigo-500'); $('selected_gif_url').value = url; };
-    window.apriRisposta = (recensioneId, parentId = null, replyToName = "") => { state.modal = { type: 'rispondi', data: { recensioneId, parentId, replyToName } }; requestRender(); setTimeout(() => { if(window.cercaGif) window.cercaGif(''); }, 100); };
+    window.selezionaGif = (url, el) => {
+        document.querySelectorAll('.gif-item').forEach(i => i.classList.remove('border-indigo-500'));
+        el.classList.add('border-indigo-500');
+        $('selected_gif_url').value = url;
+    };
+
+    window.apriRisposta = (recensioneId, parentId = null, replyToName = "") => {
+        state.modal = { type: 'rispondi', data: { recensioneId, parentId, replyToName } };
+        requestRender();
+        setTimeout(() => { if(window.cercaGif) window.cercaGif(''); }, 100);
+    };
 
     function buildCommentTree(recensioneId, parentId = null, depth = 0) {
         const children = state.comments.filter(c => c.recensioneId === recensioneId && c.parentId === parentId);
         if (!children.length) return '';
-        const mlClass = depth === 0 ? "ml-3 sm:ml-6 mt-4" : "ml-2 sm:ml-4 mt-3"; const borderClass = depth % 2 === 0 ? "border-indigo-200" : "border-rose-200";
+
+        const mlClass = depth === 0 ? "ml-3 sm:ml-6 mt-4" : "ml-2 sm:ml-4 mt-3";
+        const borderClass = depth % 2 === 0 ? "border-indigo-200" : "border-rose-200";
 
         return children.map(c => {
             const dataStr = (c.data && c.data.toMillis) ? new Date(c.data.toMillis()).toLocaleDateString() : 'Pochi istanti fa';
             const badgeHtml = c.badgeUtente ? `<span class="ml-1 text-[8px] font-black uppercase px-1.5 py-0.5 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm align-middle">${escapeHTML(c.badgeUtente)}</span>` : '';
+            
             return `
             <div class="relative pl-3 sm:pl-4 border-l-2 ${borderClass} ${mlClass}">
                 <div class="absolute left-0 top-3 sm:top-4 w-2 sm:w-3 border-t-2 ${borderClass}"></div>
+                
                 <div class="bg-slate-50/80 p-3 sm:p-4 rounded-xl border border-slate-100/50 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="flex items-center gap-1.5 mb-2">${window.getAvatar(c.avatar, "w-5 h-5 sm:w-6 sm:h-6")}<span class="font-bold text-xs sm:text-sm text-slate-800">${escapeHTML(c.nomeUtente)}</span>${badgeHtml}<span class="text-[9px] sm:text-[10px] font-bold text-slate-400 ml-1">${dataStr}</span></div>
+                    <div class="flex items-center gap-1.5 mb-2">
+                        ${window.getAvatar(c.avatar, "w-5 h-5 sm:w-6 sm:h-6")}
+                        <span class="font-bold text-xs sm:text-sm text-slate-800">${escapeHTML(c.nomeUtente)}</span>${badgeHtml}
+                        <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 ml-1">${dataStr}</span>
+                    </div>
+                    
                     ${c.testo ? `<p class="text-xs sm:text-sm font-medium text-slate-700 break-words mb-2">${escapeHTML(c.testo)}</p>` : ''}
                     ${c.gifUrl ? `<img src="${escapeHTML(c.gifUrl)}" loading="lazy" decoding="async" class="rounded-xl max-w-[150px] sm:max-w-[200px] shadow-sm mb-2 bg-slate-100">` : ''}
                     ${c.fotoUrl ? `<img src="${escapeHTML(c.fotoUrl)}" loading="lazy" decoding="async" class="rounded-xl max-w-full sm:max-w-xs shadow-sm mb-2 max-h-48 object-contain border border-slate-200/60">` : ''}
+                    
                     <div class="flex flex-wrap gap-2 items-center mt-2 border-t border-slate-200/50 pt-2">
                         <button onclick="votaCommento('${c.id}', 'up')" class="text-[10px] sm:text-xs flex items-center gap-1 py-1 px-2 rounded-lg font-bold transition-colors ${c.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white border text-slate-500 hover:bg-slate-100'}">👍 ${c.upvotes?.length||0}</button>
                         <button onclick="votaCommento('${c.id}', 'down')" class="text-[10px] sm:text-xs flex items-center gap-1 py-1 px-2 rounded-lg font-bold transition-colors ${c.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white shadow-sm' : 'bg-white border text-slate-500 hover:bg-slate-100'}">👎 ${c.downvotes?.length||0}</button>
                         <button onclick="apriRisposta('${recensioneId}', '${c.id}', '${escapeHTML(c.nomeUtente).replace(/'/g, "\\'")}')" class="text-[10px] sm:text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors ml-1">Rispondi</button>
-                        ${(isAdminSicuro() || c.uid === state.user.uid) ? `<button onclick="eliminaCommento('${c.id}')" class="text-[10px] font-bold text-red-500 hover:text-red-700 ml-auto px-2 py-1">Elimina</button>` : ''}
+                        ${(state.isAdmin || c.uid === state.user.uid) ? `<button onclick="eliminaCommento('${c.id}')" class="text-[10px] font-bold text-red-500 hover:text-red-700 ml-auto px-2 py-1">Elimina</button>` : ''}
                     </div>
                 </div>
+                
                 ${buildCommentTree(recensioneId, c.id, depth + 1)}
             </div>`;
         }).join('');
@@ -708,32 +1228,50 @@
     window.inviaProposta = async (e) => {
         e.preventDefault(); const f = new FormData(e.target); const btn = $('btnProponi'); btn.disabled = true; 
         let copUrl = f.get('url_copertina') || ""; const fileInput = $('file_copertina');
+        
         try {
-            if (fileInput && fileInput.files && fileInput.files.length > 0) { btn.innerText = "Elaborazione foto..."; try { copUrl = await comprimiInBase64(fileInput.files[0], 300, 400, 0.5); } catch(err) { await mostraAlert(`Invio solo testo.`); } }
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                btn.innerText = "Elaborazione foto...";
+                // MASSIMA COMPRESSIONE per proposte (copertina)
+                try { copUrl = await comprimiInBase64(fileInput.files[0], 300, 400, 0.5); } catch(err) { await mostraAlert(`Invio solo testo.`); }
+            }
+            
             btn.innerText = "Salvataggio...";
-            await addDoc(collection(db, "richieste"), { tipo: 'nuovo_libro', stato: 'in_attesa', richiedente: state.userData.nome || state.user.displayName || "Utente", richiedente_uid: state.user.uid, data: serverTimestamp(), dati: { titolo: f.get('titolo'), autore: f.get('autore'), trama: f.get('trama') || "", data_pubblicazione: f.get('data_pubblicazione') || "", copertina: copUrl } });
+            await addDoc(collection(db, "richieste"), {
+                tipo: 'nuovo_libro', stato: 'in_attesa', richiedente: state.userData.nome || state.user.displayName || "Utente", richiedente_uid: state.user.uid, data: serverTimestamp(),
+                dati: { titolo: f.get('titolo'), autore: f.get('autore'), trama: f.get('trama') || "", data_pubblicazione: f.get('data_pubblicazione') || "", copertina: copUrl }
+            });
             mostraAlert("Proposta inviata!"); e.target.reset();
-        } catch (dbErr) { mostraAlert("Errore Riprova."); } finally { btn.disabled = false; btn.innerText = "Invia Proposta"; }
+        } catch (dbErr) { mostraAlert("Errore Riprova."); } 
+        finally { btn.disabled = false; btn.innerText = "Invia Proposta"; }
     };
 
-    window.cambiaTab = (tab) => { state.tab = tab; state.selectedReviewBookId = null; if(state.user) updateDoc(doc(db, "utenti", state.user.uid), { lastActive: serverTimestamp() }).catch(()=>{}); requestRender(true); };
+    window.cambiaTab = (tab) => { 
+        state.tab = tab; state.selectedReviewBookId = null; 
+        if(state.user) updateDoc(doc(db, "utenti", state.user.uid), { lastActive: serverTimestamp() }).catch(()=>{});
+        requestRender(true); 
+    };
 
     window.toggleServer = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("toggleServer");
+        if (!verificaGod()) return logSabotaggio("toggleServer");
+        
         const newState = !serverState.attivo;
         await updateDoc(doc(db, "sistema", "stato_server"), { attivo: newState });
         mostraAlert(newState ? "✅ Server Riattivato." : "🛑 Server Spento.");
     };
 
     window.chiudiAltreVersioni = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("chiudiAltreVersioni");
+        if (!verificaGod()) return logSabotaggio("chiudiAltreVersioni");
+        
         if(await chiediConferma("Tutti i link attualmente aperti dagli altri verranno bloccati. Sicuro?")) {
-            await updateDoc(doc(db, "sistema", "stato_server"), { last_force_reload: Date.now() }); mostraAlert("🔒 Vecchi link isolati. La tua sessione al momento del riavvio sarà pulita.");
+            await updateDoc(doc(db, "sistema", "stato_server"), { last_force_reload: Date.now() });
+            mostraAlert("🔒 Vecchi link isolati. La tua sessione al momento del riavvio sarà pulita.");
         }
     };
 
     window.invocaPotere = async (potere) => {
-        if (!isGodSicuro()) return logIntrusioneConsole("invocaPotere");
+        if (!verificaGod()) return logSabotaggio("invocaPotere");
+        
         const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value);
         if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio (Tutti o un utente specifico)!");
         await setDoc(doc(db, "sistema", "caos"), { evento: potere, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
@@ -741,18 +1279,22 @@
     };
 
     window.voceDiDio = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("voceDiDio");
-        const msg = await chiediInput("Scrivi il messaggio globale:", ""); if(!msg) return;
-        const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value); if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio!");
+        if (!verificaGod()) return logSabotaggio("voceDiDio");
+        
+        const msg = await chiediInput("Scrivi il messaggio globale:", "");
+        if(!msg) return;
+        const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value);
+        if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio!");
         await setDoc(doc(db, "sistema", "caos"), { evento: 'messaggio', messaggio: msg, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
         mostraAlert("Messaggio Divino inviato!");
     };
 
     window.miracoloApprovazione = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("miracoloApprovazione");
+        if (!verificaGod()) return logSabotaggio("miracoloApprovazione");
+        
         if(await chiediConferma("✨ MIRACOLO: Approvare tutte le richieste in attesa?")) {
             for(let r of state.requests) {
-                if(r.tipo === 'nuovo_libro') await addDoc(collection(db, "libri"), { ...r.dati, stato: 'disponibile', rating_media: 0, numero_recensioni: 0 }), await updateDoc(doc(db, "richieste", r.id), { stato: 'approvato' });
+                if(r.tipo === 'nuovo_libro') await window.approvaProposta(r.id);
                 else if(r.tipo === 'prestito') await updateDoc(doc(db, "libri", r.libroId), { stato: 'noleggiato', noleggiato_da: r.richiedente, noleggiato_da_uid: r.richiedente_uid, scadenza: (Date.now() + 30*DAY) }), await updateDoc(doc(db, "richieste", r.id), { stato: 'approvato' });
             }
             mostraAlert("Miracolo compiuto.");
@@ -760,9 +1302,11 @@
     };
 
     window.amnistiaGenerale = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("amnistiaGenerale");
+        if (!verificaGod()) return logSabotaggio("amnistiaGenerale");
+        
         if(await chiediConferma("🕊️ AMNISTIA: Restituire forzatamente tutti i libri in prestito?")) {
-            for(let b of state.books.filter(b => b.stato === 'noleggiato')) {
+            const p = state.books.filter(b => b.stato === 'noleggiato');
+            for(let b of p) {
                 if(b.noleggiato_da_uid) await updateDoc(doc(db, "utenti", b.noleggiato_da_uid), { libri_letti: arrayUnion(b.id) });
                 await updateDoc(doc(db, "libri", b.id), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null });
             }
@@ -771,9 +1315,10 @@
     };
 
     window.apocalisse = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("apocalisse");
+        if (!verificaGod()) return logSabotaggio("apocalisse");
+        
         if(await chiediConferma("💀 APOCALISSE: Eliminare TUTTE le richieste, RECENSIONI e COMMENTI?")) {
-            for(let r of state.requests) await updateDoc(doc(db, "richieste", r.id), { stato: 'rifiutato' }); 
+            for(let r of state.requests) await window.rifiutaRichiesta(r.id); 
             for(let r of state.reviews) await deleteDoc(doc(db, "recensioni", r.id));
             for(let c of state.comments) await deleteDoc(doc(db, "commenti", c.id));
             for(let b of state.books) await updateDoc(doc(db, "libri", b.id), { rating_media: 0, numero_recensioni: 0 });
@@ -781,24 +1326,54 @@
         }
     };
 
+    // FUNZIONE SPECIALE: Compressione di Massa del DB per recuperare spazio
     window.comprimiDatabaseEsistente = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("comprimiDatabaseEsistente");
+        if (!verificaGod()) return logSabotaggio("comprimiDatabaseEsistente");
+        
         if(!await chiediConferma("🗜️ AVVIO COMPRESSIONE DI MASSA\n\nVuoi scansionare l'intero database e comprimere le foto già caricate in passato? Questo libererà moltissimo spazio, ma ci vorrà qualche secondo. Procediamo?")) return;
-        mostraAlert("Compressione in corso... Potrebbe volerci 1 minuto. NON chiudere la pagina."); let count = 0;
+        
+        mostraAlert("Compressione in corso... Potrebbe volerci 1 minuto. NON chiudere la pagina.");
+        let count = 0;
+        
         try {
-            for(let u of state.users) if(u.avatar && u.avatar.length > 50000) { const newAvatar = await window.comprimiBase64Esistente(u.avatar, 150, 150, 0.4); if(newAvatar !== u.avatar) { await updateDoc(doc(db, "utenti", u.id), { avatar: newAvatar }); count++; } }
-            for(let b of state.books) if(b.copertina && b.copertina.length > 50000) { const newCopertina = await window.comprimiBase64Esistente(b.copertina, 300, 400, 0.5); if(newCopertina !== b.copertina) { await updateDoc(doc(db, "libri", b.id), { copertina: newCopertina }); count++; } }
-            for(let r of state.reviews) { let updated = false, dataToUpdate = {}; if(r.fotoUrl && r.fotoUrl.length > 50000) { dataToUpdate.fotoUrl = await window.comprimiBase64Esistente(r.fotoUrl, 400, 400, 0.5); updated = true; } if(r.avatar && r.avatar.length > 50000) { dataToUpdate.avatar = await window.comprimiBase64Esistente(r.avatar, 150, 150, 0.4); updated = true; } if(updated) { await updateDoc(doc(db, "recensioni", r.id), dataToUpdate); count++; } }
-            for(let c of state.comments) { let updated = false, dataToUpdate = {}; if(c.fotoUrl && c.fotoUrl.length > 50000) { dataToUpdate.fotoUrl = await window.comprimiBase64Esistente(c.fotoUrl, 400, 400, 0.5); updated = true; } if(c.avatar && c.avatar.length > 50000) { dataToUpdate.avatar = await window.comprimiBase64Esistente(c.avatar, 150, 150, 0.4); updated = true; } if(updated) { await updateDoc(doc(db, "commenti", c.id), dataToUpdate); count++; } }
+            for(let u of state.users) {
+                if(u.avatar && u.avatar.length > 50000) {
+                    const newAvatar = await window.comprimiBase64Esistente(u.avatar, 150, 150, 0.4);
+                    if(newAvatar !== u.avatar) { await updateDoc(doc(db, "utenti", u.id), { avatar: newAvatar }); count++; }
+                }
+            }
+            for(let b of state.books) {
+                if(b.copertina && b.copertina.length > 50000) {
+                    const newCopertina = await window.comprimiBase64Esistente(b.copertina, 300, 400, 0.5);
+                    if(newCopertina !== b.copertina) { await updateDoc(doc(db, "libri", b.id), { copertina: newCopertina }); count++; }
+                }
+            }
+            for(let r of state.reviews) {
+                let updated = false; let dataToUpdate = {};
+                if(r.fotoUrl && r.fotoUrl.length > 50000) { dataToUpdate.fotoUrl = await window.comprimiBase64Esistente(r.fotoUrl, 400, 400, 0.5); updated = true; }
+                if(r.avatar && r.avatar.length > 50000) { dataToUpdate.avatar = await window.comprimiBase64Esistente(r.avatar, 150, 150, 0.4); updated = true; }
+                if(updated) { await updateDoc(doc(db, "recensioni", r.id), dataToUpdate); count++; }
+            }
+            for(let c of state.comments) {
+                let updated = false; let dataToUpdate = {};
+                if(c.fotoUrl && c.fotoUrl.length > 50000) { dataToUpdate.fotoUrl = await window.comprimiBase64Esistente(c.fotoUrl, 400, 400, 0.5); updated = true; }
+                if(c.avatar && c.avatar.length > 50000) { dataToUpdate.avatar = await window.comprimiBase64Esistente(c.avatar, 150, 150, 0.4); updated = true; }
+                if(updated) { await updateDoc(doc(db, "commenti", c.id), dataToUpdate); count++; }
+            }
             mostraAlert(`✅ Pulizia completata! Sono stati compressi ${count} file pesanti. Spazio recuperato con successo.`);
-        } catch (err) { mostraAlert("Errore durante la compressione: " + err.message); }
+        } catch (err) {
+            mostraAlert("Errore durante la compressione: " + err.message);
+        }
     };
 
     window.sguardoDivino = (uid) => {
-        if (!isGodSicuro()) return logIntrusioneConsole("sguardoDivino");
-        const u = state.users.find(x => x.id === uid); if(!u) return;
+        if (!verificaGod()) return logSabotaggio("sguardoDivino");
+        
+        const u = state.users.find(x => x.id === uid);
+        if(!u) return;
         const p = state.books.filter(b => b.noleggiato_da_uid === uid);
-        const volteAdmin = u.volte_admin || 0; const statusAdmin = volteAdmin > 0 ? `Sì (${volteAdmin} volt${volteAdmin === 1 ? 'a' : 'e'})` : "Mai stato";
+        const volteAdmin = u.volte_admin || 0;
+        const statusAdmin = volteAdmin > 0 ? `Sì (${volteAdmin} volt${volteAdmin === 1 ? 'a' : 'e'})` : "Mai stato";
         const isBanned = bannedDevices.includes(u.deviceId);
 
         state.modal = { 
@@ -842,19 +1417,36 @@
 
     function renderModal() {
         if(!state.modal) return '';
+        
         if (state.modal.type === 'sguardoDivinoRender') return state.modal.html;
 
         if (state.modal.type === 'radarManuale') {
-            const now = Date.now(); const onlineUsers = state.users.filter(u => u.lastActive && u.id !== state.user.uid && (now - u.lastActive.toMillis() < 30 * 60000));
+            const now = Date.now();
+            const onlineUsers = state.users.filter(u => u.lastActive && u.id !== state.user.uid && (now - u.lastActive.toMillis() < 30 * 60000));
+            
             return `
             <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md fade-in" style="transform: translate3d(0,0,0);">
                 <div class="bg-slate-900 rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-center border border-purple-500/30 relative">
                     <div class="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-rose-900/20 rounded-3xl pointer-events-none"></div>
                     <button onclick="closeModal()" class="absolute top-5 right-5 w-8 h-8 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center font-bold transition-colors z-20">✕</button>
+                    
                     <div class="relative z-10">
-                        <div class="text-5xl mb-4">📡</div><h2 class="text-2xl font-black text-white mb-2">Scansione Rete Completata</h2><p class="text-purple-300/80 text-sm mb-6">Questi utenti hanno l'app aperta o l'hanno usata di recente.</p>
+                        <div class="text-5xl mb-4">📡</div>
+                        <h2 class="text-2xl font-black text-white mb-2">Scansione Rete Completata</h2>
+                        <p class="text-purple-300/80 text-sm mb-6">Questi utenti hanno l'app aperta o l'hanno usata di recente.</p>
+                        
                         <div class="bg-black/40 rounded-2xl border border-purple-500/20 p-4 max-h-60 overflow-y-auto hide-scrollbar text-left space-y-3 mb-6 shadow-inner">
-                            ${onlineUsers.length > 0 ? onlineUsers.map(u => `<div class="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5"><div class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse shrink-0"></div><div class="flex flex-col truncate"><span class="text-sm font-bold text-white truncate">${escapeHTML(u.nome)}</span></div></div>`).join('') : `<div class="text-center py-6"><span class="text-2xl block mb-2">👻</span><span class="text-slate-400 font-medium text-sm">Nessuno online in questo momento.</span></div>`}
+                            ${onlineUsers.length > 0 
+                                ? onlineUsers.map(u => `
+                                    <div class="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                                        <div class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse shrink-0"></div>
+                                        <div class="flex flex-col truncate">
+                                            <span class="text-sm font-bold text-white truncate">${escapeHTML(u.nome)}</span>
+                                        </div>
+                                    </div>
+                                `).join('')
+                                : `<div class="text-center py-6"><span class="text-2xl block mb-2">👻</span><span class="text-slate-400 font-medium text-sm">Nessuno online in questo momento.</span></div>`
+                            }
                         </div>
                         <button onclick="closeModal()" class="w-full py-4 rounded-xl font-extrabold text-white bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-600/30 transition-transform active:scale-95">Chiudi Radar</button>
                     </div>
@@ -869,34 +1461,65 @@
                 <div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-indigo-500 to-purple-600 z-0"></div>
                     <button onclick="closeModal()" class="absolute top-4 right-4 z-20 w-8 h-8 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center font-bold transition-colors">✕</button>
+                    
                     <form onsubmit="salvaProfilo(event)" class="relative z-10 pt-4 flex flex-col items-center w-full">
+                        
+                        <!-- FIX: Il contenitore non sovrascrive l'input del file, risolto il problema di mancato salvataggio! -->
                         <div class="relative group cursor-pointer mb-6 w-24 h-24 sm:w-32 sm:h-32 mx-auto" id="avatar-wrapper">
-                            <div id="avatar_preview_container" class="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center">${avatarPreview}</div>
-                            <label for="file_avatar" class="absolute inset-0 bg-black/50 text-white rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"><span class="text-2xl mb-1">📷</span><span class="text-[10px] font-bold uppercase tracking-wider">Cambia</span></label>
+                            <div id="avatar_preview_container" class="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center">
+                                ${avatarPreview}
+                            </div>
+                            <label for="file_avatar" class="absolute inset-0 bg-black/50 text-white rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10">
+                                <span class="text-2xl mb-1">📷</span><span class="text-[10px] font-bold uppercase tracking-wider">Cambia</span>
+                            </label>
                             <input type="file" id="file_avatar" accept="image/*" class="hidden" onchange="const f = this.files[0]; if(f) { const r = new FileReader(); r.onload = e => { document.getElementById('avatar_preview_container').innerHTML = '<img src=\\'' + e.target.result + '\\' class=\\'w-full h-full object-cover\\'>'; }; r.readAsDataURL(f); }">
                         </div>
+
                         <div class="w-full space-y-4">
-                            <div><label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-2 mb-1 block">Nome Mostrato</label><input name="nome" value="${escapeHTML(state.userData.nome || state.user.displayName)}" class="${INPUT_CLS} text-center font-bold text-lg text-slate-800" required></div>
-                            <div><label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-2 mb-1 block">Email (Bloccata)</label><input value="${escapeHTML(state.user.email)}" class="w-full rounded-2xl border-2 border-slate-100 px-4 py-3 bg-slate-50 text-slate-400 font-medium text-center text-sm cursor-not-allowed" disabled></div>
+                            <div><label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-2 mb-1 block">Nome Mostrato</label>
+                                <input name="nome" value="${escapeHTML(state.userData.nome || state.user.displayName)}" class="${INPUT_CLS} text-center font-bold text-lg text-slate-800" required></div>
+                            <div><label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-2 mb-1 block">Email (Bloccata)</label>
+                                <input value="${escapeHTML(state.user.email)}" class="w-full rounded-2xl border-2 border-slate-100 px-4 py-3 bg-slate-50 text-slate-400 font-medium text-center text-sm cursor-not-allowed" disabled></div>
                         </div>
-                        <div class="flex gap-3 w-full mt-8"><button type="button" onclick="closeModal()" class="flex-1 py-3.5 rounded-xl font-extrabold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">Annulla</button><button type="submit" id="btnSalvaProfilo" class="flex-1 py-3.5 rounded-xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-600/30 transition-colors">Salva Profilo</button></div>
+
+                        <div class="flex gap-3 w-full mt-8">
+                            <button type="button" onclick="closeModal()" class="flex-1 py-3.5 rounded-xl font-extrabold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">Annulla</button>
+                            <button type="submit" id="btnSalvaProfilo" class="flex-1 py-3.5 rounded-xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-600/30 transition-colors">Salva Profilo</button>
+                        </div>
                     </form>
                 </div>
             </div>`;
         }
 
         if (state.modal.type === 'rispondi') {
-            const d = state.modal.data; const contextText = d.parentId ? `Rispondi a <span class="text-indigo-600">${escapeHTML(d.replyToName)}</span>` : "Aggiungi un commento";
+            const d = state.modal.data;
+            const contextText = d.parentId ? `Rispondi a <span class="text-indigo-600">${escapeHTML(d.replyToName)}</span>` : "Aggiungi un commento";
+            
             return `
             <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);">
                 <div class="bg-white rounded-t-3xl sm:rounded-[2.5rem] p-5 sm:p-8 w-full max-w-lg shadow-2xl slide-up flex flex-col max-h-[90vh]">
-                    <div class="flex justify-between items-center mb-4 border-b pb-3 shrink-0"><h3 class="font-extrabold text-lg sm:text-xl text-slate-800">${contextText}</h3><button onclick="closeModal()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full font-bold transition-colors">✕</button></div>
+                    <div class="flex justify-between items-center mb-4 border-b pb-3 shrink-0">
+                        <h3 class="font-extrabold text-lg sm:text-xl text-slate-800">${contextText}</h3>
+                        <button onclick="closeModal()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full font-bold transition-colors">✕</button>
+                    </div>
+
                     <form onsubmit="inviaCommento(event)" class="flex flex-col gap-4 overflow-y-auto hide-scrollbar pb-6">
                         <textarea name="testo" rows="3" placeholder="Scrivi una risposta..." class="${INPUT_CLS} resize-none"></textarea>
+                        
                         <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4 space-y-4">
-                            <div><label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2">📷 Aggiungi Foto</label><input type="file" id="file_commento" accept="image/*" class="text-xs sm:text-sm font-medium w-full file:mr-3 file:py-2 file:px-3 sm:file:px-4 file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer"></div>
-                            <div class="border-t border-slate-200 pt-4"><label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><span>🔎 Cerca GIF</span></label><input type="text" placeholder="Cerca GIF (in automatico carica le tendenze)..." class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none transition-all" oninput="if(window.cercaGif) window.cercaGif(this.value)"><div id="gif-results" class="grid grid-cols-2 gap-2 mt-3 h-32 overflow-y-auto hide-scrollbar rounded-xl bg-slate-100 border border-slate-200/50 p-2 relative"></div><input type="hidden" id="selected_gif_url" name="gifUrl"></div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2">📷 Aggiungi Foto</label>
+                                <input type="file" id="file_commento" accept="image/*" class="text-xs sm:text-sm font-medium w-full file:mr-3 file:py-2 file:px-3 sm:file:px-4 file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer">
+                            </div>
+
+                            <div class="border-t border-slate-200 pt-4">
+                                <label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><span>🔎 Cerca GIF</span></label>
+                                <input type="text" placeholder="Cerca GIF (in automatico carica le tendenze)..." class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none transition-all" oninput="if(window.cercaGif) window.cercaGif(this.value)">
+                                <div id="gif-results" class="grid grid-cols-2 gap-2 mt-3 h-32 overflow-y-auto hide-scrollbar rounded-xl bg-slate-100 border border-slate-200/50 p-2 relative"></div>
+                                <input type="hidden" id="selected_gif_url" name="gifUrl">
+                            </div>
                         </div>
+
                         <button type="submit" id="btnInviaCommento" class="w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 transition-transform active:scale-95 text-sm sm:text-base mt-2">Pubblica Risposta</button>
                     </form>
                 </div>
@@ -904,45 +1527,68 @@
         }
 
         if(state.modal.type === 'dettaglioLibro') {
-            const b = state.books.find(x => x.id === state.modal.data); if(!b) return '';
+            const b = state.books.find(x => x.id === state.modal.data);
+            if(!b) return '';
             const bookRecs = state.reviews.filter(r => r.libroId === b.id).sort((a, y) => ((y.upvotes?.length||0)-(y.downvotes?.length||0)) - ((a.upvotes?.length||0)-(a.downvotes?.length||0)));
+
             let recsHtml = '';
             if(!bookRecs.length) recsHtml = `<p class="text-slate-500 italic text-sm text-center py-4 bg-slate-50 rounded-2xl border border-slate-100">Nessuna discussione presente.</p>`;
             else {
                 recsHtml = `<div class="space-y-6">${bookRecs.map(r => {
-                    const dataStr = (r.data && r.data.toMillis) ? new Date(r.data.toMillis()).toLocaleDateString() : 'Pochi istanti fa'; const badgeHtml = r.badgeUtente ? `<span class="ml-2 text-[10px] font-black uppercase px-2 py-1 bg-amber-400 text-amber-900 rounded-lg border border-amber-300 shadow-sm align-middle">${escapeHTML(r.badgeUtente)}</span>` : '';
+                    const dataStr = (r.data && r.data.toMillis) ? new Date(r.data.toMillis()).toLocaleDateString() : 'Pochi istanti fa';
+                    const badgeHtml = r.badgeUtente ? `<span class="ml-2 text-[10px] font-black uppercase px-2 py-1 bg-amber-400 text-amber-900 rounded-lg border border-amber-300 shadow-sm align-middle">${escapeHTML(r.badgeUtente)}</span>` : '';
+                    
                     return `
                     <div class="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm">
                         <div class="flex justify-between items-start gap-4 mb-4">
-                            <div class="flex gap-3">${window.getAvatar(r.avatar, "w-10 h-10 sm:w-12 sm:h-12")}<div><div class="flex flex-wrap items-center gap-1.5"><span class="font-extrabold text-sm sm:text-base text-slate-800">${escapeHTML(r.nomeUtente)}</span>${badgeHtml}</div><span class="block text-[10px] sm:text-xs font-bold text-slate-400 mt-0.5">${dataStr}</span></div></div>
+                            <div class="flex gap-3">
+                                ${window.getAvatar(r.avatar, "w-10 h-10 sm:w-12 sm:h-12")}
+                                <div>
+                                    <div class="flex flex-wrap items-center gap-1.5"><span class="font-extrabold text-sm sm:text-base text-slate-800">${escapeHTML(r.nomeUtente)}</span>${badgeHtml}</div>
+                                    <span class="block text-[10px] sm:text-xs font-bold text-slate-400 mt-0.5">${dataStr}</span>
+                                </div>
+                            </div>
                             <div class="scale-75 sm:scale-90 origin-top-right shrink-0">${renderStars(r.voto)}</div>
                         </div>
+                        
                         ${r.commento ? `<p class="text-sm sm:text-base font-medium text-slate-700 mb-3 break-words leading-relaxed">${escapeHTML(r.commento)}</p>` : ''}
                         ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" loading="lazy" decoding="async" class="rounded-2xl max-w-full sm:max-w-md shadow-sm mb-4 border border-slate-100">` : ''}
+                        
                         <div class="flex flex-wrap gap-2 items-center border-t border-slate-100 pt-3">
                             <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-1.5 px-3 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button>
                             <button onclick="votaRecensione('${r.id}', 'down')" class="text-xs sm:text-sm flex items-center gap-1.5 py-1.5 px-3 rounded-xl font-bold transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👎 ${r.downvotes?.length||0}</button>
                             <button onclick="apriRisposta('${r.id}', null, '${escapeHTML(r.nomeUtente).replace(/'/g, "\\'")}')" class="text-xs sm:text-sm font-extrabold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-4 py-1.5 rounded-xl transition-colors ml-auto flex items-center gap-2 border border-indigo-100"><span class="text-lg leading-none">💬</span> Rispondi</button>
                         </div>
-                        <div class="mt-4 pt-2 border-t border-slate-100">${buildCommentTree(r.id, null)}</div>
+                        
+                        <div class="mt-4 pt-2 border-t border-slate-100">
+                            ${buildCommentTree(r.id, null)}
+                        </div>
                     </div>`;
                 }).join('')}</div>`;
             }
+
             return `
             <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/70 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);">
                 <div class="bg-slate-50 w-full h-[95vh] sm:h-auto sm:max-h-[90vh] sm:max-w-3xl rounded-t-3xl sm:rounded-3xl flex flex-col shadow-2xl slide-up overflow-hidden relative">
                     <button onclick="closeModal()" class="absolute top-4 right-4 z-50 w-10 h-10 bg-black/50 backdrop-blur-md text-white rounded-full flex items-center justify-center font-bold text-xl hover:bg-black/70 transition-colors">✕</button>
                     <div class="overflow-y-auto w-full hide-scrollbar flex-1 pb-20 sm:pb-0 relative">
-                        <div class="w-full h-48 sm:h-64 bg-slate-900 relative flex items-center justify-center overflow-hidden shrink-0">${b.copertina ? `<img src="${escapeHTML(b.copertina)}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover opacity-40 blur-2xl scale-125"><img src="${escapeHTML(b.copertina)}" loading="lazy" decoding="async" class="relative z-10 w-full h-full object-contain p-4 drop-shadow-2xl">` : `<div class="text-7xl z-10 opacity-30 text-white">📖</div>`}<div class="absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-transparent z-10"></div></div>
+                        <div class="w-full h-48 sm:h-64 bg-slate-900 relative flex items-center justify-center overflow-hidden shrink-0">
+                            ${b.copertina ? `<img src="${escapeHTML(b.copertina)}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover opacity-40 blur-2xl scale-125"><img src="${escapeHTML(b.copertina)}" loading="lazy" decoding="async" class="relative z-10 w-full h-full object-contain p-4 drop-shadow-2xl">` : `<div class="text-7xl z-10 opacity-30 text-white">📖</div>`}
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-transparent z-10"></div>
+                        </div>
                         <div class="px-5 sm:px-8 py-4 sm:py-6 relative z-20 -mt-8 sm:-mt-10">
                             <div class="bg-white p-5 sm:p-8 rounded-3xl shadow-xl border border-slate-100 mb-8 relative">
                                 <span class="absolute -top-3 left-6 sm:left-8 px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider ${b.stato === 'disponibile' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} shadow-sm border border-white block w-max">${b.stato}</span>
                                 <h2 class="text-2xl sm:text-4xl font-black text-slate-800 leading-tight mb-2 mt-2">${escapeHTML(b.titolo)}</h2>
                                 <p class="text-sm sm:text-base font-bold text-indigo-600 mb-4 flex items-center flex-wrap gap-2">${escapeHTML(b.autore)} ${b.data_pubblicazione ? `<span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md text-xs">&bull; ${escapeHTML(b.data_pubblicazione)}</span>` : ''}</p>
                                 <div class="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-3 rounded-2xl w-max mb-6 shadow-inner">${renderStars(b.rating_media)} <span class="text-xs sm:text-sm font-bold text-slate-400">(${b.numero_recensioni || 0} voti)</span></div>
-                                <h3 class="font-extrabold text-slate-800 text-lg mb-2">Trama</h3><p class="text-sm sm:text-base text-slate-600 leading-relaxed">${b.trama ? escapeHTML(b.trama).replace(/\n/g, '<br>') : '<span class="italic opacity-50">Nessuna trama inserita.</span>'}</p>
+                                <h3 class="font-extrabold text-slate-800 text-lg mb-2">Trama</h3>
+                                <p class="text-sm sm:text-base text-slate-600 leading-relaxed">${b.trama ? escapeHTML(b.trama).replace(/\n/g, '<br>') : '<span class="italic opacity-50">Nessuna trama inserita.</span>'}</p>
                             </div>
-                            <div class="flex items-center gap-3 mb-6"><h3 class="font-black text-slate-800 text-xl sm:text-2xl">Discussioni</h3><span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">${bookRecs.length}</span></div>
+                            <div class="flex items-center gap-3 mb-6">
+                                <h3 class="font-black text-slate-800 text-xl sm:text-2xl">Discussioni</h3>
+                                <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">${bookRecs.length}</span>
+                            </div>
                             ${recsHtml}
                         </div>
                     </div>
@@ -965,9 +1611,14 @@
         if(state.modal.type === 'recensisci') {
             const b = state.modal.data;
             return `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);"><div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-center"><h2 class="text-xl sm:text-2xl font-bold mb-2">Scrivi Recensione</h2><p class="text-xs sm:text-sm text-slate-500 mb-6 font-medium">${escapeHTML(b.titolo)}</p><form onsubmit="inviaRecensione(event, '${b.id}')" class="space-y-4 sm:space-y-6">
-                <div class="star-cb-group"><input type="radio" id="r5" name="voto" value="5"/><label for="r5">★</label><input type="radio" id="r4" name="voto" value="4"/><label for="r4">★</label><input type="radio" id="r3" name="voto" value="3"/><label for="r3">★</label><input type="radio" id="r2" name="voto" value="2"/><label for="r2">★</label><input type="radio" id="r1" name="voto" value="1"/><label for="r1">★</label></div>
+                <div class="star-cb-group">
+                    <input type="radio" id="r5" name="voto" value="5"/><label for="r5">★</label><input type="radio" id="r4" name="voto" value="4"/><label for="r4">★</label><input type="radio" id="r3" name="voto" value="3"/><label for="r3">★</label><input type="radio" id="r2" name="voto" value="2"/><label for="r2">★</label><input type="radio" id="r1" name="voto" value="1"/><label for="r1">★</label>
+                </div>
                 <textarea name="commento" rows="4" placeholder="Cosa ne pensi?" class="${INPUT_CLS} resize-none"></textarea>
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4 text-left"><label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2">📷 Aggiungi Foto (Opzionale)</label><input type="file" id="file_recensione" accept="image/*" class="text-xs sm:text-sm font-medium w-full file:mr-3 file:py-2 file:px-3 sm:file:px-4 file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer"></div>
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4 text-left">
+                    <label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2">📷 Aggiungi Foto (Opzionale)</label>
+                    <input type="file" id="file_recensione" accept="image/*" class="text-xs sm:text-sm font-medium w-full file:mr-3 file:py-2 file:px-3 sm:file:px-4 file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer">
+                </div>
                 <div class="flex gap-2 sm:gap-3"><button type="button" onclick="closeModal()" class="flex-1 py-3 sm:py-4 rounded-xl font-bold bg-slate-100 text-sm sm:text-base">Annulla</button><button type="submit" class="flex-1 py-3 sm:py-4 rounded-xl font-bold text-white bg-amber-500 shadow-lg shadow-amber-500/30 text-sm sm:text-base">Pubblica</button></div>
             </form></div></div>`;
         }
@@ -1008,32 +1659,51 @@
             if(!recs.length) h += `<div class="p-8 sm:p-10 mx-4 sm:mx-0 text-center bg-white rounded-3xl border shadow-sm"><p class="font-bold">Nessuna discussione.</p></div>`;
             else {
                 h += `<div class="space-y-6 px-4 sm:px-0">${recs.map(r => {
-                    const dataStr = (r.data && r.data.toMillis) ? new Date(r.data.toMillis()).toLocaleDateString() : 'Pochi istanti fa'; const badgeHtml = r.badgeUtente ? `<span class="ml-2 text-[10px] sm:text-[11px] font-black uppercase px-2 py-1 bg-amber-400 text-amber-900 rounded-lg border border-amber-300 shadow-sm align-middle">${escapeHTML(r.badgeUtente)}</span>` : '';
+                    const dataStr = (r.data && r.data.toMillis) ? new Date(r.data.toMillis()).toLocaleDateString() : 'Pochi istanti fa';
+                    const badgeHtml = r.badgeUtente ? `<span class="ml-2 text-[10px] sm:text-[11px] font-black uppercase px-2 py-1 bg-amber-400 text-amber-900 rounded-lg border border-amber-300 shadow-sm align-middle">${escapeHTML(r.badgeUtente)}</span>` : '';
                     return `
                     <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-200">
-                        <div class="flex justify-between items-start mb-4"><div class="flex items-center gap-3">${window.getAvatar(r.avatar, "w-10 h-10 sm:w-12 sm:h-12")}<div><div class="flex items-center flex-wrap gap-1"><span class="font-extrabold text-base sm:text-lg text-slate-800">${escapeHTML(r.nomeUtente)}</span>${badgeHtml}</div><div class="text-[10px] sm:text-xs font-bold text-slate-400 mt-0.5">${dataStr}</div></div></div><div class="scale-90 sm:scale-100 origin-top-right shrink-0">${renderStars(r.voto)}</div></div>${r.commento ? `<p class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-100 text-sm sm:text-base font-medium italic text-slate-700 mb-3">${escapeHTML(r.commento)}</p>` : ''}
-                        ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" loading="lazy" decoding="async" class="rounded-2xl max-w-full sm:max-w-md shadow-sm mb-4 border border-slate-100">` : ''}
-                        <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 pt-2 border-t border-slate-100">
-                            <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button>
-                            <button onclick="votaRecensione('${r.id}', 'down')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-50 text-rose-600 border border-rose-200 shadow-sm' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👎 ${r.downvotes?.length||0}</button>
-                            <button onclick="apriRisposta('${r.id}', null, '${escapeHTML(r.nomeUtente).replace(/'/g, "\\'")}')" class="text-xs sm:text-sm font-extrabold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-xl transition-colors ml-auto flex items-center gap-2 border border-indigo-100"><span class="text-lg leading-none">💬</span> Rispondi</button>
-                            ${isAdminSicuro() ? `<button onclick="eliminaRecensione('${r.id}', '${r.libroId}')" class="text-[10px] sm:text-xs font-bold px-3 py-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200">Elimina</button>` : ''}
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center gap-3">
+                                ${window.getAvatar(r.avatar, "w-10 h-10 sm:w-12 sm:h-12")}
+                                <div>
+                                    <div class="flex items-center flex-wrap gap-1"><span class="font-extrabold text-base sm:text-lg text-slate-800">${escapeHTML(r.nomeUtente)}</span>${badgeHtml}</div>
+                                    <div class="text-[10px] sm:text-xs font-bold text-slate-400 mt-0.5">${dataStr}</div>
+                                </div>
+                            </div>
+                            <div class="scale-90 sm:scale-100 origin-top-right shrink-0">${renderStars(r.voto)}</div>
                         </div>
-                        <div class="mt-5 border-t border-slate-100 pt-2">${buildCommentTree(r.id, null)}</div>
+                        ${r.commento ? `<p class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-100 text-sm sm:text-base font-medium italic text-slate-700 mb-3">${escapeHTML(r.commento)}</p>` : ''}
+                        ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" loading="lazy" decoding="async" class="rounded-2xl max-w-full sm:max-w-md shadow-sm mb-4 border border-slate-100">` : ''}
+                        
+                        <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 pt-2 border-t border-slate-100">
+                            <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button>
+                            <button onclick="votaRecensione('${r.id}', 'down')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👎 ${r.downvotes?.length||0}</button>
+                            <button onclick="apriRisposta('${r.id}', null, '${escapeHTML(r.nomeUtente).replace(/'/g, "\\'")}')" class="text-xs sm:text-sm font-extrabold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-xl transition-colors ml-auto flex items-center gap-2 border border-indigo-100"><span class="text-lg leading-none">💬</span> Rispondi</button>
+                            ${state.isAdmin ? `<button onclick="eliminaRecensione('${r.id}', '${r.libroId}')" class="text-[10px] sm:text-xs font-bold px-3 py-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200">Elimina</button>` : ''}
+                        </div>
+
+                        <div class="mt-5 border-t border-slate-100 pt-2">
+                            ${buildCommentTree(r.id, null)}
+                        </div>
                     </div>`;
                 }).join('')}</div>`;
             }
             return h;
         }
 
-        const userRevIds = state.reviews.filter(r => r.uid === state.user.uid).map(r => r.libroId); const daRecensire = state.userData.libri_letti.filter(id => !userRevIds.includes(id)); const libriDaRec = state.books.filter(b => daRecensire.includes(b.id));
+        const userRevIds = state.reviews.filter(r => r.uid === state.user.uid).map(r => r.libroId);
+        const daRecensire = state.userData.libri_letti.filter(id => !userRevIds.includes(id));
+        const libriDaRec = state.books.filter(b => daRecensire.includes(b.id));
 
         let h = '';
         if(libriDaRec.length > 0) {
             h += `<div class="mb-10 sm:mb-12 px-4 sm:px-0"><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">✍ Da Recensire</h2><div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">${libriDaRec.map(b => `<div class="bg-indigo-50 p-5 sm:p-6 rounded-3xl border border-indigo-100 flex flex-col justify-between items-start gap-4"><div><h4 class="font-bold text-indigo-900 text-base sm:text-lg">${escapeHTML(b.titolo)}</h4><p class="text-indigo-600 text-xs sm:text-sm">${escapeHTML(b.autore)}</p></div><button onclick="openModal('recensisci', {id: '${b.id}', titolo: '${escapeHTML(b.titolo).replace(/'/g, "\\'")}'})" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-sm sm:text-base shadow-lg shadow-indigo-600/30 hover:scale-105 transition-transform">Scrivi Recensione</button></div>`).join('')}</div></div>`;
         }
 
-        const revBooksIds = [...new Set(state.reviews.map(r => r.libroId))]; const revBooks = state.books.filter(b => revBooksIds.includes(b.id));
+        const revBooksIds = [...new Set(state.reviews.map(r => r.libroId))];
+        const revBooks = state.books.filter(b => revBooksIds.includes(b.id));
+        
         h += `<h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6 px-4 sm:px-0">📂 Esplora Discussioni</h2>`;
         if(!revBooks.length) h += `<div class="text-center p-10 sm:p-12 mx-4 sm:mx-0 bg-white rounded-3xl border"><p class="font-bold text-sm sm:text-base text-slate-500">Nessuna recensione.</p></div>`;
         else {
@@ -1066,16 +1736,29 @@
     }
 
     function adminView() {
+        
         let allarmiHtml = '';
-        if (state.isGod) {
+        if (GOD_EMAILS.includes(state.user.email)) {
             allarmiHtml = `
             <section class="mb-8 sm:mb-12">
                 <h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6 text-red-600 flex items-center gap-2">
                     <span class="text-2xl">🚨</span> Log di Sicurezza (Sabotaggi)
                     ${(state.allarmi && state.allarmi.length > 0) ? `<button onclick="pulisciAllarmi()" class="ml-auto text-xs sm:text-sm font-bold bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl transition-colors shadow-sm">Pulisci Log</button>` : ''}
                 </h2>
-                ${(state.allarmi && state.allarmi.length > 0) ? `<div class="space-y-3 sm:space-y-4">${[...state.allarmi].reverse().map(a => `<div class="bg-red-50 border-2 border-red-100 p-4 sm:p-5 rounded-2xl shadow-sm"><p class="text-[10px] sm:text-xs font-black uppercase tracking-wider text-red-400 mb-2">${new Date(a.data).toLocaleString()}</p><p class="text-sm sm:text-base font-bold text-slate-800">Bersaglio: <span class="text-indigo-600">${escapeHTML(a.bersaglio)}</span></p><p class="text-sm sm:text-base font-bold text-slate-800 mt-1">Colpevole: <span class="text-red-600">${escapeHTML(a.attaccante_nome)}</span> <span class="text-xs font-medium text-slate-500">(${escapeHTML(a.attaccante_email)})</span></p><p class="text-sm sm:text-base font-medium text-slate-700 mt-2 bg-white p-3 rounded-xl border border-red-100">${escapeHTML(a.messaggio)}</p></div>`).join('')}</div>` : `<div class="bg-emerald-50 border-2 border-emerald-100 p-5 sm:p-6 rounded-2xl text-center shadow-sm"><p class="font-extrabold text-sm sm:text-base text-emerald-600 flex items-center justify-center gap-2"><span>🛡️</span> Nessun tentativo di sabotaggio rilevato.</p></div>`}
-            </section>`;
+                ${(state.allarmi && state.allarmi.length > 0) ? `
+                <div class="space-y-3 sm:space-y-4">
+                    ${[...state.allarmi].reverse().map(a => `
+                    <div class="bg-red-50 border-2 border-red-100 p-4 sm:p-5 rounded-2xl shadow-sm">
+                        <p class="text-[10px] sm:text-xs font-black uppercase tracking-wider text-red-400 mb-2">${new Date(a.data).toLocaleString()}</p>
+                        <p class="text-sm sm:text-base font-bold text-slate-800">Bersaglio: <span class="text-indigo-600">${escapeHTML(a.bersaglio)}</span></p>
+                        <p class="text-sm sm:text-base font-bold text-slate-800 mt-1">Colpevole: <span class="text-red-600">${escapeHTML(a.attaccante_nome)}</span> <span class="text-xs font-medium text-slate-500">(${escapeHTML(a.attaccante_email)})</span></p>
+                        <p class="text-sm sm:text-base font-medium text-slate-700 mt-2 bg-white p-3 rounded-xl border border-red-100">${escapeHTML(a.messaggio)}</p>
+                    </div>
+                    `).join('')}
+                </div>
+                ` : `<div class="bg-emerald-50 border-2 border-emerald-100 p-5 sm:p-6 rounded-2xl text-center shadow-sm"><p class="font-extrabold text-sm sm:text-base text-emerald-600 flex items-center justify-center gap-2"><span>🛡️</span> Nessun tentativo di sabotaggio rilevato.</p></div>`}
+            </section>
+            `;
         }
 
         return `<div class="space-y-8 sm:space-y-12 px-4 sm:px-0">
@@ -1204,17 +1887,20 @@
             return;
         }
 
-        let godChecked = []; let allChecked = true;
+        let godChecked = [];
+        let allChecked = true;
         if (state.tab === 'god') {
             const radar = document.getElementById('god-radar-list');
             if (radar) {
                 godChecked = Array.from(radar.querySelectorAll('.target-user:checked')).map(cb => cb.value);
-                const allCb = document.getElementById('target-all'); allChecked = allCb ? allCb.checked : true;
+                const allCb = document.getElementById('target-all');
+                allChecked = allCb ? allCb.checked : true;
             }
         }
 
         const btnClass = id => `flex items-center justify-center shrink-0 gap-1.5 sm:gap-2 px-4 py-2 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl font-extrabold transition-all duration-300 text-xs sm:text-base ${state.tab === id ? 'bg-slate-900 text-white shadow-lg sm:shadow-xl sm:scale-105' : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'}`;
-        const content = { catalogo: catalogoView, prestiti: prestitiView, proponi: proponiView, recensioni: recensioniView, admin: adminView, god: godView }[state.tab];
+        const content = { catalogo: catalogoView, prestiti: prestitiView, proponi: proponiView, recensioni: recensioniView, admin: adminView, god: godView }[state.tab === "admin" && !state.isAdmin ? "catalogo" : state.tab]();
+        
         const animationClass = animate ? 'fade-in' : '';
 
         appDiv.innerHTML = `
@@ -1222,6 +1908,8 @@
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <span class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2 sm:gap-3"><span class="text-2xl sm:text-3xl drop-shadow-sm hover:rotate-12 transition-transform cursor-pointer">📚</span> <span>2ALD</span></span>
                 <div class="flex items-center gap-2 sm:gap-4">
+                    ${!state.isAdmin ? `<button onclick="diventaAdmin()" class="text-[10px] sm:text-sm font-extrabold text-amber-600 bg-amber-50 hover:bg-amber-100 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl uppercase sm:capitalize tracking-wide border border-amber-200/50 transition-colors">Admin</button>` : `<button onclick="esciDaAdmin()" class="text-[10px] sm:text-sm font-extrabold ${state.isGod ? 'text-purple-600 bg-purple-50 hover:bg-purple-100 border-purple-200/50' : 'text-rose-600 bg-rose-50 hover:bg-rose-100 border-rose-200/50'} px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl uppercase sm:capitalize tracking-wide border shadow-sm transition-colors">${state.isGod ? 'Esci da Dio' : 'Esci da Admin'}</button>`}
+                    
                     <button onclick="openModal('profilo')" class="flex items-center gap-2 sm:gap-3 bg-slate-100/80 hover:bg-slate-200/80 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-full border border-slate-200 transition-colors shadow-sm cursor-pointer group">
                         ${window.getAvatar(state.userData.avatar, "w-6 h-6 sm:w-8 sm:h-8")}
                         <span class="text-xs sm:text-sm font-bold text-slate-700 hidden md:flex items-center group-hover:text-indigo-600 transition-colors">${escapeHTML(state.userData.nome || state.user.displayName)} ${state.userData.badge ? `<span class="ml-1.5 text-[9px] uppercase font-black px-1.5 py-0.5 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm">${escapeHTML(state.userData.badge)}</span>` : ''}</span>
@@ -1242,17 +1930,20 @@
                 ${state.isGod ? `<button onclick="cambiaTab('god')" class="${btnClass('god')} snap-start !bg-purple-600 !text-white !border-purple-600 shadow-purple-600/30">⚡ <span class="hidden sm:inline">L'Olimpo</span></button>` : ''}
                 <div class="w-1 shrink-0 sm:hidden"></div>
             </div>
-            <div class="pb-10">${content()}</div>
+            <div class="pb-10">${content}</div>
         </main>
         ${renderModal()}`;
 
         if (state.tab === 'god') {
             const radar = document.getElementById('god-radar-list');
-            if (radar) { godChecked.forEach(val => { const cb = radar.querySelector(`.target-user[value="${val}"]`); if (cb) cb.checked = true; }); const allCb = document.getElementById('target-all'); if (allCb) allCb.checked = allChecked; }
+            if (radar) {
+                godChecked.forEach(val => { const cb = radar.querySelector(`.target-user[value="${val}"]`); if (cb) cb.checked = true; });
+                const allCb = document.getElementById('target-all');
+                if (allCb) allCb.checked = allChecked;
+            }
         }
     }
 </script>
-
-<!-- Aggiornamento forzato per GitHub Actions (05-10-2026) -->
 </body>
 </html>
+```eof
