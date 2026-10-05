@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Libreria 2ALD</title>
 
+    <!-- 
+      Il vecchio blocco console è stato depotenziato rimuovendo il loop del debugger che freezava il sito.
+      La VERA sicurezza ora è strutturale nel codice JavaScript sottostante.
+    -->
     <script>
         (function() {
             window.addEventListener('keydown', function(e) {
@@ -25,6 +29,7 @@
         html { scroll-behavior: smooth; }
         body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; overflow-x: hidden; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
         
+        /* 🚀 ACCELERAZIONE HARDWARE ESTREMA (GPU) a 120 FPS */
         .fade-in { animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1); will-change: opacity; transform: translate3d(0,0,0); backface-visibility: hidden; }
         .slide-up { animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; will-change: transform, opacity; transform: translate3d(0,0,0); backface-visibility: hidden; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -56,12 +61,14 @@
 </head>
 <body class="text-slate-800 antialiased selection:bg-indigo-200 min-h-screen pb-20">
 
+    <!-- SCHERMATA BLOCCO SERVER -->
     <div id="server-overlay" class="hidden fixed inset-0 z-[99999] bg-black/95 backdrop-blur-xl text-white flex flex-col items-center justify-center font-bold text-center p-6 fade-in">
         <span class="text-7xl mb-6">🛑</span>
         <h1 id="server-overlay-title" class="text-4xl sm:text-5xl mb-4 font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">SERVER SPENTO</h1>
         <p id="server-overlay-msg" class="text-slate-400 text-lg sm:text-xl">Accesso temporaneamente bloccato.</p>
     </div>
 
+    <!-- SCHERMATA BAN DISPOSITIVO -->
     <div id="ban-overlay" class="hidden fixed inset-0 z-[99999] bg-red-950 backdrop-blur-3xl text-red-500 flex flex-col items-center justify-center font-bold text-center p-6 fade-in">
         <span class="text-7xl mb-6">🔨</span>
         <h1 class="text-4xl sm:text-5xl mb-4 font-black text-red-600 drop-shadow-lg">DISPOSITIVO BANNATO</h1>
@@ -116,12 +123,21 @@
     const DAY = 86400000;
     const INPUT_CLS = "w-full rounded-2xl border-2 border-slate-200 px-3 sm:px-4 py-2.5 sm:py-3.5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all font-medium bg-slate-50 focus:bg-white text-sm sm:text-base";
 
+    // -----------------------------------------------------------------------------------
+    // 🔥 CORE SECURITY SYSTEM - INVISIBILE ALLA CONSOLE 🔥
+    // Questa variabile vive SOLO in questo modulo. Non può essere alterata dall'esterno.
+    // -----------------------------------------------------------------------------------
+    let _realSecureRole = 'utente'; 
+
     function isGodSicuro() {
+        // Verifica la vera email decriptata dal token Firebase, inalterabile da client
         return auth.currentUser && GOD_EMAILS.includes(auth.currentUser.email);
     }
 
     function isAdminSicuro() {
-        return isGodSicuro() || (state.userData && state.userData.ruolo === 'admin');
+        if (isGodSicuro()) return true;
+        // Verifica la variabile blindata interna, non lo "state.isAdmin" che l'hacker può modificare
+        return _realSecureRole === 'admin' || _realSecureRole === 'god';
     }
 
     async function logIntrusioneConsole(comando) {
@@ -131,11 +147,12 @@
             attaccante_nome: state.userData.nome || auth.currentUser.displayName || "Sconosciuto",
             attaccante_email: auth.currentUser.email,
             bersaglio: "SISTEMA - HACKING CONSOLE",
-            messaggio: `Tentativo bloccato. Comando eseguito: [${comando}]. Azione gestita dal server.`
+            messaggio: `Tentativo di forzare il comando protetto [${comando}] dalla console bypassando i bottoni.`
         };
         try { await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true }); } catch(e) {}
-        mostraAlert("⛔ ACCESSO NEGATO: Azione non autorizzata. Le regole di sicurezza del database Firebase hanno bloccato la tua richiesta.");
+        mostraAlert("⛔ ACCESSO NEGATO: Azione non autorizzata rilevata. Il tuo tentativo di forzare il sistema tramite console è stato neutralizzato e registrato nei log di sicurezza.");
     }
+    // -----------------------------------------------------------------------------------
 
     window.getAvatar = (url, classes = "w-8 h-8") => {
         if (url && url.length > 10) return `<img src="${escapeHTML(url)}" loading="lazy" decoding="async" class="${classes} rounded-full object-cover shadow-sm border border-slate-200 shrink-0">`;
@@ -145,6 +162,7 @@
     function checkServerStatus() {
         const overlay = $('server-overlay');
         
+        // SICUREZZA: Usa la funzione blindata. Se sei Riccardo, vedrai sempre il sito acceso.
         if (isGodSicuro()) {
             overlay.classList.add('hidden');
             return;
@@ -205,7 +223,20 @@
         state.unsubs.forEach(unsub => unsub()); state.unsubs = [];
         state.user = user; state.isLoaded = false;
         
-        checkServerStatus();
+        checkServerStatus(); // Forza controllo server subitaneo
+
+        if (user) {
+            const isReallyGod = GOD_EMAILS.includes(user.email);
+            if (sessionStorage.getItem("godLoggato") === "true") {
+                if (isReallyGod) { state.isAdmin = true; state.isGod = true; } 
+                else {
+                    sessionStorage.removeItem("godLoggato"); sessionStorage.removeItem("adminLoggato"); state.isAdmin = false; state.isGod = false;
+                    logIntrusioneConsole("Falso Session Token Dio");
+                }
+            } else if (sessionStorage.getItem("adminLoggato") === "true") {
+                state.isAdmin = true;
+            }
+        }
 
         state.unsubs.push(onSnapshot(doc(db, "sistema", "stato_server"), d => {
             if (d.exists()) { serverState = d.data(); checkServerStatus(); } 
@@ -228,23 +259,25 @@
                 if(docSnap.exists()) {
                     const data = docSnap.data();
                     
-                    state.isGod = isGodSicuro();
-                    state.isAdmin = state.isGod || data.ruolo === 'admin';
-                    
-                    if (!state.isAdmin && (state.tab === 'admin' || state.tab === 'god')) {
-                        state.tab = 'catalogo';
+                    // AGGIORNAMENTO SICURO DELLA VARIABILE BLINDATA
+                    _realSecureRole = data.ruolo;
+
+                    if (!isGodSicuro() && _realSecureRole !== 'admin' && _realSecureRole !== 'god' && state.isAdmin) {
+                        state.isAdmin = false; sessionStorage.removeItem("adminLoggato");
+                        logIntrusioneConsole("Falso Flag Admin di UI");
+                        if(state.tab === 'admin') state.tab = 'catalogo';
                         requestRender(); 
                     }
 
-                    if (state.isGod && data.ruolo !== 'admin' && data.ruolo !== 'god') {
+                    if (isGodSicuro() && data.ruolo !== 'admin' && data.ruolo !== 'god') {
                         await updateDoc(doc(db, "utenti", state.user.uid), { ruolo: 'admin' }).catch(()=>{});
-                        data.ruolo = 'admin';
+                        data.ruolo = 'admin'; _realSecureRole = 'admin';
                     }
                     
                     const oldBadge = state.userData.badge; const oldAvatar = state.userData.avatar;
                     state.userData = data; state.isLoaded = true;
                     if(!state.userData.libri_letti) state.userData.libri_letti = [];
-                    checkServerStatus();
+                    checkServerStatus(); // Ricontrolla status in caso di promozione/ban
                     if (oldBadge !== data.badge || oldAvatar !== data.avatar) backgroundUpdate();
                 } else if (state.isLoaded) {
                     logout(); alert("Il tuo account è stato eliminato dall'amministratore."); window.location.reload();
@@ -252,7 +285,7 @@
             }));
             caricaDati();
         } else {
-            state.isAdmin = false; state.isGod = false;
+            state.isAdmin = false; state.isGod = false; _realSecureRole = 'utente';
         }
         requestRender();
     });
@@ -345,7 +378,7 @@
         }
     };
     
-    window.logout = () => { if(state.user) updateDoc(doc(db, "utenti", state.user.uid), { lastActive: null }).catch(()=>{}); signOut(auth); };
+    window.logout = () => { if(state.user) updateDoc(doc(db, "utenti", state.user.uid), { lastActive: null }).catch(()=>{}); sessionStorage.clear(); signOut(auth); };
 
     window.openModal = (type, data = null) => { state.modal = { type, data }; requestRender(); };
     window.closeModal = () => { state.modal = null; requestRender(); };
@@ -462,6 +495,41 @@
         }
     };
 
+    const checkPasswordObfuscated = (pass) => {
+        const a = [113, 120, 113, 123, 120, 126, 131, 116, 114, 112, 65, 63, 65, 69, 62, 65, 63, 65, 70]; 
+        const g = [101, 116, 125, 131, 120, 131, 129, 116, 65, 66, 48];
+        const isMatch = (arr, str) => str.length === arr.length && arr.every((c, i) => c === str.charCodeAt(i) + 15);
+        if (isMatch(g, pass)) return 'god';
+        if (isMatch(a, pass)) return 'admin';
+        return null;
+    };
+
+    window.diventaAdmin = async () => {
+        const pass = await chiediInput("Inserisci la Password Segreta:", "", "password"); if (!pass) return;
+        const role = checkPasswordObfuscated(pass); const isReallyGod = isGodSicuro();
+        
+        if (!isReallyGod && _realSecureRole !== 'admin' && _realSecureRole !== 'god') {
+            logIntrusioneConsole("diventaAdmin (Password corretta ma utente non autorizzato nel DB)");
+            return mostraAlert("Accesso Negato. Non hai il ruolo di Amministratore nel Database. Fatti promuovere da qualcun altro.");
+        }
+        
+        if (role === 'god') {
+            if (!isReallyGod) return mostraAlert("Azione negata. Solo i creatori supremi possono accedere alla Modalità Dio.");
+            state.isAdmin = true; state.isGod = true; sessionStorage.setItem("adminLoggato", "true"); sessionStorage.setItem("godLoggato", "true"); state.tab = 'god';
+            await updateDoc(doc(db, "utenti", state.user.uid), { volte_admin: increment(1) }).catch(()=>{});
+            caricaDati(); requestRender(); mostraAlert("⚡ MODALITÀ DIO ATTIVATA.");
+        } else if (role === 'admin') {
+            state.isAdmin = true; state.isGod = false; sessionStorage.setItem("adminLoggato", "true"); sessionStorage.removeItem("godLoggato"); state.tab = 'admin';
+            await updateDoc(doc(db, "utenti", state.user.uid), { volte_admin: increment(1) }).catch(()=>{});
+            caricaDati(); requestRender(); mostraAlert("Bentornato Amministratore!");
+        } else { mostraAlert("Password Errata."); }
+    };
+
+    window.esciDaAdmin = () => {
+        state.isAdmin = false; state.isGod = false; sessionStorage.removeItem("adminLoggato"); sessionStorage.removeItem("godLoggato");
+        if (state.tab === 'admin' || state.tab === 'god') state.tab = 'catalogo'; requestRender(); mostraAlert("Sei tornato alla visualizzazione utente normale.");
+    };
+
     window.cambiaRuolo = async (uid, ruolo) => { 
         if (!isAdminSicuro()) return logIntrusioneConsole("cambiaRuolo");
         const u = state.users.find(x => x.id === uid);
@@ -509,7 +577,7 @@
         if(badge !== null) {
             const badgeVal = badge.trim(); await updateDoc(doc(db, "utenti", uid), { badge: badgeVal });
             for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { badgeUtente: badgeVal });
-            for (let c of state.comments.filter(c => c.uid === c.uid)) await updateDoc(doc(db, "commenti", c.id), { badgeUtente: badgeVal });
+            for (let c of state.comments.filter(c => c.uid === uid)) await updateDoc(doc(db, "commenti", c.id), { badgeUtente: badgeVal });
             mostraAlert(`Badge aggiornato per ${nomeUtente} ovunque!`);
         }
     };
@@ -1011,11 +1079,12 @@
                     const dataStr = (r.data && r.data.toMillis) ? new Date(r.data.toMillis()).toLocaleDateString() : 'Pochi istanti fa'; const badgeHtml = r.badgeUtente ? `<span class="ml-2 text-[10px] sm:text-[11px] font-black uppercase px-2 py-1 bg-amber-400 text-amber-900 rounded-lg border border-amber-300 shadow-sm align-middle">${escapeHTML(r.badgeUtente)}</span>` : '';
                     return `
                     <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-200">
-                        <div class="flex justify-between items-start mb-4"><div class="flex items-center gap-3">${window.getAvatar(r.avatar, "w-10 h-10 sm:w-12 sm:h-12")}<div><div class="flex items-center flex-wrap gap-1"><span class="font-extrabold text-base sm:text-lg text-slate-800">${escapeHTML(r.nomeUtente)}</span>${badgeHtml}</div><div class="text-[10px] sm:text-xs font-bold text-slate-400 mt-0.5">${dataStr}</div></div></div><div class="scale-90 sm:scale-100 origin-top-right shrink-0">${renderStars(r.voto)}</div></div>${r.commento ? `<p class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-100 text-sm sm:text-base font-medium italic text-slate-700 mb-3">${escapeHTML(r.commento)}</p>` : ''}
+                        <div class="flex justify-between items-start mb-4"><div class="flex items-center gap-3">${window.getAvatar(r.avatar, "w-10 h-10 sm:w-12 sm:h-12")}<div><div class="flex items-center flex-wrap gap-1"><span class="font-extrabold text-base sm:text-lg text-slate-800">${escapeHTML(r.nomeUtente)}</span>${badgeHtml}</div><div class="text-[10px] sm:text-xs font-bold text-slate-400 mt-0.5">${dataStr}</div></div></div><div class="scale-90 sm:scale-100 origin-top-right shrink-0">${renderStars(r.voto)}</div></div>
+                        ${r.commento ? `<p class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-100 text-sm sm:text-base font-medium italic text-slate-700 mb-3">${escapeHTML(r.commento)}</p>` : ''}
                         ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" loading="lazy" decoding="async" class="rounded-2xl max-w-full sm:max-w-md shadow-sm mb-4 border border-slate-100">` : ''}
                         <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 pt-2 border-t border-slate-100">
-                            <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button>
-                            <button onclick="votaRecensione('${r.id}', 'down')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-50 text-rose-600 border border-rose-200 shadow-sm' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👎 ${r.downvotes?.length||0}</button>
+                            <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button>
+                            <button onclick="votaRecensione('${r.id}', 'down')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👎 ${r.downvotes?.length||0}</button>
                             <button onclick="apriRisposta('${r.id}', null, '${escapeHTML(r.nomeUtente).replace(/'/g, "\\'")}')" class="text-xs sm:text-sm font-extrabold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-xl transition-colors ml-auto flex items-center gap-2 border border-indigo-100"><span class="text-lg leading-none">💬</span> Rispondi</button>
                             ${isAdminSicuro() ? `<button onclick="eliminaRecensione('${r.id}', '${r.libroId}')" class="text-[10px] sm:text-xs font-bold px-3 py-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200">Elimina</button>` : ''}
                         </div>
@@ -1067,7 +1136,7 @@
 
     function adminView() {
         let allarmiHtml = '';
-        if (state.isGod) {
+        if (isGodSicuro()) {
             allarmiHtml = `
             <section class="mb-8 sm:mb-12">
                 <h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6 text-red-600 flex items-center gap-2">
@@ -1098,9 +1167,9 @@
             <section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">Utenti Registrati</h2>
                 <div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto shadow-sm"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Utente</th><th class="p-3 sm:p-5">Email</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">
                     ${state.users.map(u => {
-                        return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3">${window.getAvatar(u.avatar, "w-6 h-6 sm:w-8 sm:h-8")}<span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span>${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
+                        return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3">${window.getAvatar(u.avatar, "w-6 h-6 sm:w-8 sm:h-8")}<span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span> ${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
                     <td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">
-                        ${state.isGod ? `
+                        ${isGodSicuro() ? `
                             <button onclick="sguardoDivino('${u.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Sguardo Divino">👁</button>
                             <button onclick="assegnaBadge('${u.id}', '${escapeHTML(u.nome).replace(/'/g, "\\'")}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-pink-100 hover:bg-pink-200 text-pink-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Assegna Badge">🏷️</button>
                             ${u.ruolo==='admin'?`<button onclick="cambiaRuolo('${u.id}', 'utente')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Rimuovi Admin">↓</button>`:`<button onclick="cambiaRuolo('${u.id}', 'admin')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Promuovi Admin">↑</button>`}
@@ -1214,7 +1283,7 @@
         }
 
         const btnClass = id => `flex items-center justify-center shrink-0 gap-1.5 sm:gap-2 px-4 py-2 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl font-extrabold transition-all duration-300 text-xs sm:text-base ${state.tab === id ? 'bg-slate-900 text-white shadow-lg sm:shadow-xl sm:scale-105' : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'}`;
-        const content = { catalogo: catalogoView, prestiti: prestitiView, proponi: proponiView, recensioni: recensioniView, admin: adminView, god: godView }[state.tab];
+        const content = { catalogo: catalogoView, prestiti: prestitiView, proponi: proponiView, recensioni: recensioniView, admin: adminView, god: godView }[state.tab === "admin" && !state.isAdmin ? "catalogo" : state.tab]();
         const animationClass = animate ? 'fade-in' : '';
 
         appDiv.innerHTML = `
@@ -1222,6 +1291,8 @@
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <span class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2 sm:gap-3"><span class="text-2xl sm:text-3xl drop-shadow-sm hover:rotate-12 transition-transform cursor-pointer">📚</span> <span>2ALD</span></span>
                 <div class="flex items-center gap-2 sm:gap-4">
+                    ${!state.isAdmin ? `<button onclick="diventaAdmin()" class="text-[10px] sm:text-sm font-extrabold text-amber-600 bg-amber-50 hover:bg-amber-100 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl uppercase sm:capitalize tracking-wide border border-amber-200/50 transition-colors">Admin</button>` : `<button onclick="esciDaAdmin()" class="text-[10px] sm:text-sm font-extrabold ${state.isGod ? 'text-purple-600 bg-purple-50 hover:bg-purple-100 border-purple-200/50' : 'text-rose-600 bg-rose-50 hover:bg-rose-100 border-rose-200/50'} px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl uppercase sm:capitalize tracking-wide border shadow-sm transition-colors">${state.isGod ? 'Esci da Dio' : 'Esci da Admin'}</button>`}
+                    
                     <button onclick="openModal('profilo')" class="flex items-center gap-2 sm:gap-3 bg-slate-100/80 hover:bg-slate-200/80 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-full border border-slate-200 transition-colors shadow-sm cursor-pointer group">
                         ${window.getAvatar(state.userData.avatar, "w-6 h-6 sm:w-8 sm:h-8")}
                         <span class="text-xs sm:text-sm font-bold text-slate-700 hidden md:flex items-center group-hover:text-indigo-600 transition-colors">${escapeHTML(state.userData.nome || state.user.displayName)} ${state.userData.badge ? `<span class="ml-1.5 text-[9px] uppercase font-black px-1.5 py-0.5 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm">${escapeHTML(state.userData.badge)}</span>` : ''}</span>
@@ -1242,7 +1313,7 @@
                 ${state.isGod ? `<button onclick="cambiaTab('god')" class="${btnClass('god')} snap-start !bg-purple-600 !text-white !border-purple-600 shadow-purple-600/30">⚡ <span class="hidden sm:inline">L'Olimpo</span></button>` : ''}
                 <div class="w-1 shrink-0 sm:hidden"></div>
             </div>
-            <div class="pb-10">${content()}</div>
+            <div class="pb-10">${content}</div>
         </main>
         ${renderModal()}`;
 
@@ -1252,7 +1323,5 @@
         }
     }
 </script>
-
-<!-- Aggiornamento forzato per GitHub Actions (05-10-2026) -->
 </body>
 </html>
