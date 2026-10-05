@@ -509,7 +509,7 @@
         if(badge !== null) {
             const badgeVal = badge.trim(); await updateDoc(doc(db, "utenti", uid), { badge: badgeVal });
             for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { badgeUtente: badgeVal });
-            for (let c of state.comments.filter(c => c.uid === uid)) await updateDoc(doc(db, "commenti", c.id), { badgeUtente: badgeVal });
+            for (let c of state.comments.filter(c => c.uid === c.uid)) await updateDoc(doc(db, "commenti", c.id), { badgeUtente: badgeVal });
             mostraAlert(`Badge aggiornato per ${nomeUtente} ovunque!`);
         }
     };
@@ -1014,8 +1014,8 @@
                         <div class="flex justify-between items-start mb-4"><div class="flex items-center gap-3">${window.getAvatar(r.avatar, "w-10 h-10 sm:w-12 sm:h-12")}<div><div class="flex items-center flex-wrap gap-1"><span class="font-extrabold text-base sm:text-lg text-slate-800">${escapeHTML(r.nomeUtente)}</span>${badgeHtml}</div><div class="text-[10px] sm:text-xs font-bold text-slate-400 mt-0.5">${dataStr}</div></div></div><div class="scale-90 sm:scale-100 origin-top-right shrink-0">${renderStars(r.voto)}</div></div>${r.commento ? `<p class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-100 text-sm sm:text-base font-medium italic text-slate-700 mb-3">${escapeHTML(r.commento)}</p>` : ''}
                         ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" loading="lazy" decoding="async" class="rounded-2xl max-w-full sm:max-w-md shadow-sm mb-4 border border-slate-100">` : ''}
                         <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 pt-2 border-t border-slate-100">
-                            <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button>
-                            <button onclick="votaRecensione('${r.id}', 'down')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👎 ${r.downvotes?.length||0}</button>
+                            <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button>
+                            <button onclick="votaRecensione('${r.id}', 'down')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-50 text-rose-600 border border-rose-200 shadow-sm' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👎 ${r.downvotes?.length||0}</button>
                             <button onclick="apriRisposta('${r.id}', null, '${escapeHTML(r.nomeUtente).replace(/'/g, "\\'")}')" class="text-xs sm:text-sm font-extrabold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-xl transition-colors ml-auto flex items-center gap-2 border border-indigo-100"><span class="text-lg leading-none">💬</span> Rispondi</button>
                             ${isAdminSicuro() ? `<button onclick="eliminaRecensione('${r.id}', '${r.libroId}')" class="text-[10px] sm:text-xs font-bold px-3 py-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200">Elimina</button>` : ''}
                         </div>
@@ -1252,5 +1252,7 @@
         }
     }
 </script>
+
+<!-- Aggiornamento forzato per GitHub Actions (05-10-2026) -->
 </body>
 </html>
