@@ -11,12 +11,12 @@
         html { scroll-behavior: smooth; }
         body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; overflow-x: hidden; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
         
-        .fade-in { animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1); will-change: opacity; transform: translate3d(0,0,0); backface-visibility: hidden; }
-        .slide-up { animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; will-change: transform, opacity; transform: translate3d(0,0,0); backface-visibility: hidden; }
+        .fade-in { animation: fadeIn 0.15s ease-out forwards; will-change: opacity; transform: translateZ(0); }
+        .slide-up { animation: slideUp 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards; will-change: transform, opacity; transform: translateZ(0); }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translate3d(0, 15px, 0) scale(0.98); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
         
-        .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); transform: translate3d(0,0,0); }
+        .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); transform: translateZ(0); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -28,34 +28,33 @@
         .star-cb-group label:hover, .star-cb-group label:hover ~ label, .star-cb-group input:checked ~ label { color: #fbbf24; }
         @media (max-width: 640px) { .star-cb-group label { font-size: 2rem; padding: 0 2px; } }
 
-        @keyframes terremoto { 0% { transform: translate3d(2px, 1px, 0) rotate(0deg); } 10% { transform: translate3d(-1px, -2px, 0) rotate(-1deg); } 20% { transform: translate3d(-3px, 0px, 0) rotate(1deg); } 30% { transform: translate3d(0px, 2px, 0) rotate(0deg); } 40% { transform: translate3d(1px, -1px, 0) rotate(1deg); } 50% { transform: translate3d(-1px, 2px, 0) rotate(-1deg); } 60% { transform: translate3d(-3px, 1px, 0) rotate(0deg); } 70% { transform: translate3d(2px, 1px, 0) rotate(-1deg); } 80% { transform: translate3d(-1px, -1px, 0) rotate(1deg); } 90% { transform: translate3d(2px, 2px, 0) rotate(0deg); } 100% { transform: translate3d(1px, -2px, 0) rotate(-1deg); } }
-        .caos-terremoto { animation: terremoto 0.3s infinite; will-change: transform; }
+        /* Effetti Caos */
+        @keyframes terremoto { 0%, 100% { transform: translate3d(0,0,0) rotate(0deg); } 25% { transform: translate3d(-2px, 2px, 0) rotate(-1deg); } 50% { transform: translate3d(2px, -2px, 0) rotate(1deg); } 75% { transform: translate3d(-2px, -2px, 0) rotate(-1deg); } }
+        .caos-terremoto { animation: terremoto 0.15s infinite; will-change: transform; transform: translateZ(0); }
         @keyframes discoteca { 0% { filter: hue-rotate(0deg) saturate(2); } 100% { filter: hue-rotate(360deg) saturate(2); } }
-        .caos-discoteca { animation: discoteca 1.5s infinite; will-change: filter; }
-        .caos-sottosopra { transform: rotate(180deg) translate3d(0,0,0); transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; }
+        .caos-discoteca { animation: discoteca 1.5s infinite linear; will-change: filter; transform: translateZ(0); }
+        .caos-sottosopra { transform: rotate(180deg) translateZ(0); transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; }
         .caos-buio * { background-color: black !important; color: black !important; border-color: black !important; box-shadow: none !important; background-image: none !important; }
         .caos-comic * { font-family: "Comic Sans MS", "Comic Sans", cursive !important; }
         .falling-item { position: fixed; top: -50px; font-size: 2rem; z-index: 9999; animation: fall linear forwards; pointer-events: none; will-change: transform; }
         @keyframes fall { to { transform: translate3d(0, 110vh, 0) rotate(360deg); } }
-        img { content-visibility: auto; }
     </style>
 </head>
 <body class="text-slate-800 antialiased selection:bg-indigo-200 min-h-screen pb-20">
 
-    <!-- SCHERMATA BLOCCO SERVER -->
     <div id="server-overlay" class="hidden fixed inset-0 z-[99999] bg-black/95 backdrop-blur-xl text-white flex flex-col items-center justify-center font-bold text-center p-6 fade-in">
         <span class="text-7xl mb-6">🛑</span>
         <h1 id="server-overlay-title" class="text-4xl sm:text-5xl mb-4 font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">SERVER SPENTO</h1>
         <p id="server-overlay-msg" class="text-slate-400 text-lg sm:text-xl">Accesso temporaneamente bloccato.</p>
     </div>
 
-    <!-- SCHERMATA BAN DISPOSITIVO -->
     <div id="ban-overlay" class="hidden fixed inset-0 z-[99999] bg-red-950 backdrop-blur-3xl text-red-500 flex flex-col items-center justify-center font-bold text-center p-6 fade-in">
         <span class="text-7xl mb-6">🔨</span>
         <h1 class="text-4xl sm:text-5xl mb-4 font-black text-red-600 drop-shadow-lg">DISPOSITIVO BANNATO</h1>
         <p class="text-red-400 text-lg sm:text-xl">Questo dispositivo ha violato le regole ed è stato bloccato in modo permanente.</p>
     </div>
 
+    <!-- ROOT CONTAINER -->
     <div id="app" class="min-h-screen">
         <div class="flex items-center justify-center min-h-screen">
             <div class="animate-pulse text-2xl font-bold text-indigo-500 flex items-center gap-3">
@@ -97,6 +96,7 @@
 
     let serverState = { attivo: true, last_force_reload: null };
     let bannedDevices = [];
+    let appShellInjected = false;
 
     const $ = id => document.getElementById(id);
     const escapeHTML = str => String(str || "").replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag]));
@@ -110,31 +110,15 @@
 
     function checkServerStatus() {
         const overlay = $('server-overlay');
-        
-        if (state.isGod) {
-            overlay.classList.add('hidden');
-            return;
-        }
-
-        if (serverState.attivo === false) {
-            $('server-overlay-title').innerText = "SERVER SPENTO";
-            $('server-overlay-msg').innerText = "Il database è stato spento dall'amministratore.";
-            overlay.classList.remove('hidden');
-        } else if (serverState.last_force_reload && PAGE_LOAD_TIME < serverState.last_force_reload) {
-            $('server-overlay-title').innerText = "VERSIONE OBSOLETA";
-            $('server-overlay-msg').innerText = "C'è un aggiornamento critico. Per favore ricarica la pagina.";
-            overlay.classList.remove('hidden');
-        } else {
-            overlay.classList.add('hidden');
-        }
+        if (state.isGod) { overlay.classList.add('hidden'); return; }
+        if (serverState.attivo === false) { $('server-overlay-title').innerText = "SERVER SPENTO"; $('server-overlay-msg').innerText = "Il database è stato spento dall'amministratore."; overlay.classList.remove('hidden');
+        } else if (serverState.last_force_reload && PAGE_LOAD_TIME < serverState.last_force_reload) { $('server-overlay-title').innerText = "VERSIONE OBSOLETA"; $('server-overlay-msg').innerText = "C'è un aggiornamento critico. Per favore ricarica la pagina."; overlay.classList.remove('hidden');
+        } else { overlay.classList.add('hidden'); }
     }
 
     window.innescaCaos = (evento, messaggio) => {
         if (evento === 'messaggio') return CustomUI.show(`📢 LA VOCE SUPREMA:\n\n${escapeHTML(messaggio)}`, 'alert');
-        const body = document.body;
-        const rimuoviTutto = () => { body.classList.remove('caos-discoteca', 'caos-terremoto', 'caos-sottosopra', 'caos-buio', 'caos-comic'); };
-        rimuoviTutto();
-
+        const body = document.body; const rimuoviTutto = () => { body.classList.remove('caos-discoteca', 'caos-terremoto', 'caos-sottosopra', 'caos-buio', 'caos-comic'); }; rimuoviTutto();
         if (evento === 'discoteca') { body.classList.add('caos-discoteca'); setTimeout(rimuoviTutto, 10000); } 
         else if (evento === 'terremoto') { body.classList.add('caos-terremoto'); setTimeout(rimuoviTutto, 8000); } 
         else if (evento === 'sottosopra') { body.classList.add('caos-sottosopra'); setTimeout(rimuoviTutto, 15000); } 
@@ -145,32 +129,19 @@
             rr.innerHTML = `<button onclick="this.parentNode.remove()" class="absolute top-6 right-6 px-6 py-3 bg-red-600 text-white font-black uppercase tracking-wider rounded-2xl z-[1000000] hover:bg-red-700 shadow-2xl transition-transform active:scale-95">CHIEDI PIETÀ 🏳️</button><iframe width="100%" height="100%" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
             document.body.appendChild(rr);
         } else if (['pioggia', 'gattini', 'thanos'].includes(evento)) {
-            let emoji = '🌧️'; if (evento === 'gattini') emoji = '🐱'; if (evento === 'thanos') emoji = '💨';
-            let count = 0, lastTime = 0;
+            let emoji = '🌧️'; if (evento === 'gattini') emoji = '🐱'; if (evento === 'thanos') emoji = '💨'; let count = 0, lastTime = 0;
             const animateFall = (time) => {
                 if (time - lastTime > 100) {
-                    if (count > 50) return;
-                    const el = document.createElement('div'); el.className = 'falling-item drop-shadow-lg'; el.innerText = emoji; el.style.left = Math.random() * 100 + 'vw'; el.style.animationDuration = (Math.random() * 2 + 1.5) + 's'; el.style.fontSize = (Math.random() * 2.5 + 2) + 'rem';
-                    document.body.appendChild(el); setTimeout(() => { if(el.parentNode) el.parentNode.removeChild(el); }, 3500);
-                    count++; lastTime = time;
+                    if (count > 50) return; const el = document.createElement('div'); el.className = 'falling-item drop-shadow-lg'; el.innerText = emoji; el.style.left = Math.random() * 100 + 'vw'; el.style.animationDuration = (Math.random() * 2 + 1.5) + 's'; el.style.fontSize = (Math.random() * 2.5 + 2) + 'rem';
+                    document.body.appendChild(el); setTimeout(() => { if(el.parentNode) el.parentNode.removeChild(el); }, 3500); count++; lastTime = time;
                 }
                 if (count <= 50) requestAnimationFrame(animateFall);
             }; requestAnimationFrame(animateFall);
-            
-            if(evento === 'thanos') {
-               const appDiv = document.getElementById('app');
-               if(appDiv) {
-                   appDiv.style.transition = "opacity 4s cubic-bezier(0.4, 0, 0.2, 1), filter 4s cubic-bezier(0.4, 0, 0.2, 1)"; appDiv.style.opacity = "0"; appDiv.style.filter = "blur(15px)"; appDiv.style.willChange = "opacity, filter";
-                   setTimeout(() => { appDiv.style.transition = "opacity 2s ease-out, filter 2s ease-out"; appDiv.style.opacity = "1"; appDiv.style.filter = "blur(0)"; setTimeout(() => { appDiv.style.willChange = "auto"; }, 2000); }, 10000);
-               }
-            }
         }
     };
 
     onAuthStateChanged(auth, async user => {
-        state.unsubs.forEach(unsub => unsub()); state.unsubs = [];
-        state.user = user; state.isLoaded = false;
-        
+        state.unsubs.forEach(unsub => unsub()); state.unsubs = []; state.user = user; state.isLoaded = false;
         if (user) {
             updateDoc(doc(db, "utenti", user.uid), { lastActive: serverTimestamp() }).catch(()=>{});
             window.addEventListener('beforeunload', () => { updateDoc(doc(db, "utenti", user.uid), { lastActive: null }).catch(()=>{}); });
@@ -178,141 +149,169 @@
             state.unsubs.push(onSnapshot(doc(db, "utenti", user.uid), async docSnap => {
                 if(docSnap.exists()) {
                     const data = docSnap.data();
-                    
-                    state.isAdmin = (data.ruolo === 'admin' || data.ruolo === 'god');
-                    state.isGod = (data.ruolo === 'god');
-
+                    state.isAdmin = (data.ruolo === 'admin' || data.ruolo === 'god'); state.isGod = (data.ruolo === 'god');
                     const oldBadge = state.userData.badge; const oldAvatar = state.userData.avatar;
-                    state.userData = data; state.isLoaded = true;
-                    if(!state.userData.libri_letti) state.userData.libri_letti = [];
-                    
-                    if (state.tab === 'admin' && !state.isAdmin) state.tab = 'catalogo';
-                    if (state.tab === 'god' && !state.isGod) state.tab = 'catalogo';
-
-                    checkServerStatus();
-                    if (oldBadge !== data.badge || oldAvatar !== data.avatar) backgroundUpdate();
-                } else if (state.isLoaded) {
-                    logout(); alert("Il tuo account è stato eliminato dall'amministratore."); window.location.reload();
-                }
+                    state.userData = data; state.isLoaded = true; if(!state.userData.libri_letti) state.userData.libri_letti = [];
+                    if (state.tab === 'admin' && !state.isAdmin) window.cambiaTab('catalogo'); if (state.tab === 'god' && !state.isGod) window.cambiaTab('catalogo');
+                    checkServerStatus(); if (oldBadge !== data.badge || oldAvatar !== data.avatar) renderNav();
+                } else if (state.isLoaded) { logout(); alert("Il tuo account è stato eliminato dall'amministratore."); window.location.reload(); }
             }));
 
             state.unsubs.push(onSnapshot(doc(db, "sistema", "stato_server"), d => {
-                if (d.exists()) { serverState = d.data(); checkServerStatus(); } 
-                else if (state.isGod) setDoc(doc(db, "sistema", "stato_server"), { attivo: true, last_force_reload: null }).catch(()=>{});
-            }, (error) => {
-                if (error.code === 'permission-denied') {
-                    serverState.attivo = false;
-                    checkServerStatus();
-                }
-            }));
+                if (d.exists()) { serverState = d.data(); checkServerStatus(); } else if (state.isGod) setDoc(doc(db, "sistema", "stato_server"), { attivo: true, last_force_reload: null }).catch(()=>{});
+            }, (error) => { if (error.code === 'permission-denied') { serverState.attivo = false; checkServerStatus(); } }));
 
             state.unsubs.push(onSnapshot(doc(db, "sistema", "blacklist"), d => {
-                if (d.exists()) {
-                    bannedDevices = d.data().devices || [];
-                    if (bannedDevices.includes(LOCAL_DEVICE_ID) && !state.isGod) $('ban-overlay').classList.remove('hidden');
-                    else $('ban-overlay').classList.add('hidden');
-                } else if (state.isGod) setDoc(doc(db, "sistema", "blacklist"), { devices: [] }).catch(()=>{});
-            }, (error) => {
-                // Ignore permission denied for blacklist if not admin
-            }));
+                if (d.exists()) { bannedDevices = d.data().devices || []; if (bannedDevices.includes(LOCAL_DEVICE_ID) && !state.isGod) $('ban-overlay').classList.remove('hidden'); else $('ban-overlay').classList.add('hidden'); } else if (state.isGod) setDoc(doc(db, "sistema", "blacklist"), { devices: [] }).catch(()=>{});
+            }, (error) => { }));
 
             caricaDati();
-        } else {
-            state.isAdmin = false; state.isGod = false;
-        }
-        requestRender();
+        } else { state.isAdmin = false; state.isGod = false; appShellInjected = false; }
+        renderAuth();
     });
 
-    let bgUpdateTimer;
-    function backgroundUpdate() { if (state.tab === 'proponi' || state.modal) return; clearTimeout(bgUpdateTimer); bgUpdateTimer = setTimeout(() => requestRender(false), 16); }
-
-    let isRendering = false, shouldAnimateNextRender = true;
-    function requestRender(animate = true) {
-        if (!animate) shouldAnimateNextRender = false;
-        if (!isRendering) {
-            isRendering = true;
-            requestAnimationFrame(() => { actualRender(shouldAnimateNextRender); isRendering = false; shouldAnimateNextRender = true; });
-        }
+    let bgUpdateTimer; 
+    function backgroundUpdate() { 
+        clearTimeout(bgUpdateTimer); 
+        bgUpdateTimer = setTimeout(() => {
+            // Se c'è un modal aperto o sta scrivendo una proposta, EVITA di renderizzare la main area per non farlo laggare
+            if (!state.modal && state.tab !== 'proponi') {
+                renderMain(false);
+            }
+        }, 300);
     }
 
     function caricaDati() {
-        state.unsubs.push(onSnapshot(collection(db, "libri"), s => { state.books = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }, (err) => {if(err.code==='permission-denied'){state.books=[]; backgroundUpdate();}}));
-        state.unsubs.push(onSnapshot(collection(db, "recensioni"), s => { state.reviews = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.data - a.data); backgroundUpdate(); }, (err) => {if(err.code==='permission-denied'){state.reviews=[]; backgroundUpdate();}}));
-        state.unsubs.push(onSnapshot(collection(db, "commenti"), s => { state.comments = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.data - b.data); backgroundUpdate(); }, (err) => {if(err.code==='permission-denied'){state.comments=[]; backgroundUpdate();}}));
-        state.unsubs.push(onSnapshot(collection(db, "utenti"), s => { state.users = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }, (err) => {if(err.code==='permission-denied'){state.users=[]; backgroundUpdate();}}));
-        
-        state.unsubs.push(onSnapshot(query(collection(db, "richieste"), where("stato", "==", "in_attesa")), s => { state.requests = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }, (err) => {if(err.code==='permission-denied'){state.requests=[]; backgroundUpdate();}}));
-            
-        state.unsubs.push(onSnapshot(doc(db, "sistema", "sicurezza"), d => {
-            if(d.exists()) { state.allarmi = d.data().log || []; backgroundUpdate(); } 
-        }, (err) => {}));
-
+        state.unsubs.push(onSnapshot(collection(db, "libri"), s => { state.books = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }, (err) => {}));
+        state.unsubs.push(onSnapshot(collection(db, "recensioni"), s => { state.reviews = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.data - a.data); backgroundUpdate(); }, (err) => {}));
+        state.unsubs.push(onSnapshot(collection(db, "commenti"), s => { state.comments = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.data - b.data); backgroundUpdate(); }, (err) => {}));
+        state.unsubs.push(onSnapshot(collection(db, "utenti"), s => { state.users = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }, (err) => {}));
+        state.unsubs.push(onSnapshot(query(collection(db, "richieste"), where("stato", "==", "in_attesa")), s => { state.requests = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }, (err) => {}));
+        state.unsubs.push(onSnapshot(doc(db, "sistema", "sicurezza"), d => { if(d.exists()) { state.allarmi = d.data().log || []; backgroundUpdate(); } }, (err) => {}));
         state.unsubs.push(onSnapshot(doc(db, "sistema", "caos"), d => {
-            if(d.exists()) {
-                const data = d.data();
-                if(data.timestamp && (Date.now() - data.timestamp.toMillis() < 15000)) {
-                    const targets = data.targets || ['all'];
-                    if (targets.includes('all') || targets.includes(state.user.uid)) window.innescaCaos(data.evento, data.messaggio);
-                }
-            }
+            if(d.exists()) { const data = d.data(); if(data.timestamp && (Date.now() - data.timestamp.toMillis() < 15000)) { const targets = data.targets || ['all']; if (targets.includes('all') || targets.includes(state.user.uid)) window.innescaCaos(data.evento, data.messaggio); } }
         }, (err) => {}));
     }
 
-    window.toggleAuthMode = () => { state.authMode = state.authMode === 'login' ? 'register' : 'login'; requestRender(); };
+    // GESTIONE RENDERING ISOLATO ZONA PER ZONA
+    window.toggleAuthMode = () => { state.authMode = state.authMode === 'login' ? 'register' : 'login'; renderAuth(); };
+    window.cambiaTab = (tab) => { state.tab = tab; state.selectedReviewBookId = null; if(state.user) updateDoc(doc(db, "utenti", state.user.uid), { lastActive: serverTimestamp() }).catch(()=>{}); renderMain(true); };
+    window.openModal = (type, data = null) => { state.modal = { type, data }; renderModal(); };
+    window.closeModal = () => { state.modal = null; renderModal(); };
 
+    function renderAuth() {
+        const appDiv = $('app');
+        if (!state.user) {
+            appDiv.innerHTML = `<div class="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-slate-50 fade-in"><div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 shadow-2xl border border-slate-100 w-full max-w-md"><div class="text-center mb-6 sm:mb-8"><div class="text-5xl sm:text-6xl mb-3 sm:mb-4">📚</div><h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Libreria 2ALD</h1></div><form onsubmit="gestisciLogin(event)" class="space-y-3 sm:space-y-4">${state.authMode === 'register' ? `<input id="nome" type="text" placeholder="Il tuo Nome e Cognome" class="${INPUT_CLS}" required>` : ''}<input id="email" type="email" placeholder="Email" required class="${INPUT_CLS}"><input id="password" type="password" placeholder="Password (min 6 caratteri)" required class="${INPUT_CLS}"><p id="errorBox" class="text-red-500 text-xs sm:text-sm font-bold text-center h-4 sm:h-5"></p><button id="authSubmitBtn" type="submit" class="w-full text-white font-extrabold py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-lg transition-all active:scale-95 text-sm sm:text-base ${state.authMode === 'register' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-700'}">${state.authMode === 'register' ? 'Crea Account' : 'Accedi'}</button></form><div class="mt-5 sm:mt-6 text-center border-t border-slate-100 pt-5 sm:pt-6"><button onclick="toggleAuthMode()" type="button" class="text-indigo-600 font-bold hover:text-indigo-800 transition-colors text-xs sm:text-sm">${state.authMode === 'register' ? 'Hai già un account? Accedi' : 'Non hai un account? Registrati'}</button></div></div></div>`;
+            return;
+        }
+
+        // Inizializza la shell isolata solo se non esiste
+        if (!appShellInjected) {
+            appDiv.innerHTML = `
+                <div id="nav-zone"></div>
+                <div id="main-zone" class="max-w-7xl mx-auto pt-4 sm:pt-8 space-y-6 sm:space-y-10 pb-10 fade-in"></div>
+                <div id="modal-zone"></div>
+            `;
+            appShellInjected = true;
+            renderNav();
+            renderMain();
+            renderModal();
+        }
+    }
+
+    function renderNav() {
+        const navZone = $('nav-zone');
+        if (!navZone || !state.user) return;
+        navZone.innerHTML = `<nav class="sticky top-0 z-40 glass-panel border-b border-slate-200/60 px-4 sm:px-6 py-3 sm:py-4 shadow-sm"><div class="max-w-7xl mx-auto flex items-center justify-between"><span class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2 sm:gap-3"><span class="text-2xl sm:text-3xl drop-shadow-sm hover:rotate-12 transition-transform cursor-pointer">📚</span> <span>2ALD</span></span><div class="flex items-center gap-2 sm:gap-4"><button onclick="openModal('profilo')" class="flex items-center gap-2 sm:gap-3 bg-slate-100/80 hover:bg-slate-200/80 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-full border border-slate-200 transition-colors shadow-sm cursor-pointer group">${window.getAvatar(state.userData.avatar, "w-6 h-6 sm:w-8 sm:h-8")}<span class="text-xs sm:text-sm font-bold text-slate-700 hidden md:flex items-center group-hover:text-indigo-600 transition-colors">${escapeHTML(state.userData.nome || state.user.displayName)} ${state.userData.badge ? `<span class="ml-1.5 text-[9px] uppercase font-black px-1.5 py-0.5 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm">${escapeHTML(state.userData.badge)}</span>` : ''}</span></button><button onclick="logout()" class="bg-white border-2 border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-rose-500 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-colors shadow-sm">Esci</button></div></div></nav>`;
+    }
+
+    function renderMain(animate = false) {
+        const mainZone = $('main-zone');
+        if (!mainZone || !state.user) return;
+
+        // Gestione Radar God Mode (salvataggio stato checkbox prima del re-render)
+        let godChecked = []; let allChecked = true;
+        if (state.tab === 'god' && $('god-radar-list')) {
+            godChecked = Array.from($('god-radar-list').querySelectorAll('.target-user:checked')).map(cb => cb.value); 
+            allChecked = $('target-all') ? $('target-all').checked : true; 
+        }
+
+        const btnClass = id => `flex items-center justify-center shrink-0 gap-1.5 sm:gap-2 px-4 py-2 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl font-extrabold transition-all duration-300 text-xs sm:text-base ${state.tab === id ? 'bg-slate-900 text-white shadow-lg sm:shadow-xl sm:scale-105' : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'}`;
+        const content = { catalogo: catalogoView, prestiti: prestitiView, proponi: proponiView, recensioni: recensioniView, admin: adminView, god: godView }[state.tab === "admin" && !state.isAdmin ? "catalogo" : state.tab]();
+        
+        mainZone.innerHTML = `
+            <div class="${animate ? 'fade-in' : ''}">
+                <div class="flex flex-nowrap sm:flex-wrap gap-2 sm:gap-3 items-center border-b pb-4 sm:pb-8 px-4 sm:px-6 overflow-x-auto hide-scrollbar snap-x">
+                    <button onclick="cambiaTab('catalogo')" class="${btnClass('catalogo')} snap-start">📖 Catalogo</button>
+                    <button onclick="cambiaTab('prestiti')" class="${btnClass('prestiti')} snap-start">🎒 I Miei Libri</button>
+                    <button onclick="cambiaTab('recensioni')" class="${btnClass('recensioni')} snap-start">⭐ Recensioni & Social</button>
+                    <button onclick="cambiaTab('proponi')" class="${btnClass('proponi')} snap-start">💡 Proponi</button>
+                    ${state.isAdmin ? `<button onclick="cambiaTab('admin')" class="${btnClass('admin')} snap-start !bg-amber-400 !text-white !border-amber-400 shadow-amber-400/30">⚙ <span class="hidden sm:inline">Admin</span></button>` : ''}
+                    ${state.isGod ? `<button onclick="cambiaTab('god')" class="${btnClass('god')} snap-start !bg-purple-600 !text-white !border-purple-600 shadow-purple-600/30">⚡ <span class="hidden sm:inline">L'Olimpo</span></button>` : ''}
+                    <div class="w-1 shrink-0 sm:hidden"></div>
+                </div>
+                <div class="pt-6">${content}</div>
+            </div>`;
+
+        // Ripristino stato checkbox God Mode
+        if (state.tab === 'god' && $('god-radar-list')) { 
+            godChecked.forEach(val => { const cb = $('god-radar-list').querySelector(`.target-user[value="${val}"]`); if (cb) cb.checked = true; }); 
+            if ($('target-all')) $('target-all').checked = allChecked; 
+        }
+    }
+
+    function renderModal() {
+        const modalZone = $('modal-zone');
+        if (!modalZone || !state.user) return;
+        
+        if (!state.modal) {
+            modalZone.innerHTML = '';
+            return;
+        }
+
+        modalZone.innerHTML = buildModalHTML();
+    }
+
+    // --- FUNZIONI DI SUPPORTO AUTH E DB ---
     window.gestisciLogin = async (e) => {
-        e.preventDefault(); const isRegister = state.authMode === 'register'; const email = $('email').value.trim(); const password = $('password').value; const btn = $('authSubmitBtn'); const originalText = btn.innerText;
-        btn.innerText = "Attendere..."; btn.disabled = true; $('errorBox').innerText = "";
-
+        e.preventDefault(); const isRegister = state.authMode === 'register'; const email = $('email').value.trim(); const password = $('password').value; const btn = $('authSubmitBtn'); const originalText = btn.innerText; btn.innerText = "Attendere..."; btn.disabled = true; $('errorBox').innerText = "";
         try {
             if (isRegister) {
-                const emailRegex = /^[a-zA-Z0-9._%+-]{3,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-                if(!emailRegex.test(email)) throw new Error("Devi inserire un'email reale e valida.");
-                const fakeDomains = ['temp-mail.org', '10minutemail.com', 'guerrillamail.com', 'mailinator.com', 'yopmail.com'];
-                if (fakeDomains.includes(email.split('@')[1])) throw new Error("Non puoi usare email temporanee o false.");
+                const emailRegex = /^[a-zA-Z0-9._%+-]{3,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/; if(!emailRegex.test(email)) throw new Error("Devi inserire un'email reale e valida.");
+                const fakeDomains = ['temp-mail.org', '10minutemail.com', 'guerrillamail.com', 'mailinator.com', 'yopmail.com']; if (fakeDomains.includes(email.split('@')[1])) throw new Error("Non puoi usare email temporanee o false.");
                 if (['sborra', 'cazzo', 'merda', 'puttana', 'troia', 'fake', 'admin', 'root'].some(w => email.toLowerCase().includes(w))) throw new Error("Email non consentita per Policy di Sicurezza.");
-                
                 const nome = $('nome').value.trim(); if(!nome || nome === "") throw new Error("Inserisci il tuo nome e cognome.");
                 let cred;
                 try { cred = await createUserWithEmailAndPassword(auth, email, password); } 
                 catch (createErr) {
                     if (createErr.code === 'auth/email-already-in-use') {
                         try {
-                            let tempCred = await signInWithEmailAndPassword(auth, email, password);
-                            const checkDoc = await getDoc(doc(db, "utenti", tempCred.user.uid));
+                            let tempCred = await signInWithEmailAndPassword(auth, email, password); const checkDoc = await getDoc(doc(db, "utenti", tempCred.user.uid));
                             if (!checkDoc.exists()) { await tempCred.user.delete(); cred = await createUserWithEmailAndPassword(auth, email, password); } 
                             else throw new Error("Questa email è già registrata ed attiva. Clicca su 'Accedi'.");
                         } catch (loginErr) { if (loginErr.message.includes("attiva")) throw loginErr; throw new Error("Account rimosso ma credenziali bloccate. Accedi con la tua VECCHIA password per sbloccare l'email."); }
                     } else throw createErr;
                 }
-
-                // Sicurezza: ruolo 'utente' forzato lato client (il server lo forzerà comunque)
                 await updateProfile(cred.user, { displayName: nome });
                 await setDoc(doc(db, "utenti", cred.user.uid), { nome: nome, email: email, ruolo: "utente", volte_admin: 0, libri_letti: [], badge: null, avatar: null, lastActive: serverTimestamp(), deviceId: LOCAL_DEVICE_ID });
             } else {
-                const cred = await signInWithEmailAndPassword(auth, email, password);
-                const docRef = doc(db, "utenti", cred.user.uid); const docSnap = await getDoc(docRef);
-                if (!docSnap.exists()) { await cred.user.delete(); throw new Error("Il tuo account era stato rimosso. L'email è sbloccata: registrati di nuovo."); } 
-                else await updateDoc(docRef, { deviceId: LOCAL_DEVICE_ID });
+                const cred = await signInWithEmailAndPassword(auth, email, password); const docRef = doc(db, "utenti", cred.user.uid); const docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) { await cred.user.delete(); throw new Error("Il tuo account era stato rimosso. L'email è sbloccata: registrati di nuovo."); } else await updateDoc(docRef, { deviceId: LOCAL_DEVICE_ID });
             }
         } catch (error) {
-            let msg = error.message;
-            if (error.code === 'auth/email-already-in-use') msg = "Questa email è già registrata. Effettua l'accesso.";
-            if (error.code === 'auth/weak-password') msg = "La password deve avere almeno 6 caratteri.";
-            if (['auth/invalid-credential', 'auth/user-not-found', 'auth/wrong-password'].includes(error.code)) msg = "Email o password errati.";
-            if (error.code === 'auth/invalid-email') msg = "Il formato dell'email non è valido.";
-            if (!msg.includes("Policy di") && !msg.includes("preso") && !msg.includes("reale") && !msg.includes("cognome") && !msg.includes("temporanee") && !msg.includes("sbloccata") && !msg.includes("VECCHIA") && !msg.includes("attiva") && error.code) msg = "Errore: Controlla i dati inseriti.";
+            let msg = error.message; if (error.code === 'auth/email-already-in-use') msg = "Questa email è già registrata. Effettua l'accesso."; if (error.code === 'auth/weak-password') msg = "La password deve avere almeno 6 caratteri."; if (['auth/invalid-credential', 'auth/user-not-found', 'auth/wrong-password'].includes(error.code)) msg = "Email o password errati."; if (error.code === 'auth/invalid-email') msg = "Il formato dell'email non è valido."; if (!msg.includes("Policy di") && !msg.includes("preso") && !msg.includes("reale") && !msg.includes("cognome") && !msg.includes("temporanee") && !msg.includes("sbloccata") && !msg.includes("VECCHIA") && !msg.includes("attiva") && error.code) msg = "Errore: Controlla i dati inseriti.";
             $('errorBox').innerText = msg; btn.innerText = originalText; btn.disabled = false;
         }
     };
     
     window.logout = () => { if(state.user) updateDoc(doc(db, "utenti", state.user.uid), { lastActive: null }).catch(()=>{}); sessionStorage.clear(); signOut(auth); };
 
-    window.openModal = (type, data = null) => { state.modal = { type, data }; requestRender(); };
-    window.closeModal = () => { state.modal = null; requestRender(); };
-    window.apriRadarManuale = () => { if(!state.isGod) return mostraAlert("Permesso negato"); state.modal = { type: 'radarManuale' }; requestRender(); };
+    // ... (Mantengo tutte le altre funzioni di salvataggio intatte: salvaProfilo, inviaRecensione, inviaCommento, admin actions, ecc.) ...
+    
+    window.apriRadarManuale = () => { if(!state.isGod) return mostraAlert("Permesso negato"); state.modal = { type: 'radarManuale' }; renderModal(); };
 
-    function comprimiInBase64(file, maxWidth = 400, maxHeight = 400, quality = 0.5, isSquare = false) {
+    function comprimiInBase64(file, maxWidth = 300, maxHeight = 300, quality = 0.4, isSquare = false) {
         return new Promise((resolve, reject) => {
             if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) return reject(new Error("Formato HEIC (iPhone) non supportato."));
             if (file.type.startsWith('video/')) return reject(new Error("I video sono troppo pesanti per il database. Inserisci una foto o una GIF."));
@@ -321,67 +320,33 @@
             const objectUrl = URL.createObjectURL(file); const img = new Image(); img.src = objectUrl;
             img.onload = () => {
                 URL.revokeObjectURL(objectUrl); const canvas = document.createElement('canvas'); let w = img.width, h = img.height;
-                if (isSquare) {
-                    const minSize = Math.min(w, h); const maxSize = Math.min(minSize, maxWidth);
-                    canvas.width = maxSize; canvas.height = maxSize; const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, (w - minSize) / 2, (h - minSize) / 2, minSize, minSize, 0, 0, maxSize, maxSize);
-                } else {
-                    if (w > h) { if (w > maxWidth) { h = Math.round(h * (maxWidth / w)); w = maxWidth; } } else { if (h > maxHeight) { w = Math.round(w * (maxHeight / h)); h = maxHeight; } }
-                    canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                }
-                resolve(canvas.toDataURL('image/jpeg', quality));
-            };
-            img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("Errore Canvas Base64")); };
+                if (isSquare) { const minSize = Math.min(w, h); const maxSize = Math.min(minSize, maxWidth); canvas.width = maxSize; canvas.height = maxSize; const ctx = canvas.getContext('2d'); ctx.drawImage(img, (w - minSize) / 2, (h - minSize) / 2, minSize, minSize, 0, 0, maxSize, maxSize); } else { if (w > h) { if (w > maxWidth) { h = Math.round(h * (maxWidth / w)); w = maxWidth; } } else { if (h > maxHeight) { w = Math.round(w * (maxHeight / h)); h = maxHeight; } } canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h); } 
+                // NOVITÀ: Usa WebP invece di JPEG, il peso del file si riduce drasticamente!
+                resolve(canvas.toDataURL('image/webp', quality));
+            }; img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("Errore Canvas Base64")); };
         });
     }
 
-    window.comprimiBase64Esistente = (base64Str, maxWidth = 400, maxHeight = 400, quality = 0.5) => {
-        return new Promise((resolve) => {
-            if (!base64Str || !base64Str.startsWith('data:image/') || base64Str.length < 30000) return resolve(base64Str);
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas'); let w = img.width, h = img.height;
-                if (w > maxWidth) { h = Math.round(h * (maxWidth / w)); w = maxWidth; }
-                if (h > maxHeight) { w = Math.round(w * (maxHeight / h)); h = maxHeight; }
-                canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                resolve(canvas.toDataURL('image/jpeg', quality));
-            };
-            img.onerror = () => resolve(base64Str); img.src = base64Str;
-        });
-    };
-
     window.salvaProfilo = async (e) => {
         e.preventDefault(); const f = new FormData(e.target); const nuovoNome = f.get('nome').trim(); const fileInput = $('file_avatar'); const btn = $('btnSalvaProfilo');
-        if(!nuovoNome) return mostraAlert("Il nome non può essere vuoto.");
-        btn.disabled = true; btn.innerText = "Salvataggio ovunque...";
-
+        if(!nuovoNome) return mostraAlert("Il nome non può essere vuoto."); btn.disabled = true; btn.innerText = "Salvataggio ovunque...";
         try {
             const oldNome = state.userData.nome, oldAvatar = state.userData.avatar;
-            if (nuovoNome !== oldNome) {
-                const nameSnap = await getDocs(query(collection(db, "utenti"), where("nome", "==", nuovoNome)));
-                let nameTaken = false; nameSnap.forEach(d => { if (d.id !== state.user.uid) nameTaken = true; }); 
-                if (nameTaken) throw new Error("Questo nome è già in uso da un altro utente.");
-                await updateProfile(auth.currentUser, { displayName: nuovoNome });
-            }
-
+            if (nuovoNome !== oldNome) { const nameSnap = await getDocs(query(collection(db, "utenti"), where("nome", "==", nuovoNome))); let nameTaken = false; nameSnap.forEach(d => { if (d.id !== state.user.uid) nameTaken = true; }); if (nameTaken) throw new Error("Questo nome è già in uso da un altro utente."); await updateProfile(auth.currentUser, { displayName: nuovoNome }); }
             let avatarUrl = oldAvatar;
-            if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                try { avatarUrl = await comprimiInBase64(fileInput.files[0], 150, 150, 0.4, true); } catch(err) { throw new Error(err.message); }
-            }
-
+            if (fileInput && fileInput.files && fileInput.files.length > 0) { try { avatarUrl = await comprimiInBase64(fileInput.files[0], 150, 150, 0.4, true); } catch(err) { throw new Error(err.message); } }
             await updateDoc(doc(db, "utenti", state.user.uid), { nome: nuovoNome, avatar: avatarUrl });
 
             if (nuovoNome !== oldNome || avatarUrl !== oldAvatar) {
                 const updatePromises = [];
                 for (let b of state.books.filter(b => b.noleggiato_da_uid === state.user.uid)) updatePromises.push(updateDoc(doc(db, "libri", b.id), { noleggiato_da: nuovoNome }));
+                for (let b of state.books.filter(b => b.caricato_da_uid === state.user.uid)) updatePromises.push(updateDoc(doc(db, "libri", b.id), { caricato_da: nuovoNome }));
                 for (let r of state.reviews.filter(r => r.uid === state.user.uid)) updatePromises.push(updateDoc(doc(db, "recensioni", r.id), { nomeUtente: nuovoNome, avatar: avatarUrl }));
                 for (let c of state.comments.filter(c => c.uid === state.user.uid)) updatePromises.push(updateDoc(doc(db, "commenti", c.id), { nomeUtente: nuovoNome, avatar: avatarUrl }));
                 await Promise.all(updatePromises);
             }
-
             mostraAlert("Profilo aggiornato con successo ovunque!"); closeModal();
-        } catch (error) { mostraAlert(error.message || "Errore durante il salvataggio."); } 
-        finally { if(btn) { btn.disabled = false; btn.innerText = "Salva Profilo"; } }
+        } catch (error) { mostraAlert(error.message || "Errore durante il salvataggio."); } finally { if(btn) { btn.disabled = false; btn.innerText = "Salva Profilo"; } }
     };
 
     const CustomUI = {
@@ -391,22 +356,12 @@
                 const box = document.createElement('div'); box.className = 'bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-center flex flex-col items-center border border-slate-100 mx-4';
                 const icon = document.createElement('div'); icon.className = 'text-5xl sm:text-6xl mb-4 sm:mb-5 drop-shadow-md'; icon.innerText = type === 'alert' ? '🔔' : (type === 'confirm' ? '❓' : '✍'); box.appendChild(icon);
                 const title = document.createElement('h3'); title.className = 'text-lg sm:text-xl font-extrabold text-slate-800 mb-5 sm:mb-6 leading-tight whitespace-pre-line'; title.innerHTML = message; box.appendChild(title);
-                
                 let input = null;
-                if (type === 'prompt') {
-                    input = document.createElement('input'); input.type = inputType; input.value = defaultVal; input.placeholder = "Scrivi qui...";
-                    input.className = 'w-full rounded-2xl border-2 border-slate-200 px-4 py-3 mb-5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all font-medium bg-slate-50 focus:bg-white text-center text-base'; box.appendChild(input);
-                }
-                
+                if (type === 'prompt') { input = document.createElement('input'); input.type = inputType; input.value = defaultVal; input.placeholder = "Scrivi qui..."; input.className = 'w-full rounded-2xl border-2 border-slate-200 px-4 py-3 mb-5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all font-medium bg-slate-50 focus:bg-white text-center text-base'; box.appendChild(input); }
                 const btnContainer = document.createElement('div'); btnContainer.className = 'flex gap-3 w-full';
-                if (type !== 'alert') {
-                    const btnCancel = document.createElement('button'); btnCancel.className = 'flex-1 py-3 sm:py-4 rounded-xl font-extrabold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors text-sm sm:text-base'; btnCancel.innerText = 'Annulla';
-                    btnCancel.onclick = () => { document.body.removeChild(overlay); resolve(null); }; btnContainer.appendChild(btnCancel);
-                }
-                const btnConfirm = document.createElement('button'); btnConfirm.className = 'flex-1 py-3 sm:py-4 rounded-xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-lg text-sm sm:text-base'; btnConfirm.innerText = type === 'confirm' ? 'Conferma' : 'OK';
-                btnConfirm.onclick = () => { document.body.removeChild(overlay); resolve(type === 'prompt' ? (input ? input.value : null) : true); };
-                btnContainer.appendChild(btnConfirm); box.appendChild(btnContainer); overlay.appendChild(box); document.body.appendChild(overlay);
-                if (input) { input.focus(); if(inputType === 'number') input.select(); }
+                if (type !== 'alert') { const btnCancel = document.createElement('button'); btnCancel.className = 'flex-1 py-3 sm:py-4 rounded-xl font-extrabold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors text-sm sm:text-base'; btnCancel.innerText = 'Annulla'; btnCancel.onclick = () => { document.body.removeChild(overlay); resolve(null); }; btnContainer.appendChild(btnCancel); }
+                const btnConfirm = document.createElement('button'); btnConfirm.className = 'flex-1 py-3 sm:py-4 rounded-xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-lg text-sm sm:text-base'; btnConfirm.innerText = type === 'confirm' ? 'Conferma' : 'OK'; btnConfirm.onclick = () => { document.body.removeChild(overlay); resolve(type === 'prompt' ? (input ? input.value : null) : true); };
+                btnContainer.appendChild(btnConfirm); box.appendChild(btnContainer); overlay.appendChild(box); document.body.appendChild(overlay); if (input) { input.focus(); if(inputType === 'number') input.select(); }
             });
         }
     };
@@ -415,474 +370,220 @@
     window.chiediConferma = (msg) => CustomUI.show(msg, 'confirm');
     window.chiediInput = (msg, defaultVal = "", type = "text") => CustomUI.show(msg, 'prompt', defaultVal, type);
     
-    window.pulisciAllarmi = async () => {
-        if (!state.isGod) return mostraAlert("Permesso negato");
-        if(await chiediConferma("Sei sicuro di voler eliminare tutto il registro dei sabotaggi?")) {
-            await setDoc(doc(db, "sistema", "sicurezza"), { log: [] }, { merge: true }).catch(e => mostraAlert("Errore: " + e.message));
-            mostraAlert("Registro di sicurezza pulito.");
-        }
-    };
-
+    window.pulisciAllarmi = async () => { if (!state.isGod) return; if(await chiediConferma("Sei sicuro di voler eliminare tutto il registro dei sabotaggi?")) { await setDoc(doc(db, "sistema", "sicurezza"), { log: [] }, { merge: true }).catch(e => mostraAlert("Errore: " + e.message)); mostraAlert("Registro di sicurezza pulito."); } };
     window.modificaUtente = async (uid, nomeAttuale) => {
-        if (!state.isAdmin) return mostraAlert("Permesso negato");
-        const nuovoNome = await chiediInput(`Modifica il nome di ${nomeAttuale}:`, nomeAttuale);
+        if (!state.isAdmin) return; const nuovoNome = await chiediInput(`Modifica il nome di ${nomeAttuale}:`, nomeAttuale);
         if (nuovoNome && nuovoNome.trim() !== "" && nuovoNome !== nomeAttuale) {
-            try {
-                const nameSnap = await getDocs(query(collection(db, "utenti"), where("nome", "==", nuovoNome.trim())));
-                if (!nameSnap.empty) return mostraAlert("Nome già in uso da un altro utente!");
-                await updateDoc(doc(db, "utenti", uid), { nome: nuovoNome.trim() });
+            try { const nameSnap = await getDocs(query(collection(db, "utenti"), where("nome", "==", nuovoNome.trim()))); if (!nameSnap.empty) return mostraAlert("Nome già in uso da un altro utente!"); await updateDoc(doc(db, "utenti", uid), { nome: nuovoNome.trim() });
                 for (let b of state.books.filter(b => b.noleggiato_da_uid === uid)) await updateDoc(doc(db, "libri", b.id), { noleggiato_da: nuovoNome.trim() });
+                for (let b of state.books.filter(b => b.caricato_da_uid === uid)) await updateDoc(doc(db, "libri", b.id), { caricato_da: nuovoNome.trim() });
                 for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: nuovoNome.trim() });
                 for (let c of state.comments.filter(c => c.uid === uid)) await updateDoc(doc(db, "commenti", c.id), { nomeUtente: nuovoNome.trim() });
                 mostraAlert("Nome utente aggiornato ovunque!");
-            } catch(e) {
-                mostraAlert("Errore: " + e.message);
-            }
-        }
-    };
-
-    window.eliminaUtente = async (uid, nome) => {
-        if (!state.isAdmin) return mostraAlert("Permesso negato");
-        if (uid === state.user.uid) return mostraAlert("Non puoi eliminare te stesso.");
-        if (await chiediConferma(`Sicuro di voler distruggere l'account di ${nome}?\nIl profilo verrà raso al suolo e dovrà registrarsi da capo.`)) {
-            try {
-                for (let b of state.books.filter(b => b.noleggiato_da_uid === uid)) await updateDoc(doc(db, "libri", b.id), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null });
-                for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: "Utente eliminato" });
-                await deleteDoc(doc(db, "utenti", uid)); 
-                mostraAlert("Account e dati eliminati definitivamente.");
-            } catch(e) {
-                mostraAlert("Azione Rilevata e Negata dalle Security Rules.");
-            }
-        }
-    };
-
-    window.assegnaBadge = async (uid, nomeUtente) => {
-        if (!state.isAdmin) return mostraAlert("Permesso negato");
-        const badge = await chiediInput(`Assegna un badge a ${nomeUtente} (Es. 🤡 Re dei Troll). Lascia vuoto per rimuovere:`, "");
-        if(badge !== null) {
-            try {
-                const badgeVal = badge.trim(); await updateDoc(doc(db, "utenti", uid), { badge: badgeVal });
-                for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { badgeUtente: badgeVal });
-                for (let c of state.comments.filter(c => c.uid === uid)) await updateDoc(doc(db, "commenti", c.id), { badgeUtente: badgeVal });
-                mostraAlert(`Badge aggiornato per ${nomeUtente} ovunque!`);
-            } catch(e) {
-                mostraAlert("Errore: " + e.message);
-            }
-        }
-    };
-
-    window.banDispositivo = async (uid, nome) => {
-        if (!state.isAdmin) return mostraAlert("Permesso negato");
-        const u = state.users.find(x => x.id === uid);
-        if (!u || !u.deviceId) return mostraAlert("Impossibile trovare l'ID del dispositivo. L'utente deve rifare l'accesso per essere tracciato.");
-        
-        try {
-            if (bannedDevices.includes(u.deviceId)) {
-                if(await chiediConferma(`🟢 SBLOCCO DISPOSITIVO\n\nVuoi SBLOCCARE il dispositivo di ${nome}?`)) {
-                    await setDoc(doc(db, "sistema", "blacklist"), { devices: bannedDevices.filter(id => id !== u.deviceId) }); 
-                    mostraAlert(`Dispositivo di ${nome} sbloccato!`);
-                }
-            } else {
-                if(await chiediConferma(`🔨 BAN DISPOSITIVO\n\nSicuro di voler BANNARE il PC/Telefono di ${nome}?\nNon potrà più accedere né creare account.`)) {
-                    await setDoc(doc(db, "sistema", "blacklist"), { devices: arrayUnion(u.deviceId) }, { merge: true }); 
-                    mostraAlert(`Dispositivo bannato.`);
-                }
-            }
-        } catch(e) {
-            mostraAlert("Azione Rilevata e Negata dalle Security Rules.");
-        }
-    };
-
-    window.approvaProposta = async (reqId) => {
-        if (!state.isAdmin) return mostraAlert("Permesso negato");
-        const req = state.requests.find(x => x.id === reqId); if(!req) return;
-        try {
-            await addDoc(collection(db, "libri"), { ...req.dati, stato: 'disponibile', rating_media: 0, numero_recensioni: 0 }); 
-            await updateDoc(doc(db, "richieste", reqId), { stato: 'approvato' }); 
-            mostraAlert("Libro approvato!");
-        } catch(e) { mostraAlert("Errore: " + e.message); }
-    };
-
-    window.approvaPrestito = async (reqId) => {
-        if (!state.isAdmin) return mostraAlert("Permesso negato");
-        const req = state.requests.find(x => x.id === reqId); if(!req) return;
-        const giorni = parseInt(await chiediInput(`Per quanti giorni vuoi prestare il libro a ${req.richiedente}?`, "30", "number")); if (!giorni || giorni < 1) return;
-        try {
-            await updateDoc(doc(db, "libri", req.libroId), { stato: 'noleggiato', noleggiato_da: req.richiedente, noleggiato_da_uid: req.richiedente_uid, scadenza: (Date.now() + giorni*DAY) });
-            await updateDoc(doc(db, "richieste", reqId), { stato: 'approvato' }); 
-            mostraAlert("Prestito approvato!");
-        } catch(e) { mostraAlert("Errore: " + e.message); }
-    };
-
-    window.rifiutaRichiesta = async (reqId) => { 
-        if (!state.isAdmin) return mostraAlert("Permesso negato"); 
-        try { await updateDoc(doc(db, "richieste", reqId), { stato: 'rifiutato' }); } catch(e) { mostraAlert("Errore: " + e.message); }
-    };
-
-    window.restituisciLibro = async (libroId) => {
-        if (!state.isAdmin) return mostraAlert("Permesso negato");
-        if(await chiediConferma("Terminare il prestito? Il libro tornerà disponibile e l'utente potrà recensirlo.")) {
-            try {
-                const b = state.books.find(x => x.id === libroId);
-                if(b && b.noleggiato_da_uid) await updateDoc(doc(db, "utenti", b.noleggiato_da_uid), { libri_letti: arrayUnion(libroId) });
-                await updateDoc(doc(db, "libri", libroId), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null });
             } catch(e) { mostraAlert("Errore: " + e.message); }
         }
     };
-
-    window.prolungaPrestito = async (libroId, scadenzaAttuale) => {
-        if (!state.isAdmin) return mostraAlert("Permesso negato");
-        const giorni = parseInt(await chiediInput("Quanti giorni in più?", "15", "number")); if (!giorni || giorni < 1) return;
-        try { await updateDoc(doc(db, "libri", libroId), { scadenza: scadenzaAttuale + (giorni * DAY) }); } catch(e) { mostraAlert("Errore: " + e.message); }
-    };
-
-    window.eliminaLibro = async (libroId) => {
-        if (!state.isAdmin) return mostraAlert("Permesso negato");
-        if(await chiediConferma("Eliminare definitivamente questo libro dal database?")) {
-            try { await deleteDoc(doc(db, "libri", libroId)); } catch(e) { mostraAlert("Errore: " + e.message); }
+    window.eliminaUtente = async (uid, nome) => {
+        if (!state.isAdmin) return; if (uid === state.user.uid) return mostraAlert("Non puoi eliminare te stesso.");
+        if (await chiediConferma(`Sicuro di voler distruggere l'account di ${nome}?`)) {
+            try { for (let b of state.books.filter(b => b.noleggiato_da_uid === uid)) await updateDoc(doc(db, "libri", b.id), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null }); for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: "Utente eliminato" }); await deleteDoc(doc(db, "utenti", uid)); mostraAlert("Account e dati eliminati definitivamente."); } catch(e) { mostraAlert("Azione Rilevata e Negata dalle Security Rules."); }
         }
+    };
+    window.assegnaBadge = async (uid, nomeUtente) => {
+        if (!state.isAdmin) return; const badge = await chiediInput(`Assegna un badge a ${nomeUtente} (Es. 🤡 Re dei Troll). Lascia vuoto per rimuovere:`, "");
+        if(badge !== null) { try { const badgeVal = badge.trim(); await updateDoc(doc(db, "utenti", uid), { badge: badgeVal }); for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { badgeUtente: badgeVal }); for (let c of state.comments.filter(c => c.uid === uid)) await updateDoc(doc(db, "commenti", c.id), { badgeUtente: badgeVal }); mostraAlert(`Badge aggiornato per ${nomeUtente} ovunque!`); } catch(e) { mostraAlert("Errore: " + e.message); } }
+    };
+    window.banDispositivo = async (uid, nome) => {
+        if (!state.isAdmin) return; const u = state.users.find(x => x.id === uid); if (!u || !u.deviceId) return mostraAlert("Impossibile trovare l'ID del dispositivo.");
+        try { if (bannedDevices.includes(u.deviceId)) { if(await chiediConferma(`Vuoi SBLOCCARE il dispositivo di ${nome}?`)) { await setDoc(doc(db, "sistema", "blacklist"), { devices: bannedDevices.filter(id => id !== u.deviceId) }); mostraAlert(`Dispositivo sbloccato!`); } } else { if(await chiediConferma(`Sicuro di voler BANNARE il PC/Telefono di ${nome}?`)) { await setDoc(doc(db, "sistema", "blacklist"), { devices: arrayUnion(u.deviceId) }, { merge: true }); mostraAlert(`Dispositivo bannato.`); } } } catch(e) { mostraAlert("Azione Negata."); }
+    };
+    window.approvaProposta = async (reqId) => {
+        if (!state.isAdmin) return; const req = state.requests.find(x => x.id === reqId); if(!req) return;
+        try { await addDoc(collection(db, "libri"), { ...req.dati, stato: 'disponibile', rating_media: 0, numero_recensioni: 0, caricato_da: req.richiedente, caricato_da_uid: req.richiedente_uid }); await updateDoc(doc(db, "richieste", reqId), { stato: 'approvato' }); mostraAlert("Libro approvato!"); } catch(e) { mostraAlert("Errore: " + e.message); }
+    };
+    window.approvaPrestito = async (reqId) => {
+        if (!state.isAdmin) return; const req = state.requests.find(x => x.id === reqId); if(!req) return;
+        const giorni = parseInt(await chiediInput(`Per quanti giorni vuoi prestare il libro a ${req.richiedente}?`, "30", "number")); if (!giorni || giorni < 1) return;
+        try { await updateDoc(doc(db, "libri", req.libroId), { stato: 'noleggiato', noleggiato_da: req.richiedente, noleggiato_da_uid: req.richiedente_uid, scadenza: (Date.now() + giorni*DAY) }); await updateDoc(doc(db, "richieste", reqId), { stato: 'approvato' }); mostraAlert("Prestito approvato!"); } catch(e) { mostraAlert("Errore: " + e.message); }
+    };
+    window.rifiutaRichiesta = async (reqId) => { if (!state.isAdmin) return; try { await updateDoc(doc(db, "richieste", reqId), { stato: 'rifiutato' }); } catch(e) { mostraAlert("Errore."); } };
+    window.restituisciLibro = async (libroId) => {
+        if (!state.isAdmin) return;
+        if(await chiediConferma("Terminare il prestito? Il libro tornerà disponibile.")) {
+            try { const b = state.books.find(x => x.id === libroId); if(b && b.noleggiato_da_uid) await updateDoc(doc(db, "utenti", b.noleggiato_da_uid), { libri_letti: arrayUnion(libroId) }); await updateDoc(doc(db, "libri", libroId), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null }); } catch(e) { mostraAlert("Errore."); }
+        }
+    };
+    window.prolungaPrestito = async (libroId, scadenzaAttuale) => { if (!state.isAdmin) return; const giorni = parseInt(await chiediInput("Quanti giorni in più?", "15", "number")); if (!giorni || giorni < 1) return; try { await updateDoc(doc(db, "libri", libroId), { scadenza: scadenzaAttuale + (giorni * DAY) }); } catch(e) { mostraAlert("Errore."); } };
+
+    window.eliminaLibro = async (libroId) => { 
+        if (!state.isAdmin) return; 
+        if(await chiediConferma("Eliminare definitivamente questo libro, TUTTE le sue recensioni e i commenti?")) { 
+            try { 
+                // 1. Elimina il libro principale
+                await deleteDoc(doc(db, "libri", libroId)); 
+
+                // 2. Elimina tutte le recensioni di questo libro
+                const recensioniDaEliminare = state.reviews.filter(r => r.libroId === libroId);
+                for (let rec of recensioniDaEliminare) {
+                    await deleteDoc(doc(db, "recensioni", rec.id));
+                    
+                    // 3. Elimina i commenti legati a questa recensione
+                    const commentiDaEliminare = state.comments.filter(c => c.recensioneId === rec.id);
+                    for (let comm of commentiDaEliminare) {
+                        await deleteDoc(doc(db, "commenti", comm.id));
+                    }
+                }
+
+                // 4. Elimina eventuali richieste in attesa per questo libro
+                const richiesteDaEliminare = state.requests.filter(req => req.libroId === libroId);
+                for (let req of richiesteDaEliminare) {
+                    await deleteDoc(doc(db, "richieste", req.id));
+                }
+
+                mostraAlert("Libro e dati collegati eliminati con successo dal database!"); 
+            } catch(e) { 
+                mostraAlert("Errore durante l'eliminazione."); 
+            } 
+        } 
     };
 
     window.salvaModificaLibro = async (e, id) => {
-        e.preventDefault(); if (!state.isAdmin) return mostraAlert("Permesso negato");
-        const f = new FormData(e.target);
-        try {
-            await updateDoc(doc(db, "libri", id), { titolo: f.get('titolo'), autore: f.get('autore'), trama: f.get('trama'), data_pubblicazione: f.get('data_pubblicazione') });
-            closeModal(); mostraAlert("Libro aggiornato!");
-        } catch(e) { mostraAlert("Errore: " + e.message); }
-    };
+        e.preventDefault(); 
+        const libro = state.books.find(x => x.id === id); if (!libro) return mostraAlert("Libro non trovato.");
+        if (!state.isAdmin && libro.caricato_da_uid !== state.user.uid) return mostraAlert("Permesso negato: non sei il proprietario di questo libro.");
+        
+        const btn = e.target.querySelector('#btnSalvaModifica'); if(btn) { btn.disabled = true; btn.innerText = "Salvataggio..."; }
+        const f = new FormData(e.target); let copUrl = libro.copertina || ""; 
+        const fileInput = document.getElementById('file_modifica_copertina'); const urlInput = f.get('url_copertina');
 
+        try {
+            if (fileInput && fileInput.files && fileInput.files.length > 0) { if(btn) btn.innerText = "Elaborazione foto..."; copUrl = await comprimiInBase64(fileInput.files[0], 300, 400, 0.5); 
+            } else if (urlInput && urlInput.trim() !== '') { copUrl = urlInput.trim(); }
+
+            await updateDoc(doc(db, "libri", id), { titolo: f.get('titolo'), autore: f.get('autore'), trama: f.get('trama'), data_pubblicazione: f.get('data_pubblicazione'), copertina: copUrl });
+            closeModal(); mostraAlert("Libro aggiornato con successo!");
+        } catch(err) { mostraAlert("Errore: " + err.message); if(btn) { btn.disabled = false; btn.innerText = "Salva Modifiche"; } }
+    };
     window.richiediPrestito = async (libroId, titolo) => {
-        try {
-            await addDoc(collection(db, "richieste"), { tipo: 'prestito', stato: 'in_attesa', libroId: libroId, titolo: unescape(titolo), richiedente: state.userData.nome || state.user.displayName || "Utente", richiedente_uid: state.user.uid, data: serverTimestamp() });
-            mostraAlert("Richiesta di prestito inviata con successo!");
-        } catch(e) { mostraAlert("Errore: " + e.message); }
+        try { await addDoc(collection(db, "richieste"), { tipo: 'prestito', stato: 'in_attesa', libroId: libroId, titolo: unescape(titolo), richiedente: state.userData.nome || state.user.displayName || "Utente", richiedente_uid: state.user.uid, data: serverTimestamp() }); mostraAlert("Richiesta di prestito inviata con successo!"); } catch(e) { mostraAlert("Errore."); }
     };
 
-    window.apriDettaglioLibro = (libroId) => { state.modal = { type: 'dettaglioLibro', data: libroId }; requestRender(false); };
-    window.apriRecensioni = (libroId) => { state.selectedReviewBookId = libroId; requestRender(); };
-    window.chiudiRecensioni = () => { state.selectedReviewBookId = null; requestRender(); };
+    window.apriDettaglioLibro = (libroId) => { 
+        // 40ms e requestAnimationFrame danno il tempo alla scheda di terminare
+        // l'animazione di click, allineando la generazione del modale col refresh del monitor
+        setTimeout(() => {
+            requestAnimationFrame(() => {
+                state.modal = { type: 'dettaglioLibro', data: libroId }; 
+                renderModal(); 
+            });
+        }, 40);
+    };
+
+    window.apriRecensioni = (libroId) => { state.selectedReviewBookId = libroId; renderMain(); };
+    window.chiudiRecensioni = () => { state.selectedReviewBookId = null; renderMain(); };
 
     window.inviaRecensione = async (e, libroId) => {
-        e.preventDefault(); const f = new FormData(e.target); const voto = parseInt(f.get('voto'));
-        if(!voto) return mostraAlert("Seleziona una valutazione in stelle!");
-        const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true; btn.innerText = "Pubblicazione...";
-
-        let fotoUrl = ""; const fileInput = $('file_recensione');
+        e.preventDefault(); const f = new FormData(e.target); const voto = parseInt(f.get('voto')); if(!voto) return mostraAlert("Seleziona una valutazione in stelle!"); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true; btn.innerText = "Pubblicazione..."; let fotoUrl = ""; const fileInput = $('file_recensione');
         try {
             if (fileInput && fileInput.files && fileInput.files.length > 0) try { fotoUrl = await comprimiInBase64(fileInput.files[0], 400, 400, 0.5); } catch(err) { throw new Error(err.message); }
-            const libro = state.books.find(x => x.id === libroId);
-            const nuovoNum = (libro.numero_recensioni || 0) + 1;
-            const nuovaMedia = (((libro.rating_media || 0) * (libro.numero_recensioni || 0)) + voto) / nuovoNum;
-
+            const libro = state.books.find(x => x.id === libroId); const nuovoNum = (libro.numero_recensioni || 0) + 1; const nuovaMedia = (((libro.rating_media || 0) * (libro.numero_recensioni || 0)) + voto) / nuovoNum;
             await addDoc(collection(db, "recensioni"), { libroId, libroTitolo: libro.titolo, uid: state.user.uid, nomeUtente: state.userData.nome || state.user.displayName, avatar: state.userData.avatar || null, badgeUtente: state.userData.badge || "", voto, commento: f.get('commento'), fotoUrl: fotoUrl, data: serverTimestamp(), upvotes: [], downvotes: [] });
-            // Se fallisce qui, significa che l'utente non è admin. Idealmente il rating update dovrebbe essere gestito da una Cloud Function o permesso a tutti
             await updateDoc(doc(db, "libri", libroId), { rating_media: nuovaMedia, numero_recensioni: nuovoNum }).catch(e => console.warn("L'aggiornamento della media richiede permessi admin o cloud function"));
             closeModal(); mostraAlert("Recensione pubblicata!");
         } catch(err) { mostraAlert(err.message || "Errore durante la pubblicazione."); btn.disabled = false; btn.innerText = "Pubblica"; }
     };
 
     window.inviaCommento = async (e) => {
-        e.preventDefault(); const btn = $('btnInviaCommento'); btn.disabled = true; btn.innerText = "Invio...";
-        const f = new FormData(e.target); const testo = f.get('testo').trim(); const gifUrl = $('selected_gif_url') ? $('selected_gif_url').value : ""; const fileInput = $('file_commento'); let fotoUrl = "";
+        e.preventDefault(); const btn = $('btnInviaCommento'); btn.disabled = true; btn.innerText = "Invio..."; const f = new FormData(e.target); const testo = f.get('testo').trim(); const gifUrl = $('selected_gif_url') ? $('selected_gif_url').value : ""; const fileInput = $('file_commento'); let fotoUrl = "";
         if (!testo && !gifUrl && (!fileInput || fileInput.files.length === 0)) { btn.disabled = false; btn.innerText = "Pubblica Risposta"; return mostraAlert("Inserisci un testo, una GIF o una foto per rispondere."); }
-
         try {
-            if (fileInput && fileInput.files && fileInput.files.length > 0) try { fotoUrl = await comprimiInBase64(fileInput.files[0], 400, 400, 0.5); } catch(err) { throw new Error(err.message); }
-            const d = state.modal.data;
+            if (fileInput && fileInput.files && fileInput.files.length > 0) try { fotoUrl = await comprimiInBase64(fileInput.files[0], 400, 400, 0.5); } catch(err) { throw new Error(err.message); } const d = state.modal.data;
             await addDoc(collection(db, "commenti"), { recensioneId: d.recensioneId, parentId: d.parentId, uid: state.user.uid, nomeUtente: state.userData.nome || state.user.displayName, avatar: state.userData.avatar || null, badgeUtente: state.userData.badge || "", testo: testo, gifUrl: gifUrl, fotoUrl: fotoUrl, data: serverTimestamp(), upvotes: [], downvotes: [] });
             closeModal(); mostraAlert("Risposta pubblicata!");
         } catch (error) { mostraAlert(error.message || "Errore durante l'invio."); btn.disabled = false; btn.innerText = "Pubblica Risposta"; }
     };
 
-    window.eliminaCommento = async (commentoId) => {
-        const c = state.comments.find(x => x.id === commentoId); if (!c) return;
-        if(await chiediConferma("Sicuro di voler eliminare questa risposta?")) {
-            try { await deleteDoc(doc(db, "commenti", commentoId)); } catch(e) { mostraAlert("Errore: " + e.message); }
-        }
-    };
+    window.eliminaCommento = async (commentoId) => { const c = state.comments.find(x => x.id === commentoId); if (!c) return; if(await chiediConferma("Sicuro di voler eliminare questa risposta?")) { try { await deleteDoc(doc(db, "commenti", commentoId)); } catch(e) { mostraAlert("Errore."); } } };
 
     window.vota = async (id, tipo, collectionName) => {
-        const items = collectionName === 'recensioni' ? state.reviews : state.comments; const item = items.find(x => x.id === id); if (!item) return;
-        let newUp = [...(item.upvotes || [])], newDown = [...(item.downvotes || [])];
-        if (tipo === 'up') {
-            if (newUp.includes(state.user.uid)) newUp = newUp.filter(x => x !== state.user.uid); else { newUp.push(state.user.uid); newDown = newDown.filter(x => x !== state.user.uid); }
-        } else if (tipo === 'down') {
-            if (newDown.includes(state.user.uid)) newDown = newDown.filter(x => x !== state.user.uid); else { newDown.push(state.user.uid); newUp = newUp.filter(x => x !== state.user.uid); }
-        }
-        try { await updateDoc(doc(db, collectionName, id), { upvotes: newUp, downvotes: newDown }); } catch(e) { mostraAlert("Errore: " + e.message); }
+        const items = collectionName === 'recensioni' ? state.reviews : state.comments; const item = items.find(x => x.id === id); if (!item) return; let newUp = [...(item.upvotes || [])], newDown = [...(item.downvotes || [])];
+        if (tipo === 'up') { if (newUp.includes(state.user.uid)) newUp = newUp.filter(x => x !== state.user.uid); else { newUp.push(state.user.uid); newDown = newDown.filter(x => x !== state.user.uid); }
+        } else if (tipo === 'down') { if (newDown.includes(state.user.uid)) newDown = newDown.filter(x => x !== state.user.uid); else { newDown.push(state.user.uid); newUp = newUp.filter(x => x !== state.user.uid); } }
+        try { await updateDoc(doc(db, collectionName, id), { upvotes: newUp, downvotes: newDown }); } catch(e) { mostraAlert("Errore."); }
     };
 
-    window.votaRecensione = (id, tipo) => window.vota(id, tipo, "recensioni");
-    window.votaCommento = (id, tipo) => window.vota(id, tipo, "commenti");
+    window.votaRecensione = (id, tipo) => window.vota(id, tipo, "recensioni"); window.votaCommento = (id, tipo) => window.vota(id, tipo, "commenti");
 
     window.eliminaRecensione = async (recId, libroId) => {
-        if (!state.isAdmin && state.user.uid !== state.reviews.find(r => r.id === recId)?.uid) return mostraAlert("Permesso negato");
+        if (!state.isAdmin && state.user.uid !== state.reviews.find(r => r.id === recId)?.uid) return;
         if (await chiediConferma("Eliminare questa recensione?")) {
-            try {
-                await deleteDoc(doc(db, "recensioni", recId));
-                const snap = await getDocs(query(collection(db, "recensioni"), where("libroId", "==", libroId)));
-                let totVoti = 0, numRecs = 0; snap.forEach(d => { totVoti += d.data().voto; numRecs++; });
-                await updateDoc(doc(db, "libri", libroId), { rating_media: numRecs === 0 ? 0 : totVoti / numRecs, numero_recensioni: numRecs }).catch(e=>console.warn("Richiede permessi admin"));
-                mostraAlert("Recensione eliminata!");
-            } catch(e) { mostraAlert("Errore: " + e.message); }
+            try { await deleteDoc(doc(db, "recensioni", recId)); const snap = await getDocs(query(collection(db, "recensioni"), where("libroId", "==", libroId))); let totVoti = 0, numRecs = 0; snap.forEach(d => { totVoti += d.data().voto; numRecs++; }); await updateDoc(doc(db, "libri", libroId), { rating_media: numRecs === 0 ? 0 : totVoti / numRecs, numero_recensioni: numRecs }).catch(e=>{}); mostraAlert("Recensione eliminata!"); } catch(e) { mostraAlert("Errore."); }
         }
     };
 
     let gifTimeout;
     window.cercaGif = (queryStr) => {
-        clearTimeout(gifTimeout); const container = $('gif-results'); if(!container) return;
-        container.innerHTML = '<div class="col-span-2 text-center text-xs font-bold text-slate-400 py-4 absolute inset-0 flex items-center justify-center">Caricamento GIF...</div>';
-        
+        clearTimeout(gifTimeout); const container = $('gif-results'); if(!container) return; container.innerHTML = '<div class="col-span-2 text-center text-xs font-bold text-slate-400 py-4 absolute inset-0 flex items-center justify-center">Caricamento GIF...</div>';
         gifTimeout = setTimeout(async () => {
             const fallbackGifs = ["https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif", "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif", "https://media.giphy.com/media/13CoXDiaCcCoyk/giphy.gif", "https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/giphy.gif"];
-            try {
-                const GIPHY_KEY = "GlVGYHqc3SyCEwzSicFXvSEzS3Z3962r"; 
-                let url = (!queryStr || queryStr.trim() === "") ? `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_KEY}&limit=20&rating=g` : `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(queryStr)}&limit=20&rating=g`;
-                const res = await fetch(url); if (!res.ok) throw new Error("Errore API");
-                const data = await res.json();
-                if (data.data && data.data.length > 0) container.innerHTML = data.data.map(g => `<img src="${g.images.fixed_height_small.url}" loading="lazy" decoding="async" onclick="selezionaGif('${g.images.fixed_height_small.url}', this)" class="gif-item w-full h-24 object-cover cursor-pointer hover:scale-105 border-4 border-transparent transition-transform rounded-xl shadow-sm bg-slate-200">`).join('');
-                else throw new Error("Nessuna GIF trovata.");
+            try { const GIPHY_KEY = "GlVGYHqc3SyCEwzSicFXvSEzS3Z3962r"; let url = (!queryStr || queryStr.trim() === "") ? `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_KEY}&limit=20&rating=g` : `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(queryStr)}&limit=20&rating=g`; const res = await fetch(url); if (!res.ok) throw new Error("Errore"); const data = await res.json(); if (data.data && data.data.length > 0) container.innerHTML = data.data.map(g => `<img src="${g.images.fixed_height_small.url}" loading="lazy" decoding="async" onclick="selezionaGif('${g.images.fixed_height_small.url}', this)" class="gif-item w-full h-24 object-cover cursor-pointer hover:scale-105 border-4 border-transparent transition-transform rounded-xl shadow-sm bg-slate-200">`).join(''); else throw new Error("Vuoto");
             } catch(e) { container.innerHTML = fallbackGifs.map(gifUrl => `<img src="${gifUrl}" loading="lazy" decoding="async" onclick="selezionaGif('${gifUrl}', this)" class="gif-item w-full h-24 object-cover cursor-pointer hover:scale-105 border-4 border-transparent transition-transform rounded-xl shadow-sm bg-slate-200">`).join(''); }
         }, 500);
     };
 
     window.selezionaGif = (url, el) => { document.querySelectorAll('.gif-item').forEach(i => i.classList.remove('border-indigo-500')); el.classList.add('border-indigo-500'); $('selected_gif_url').value = url; };
-    window.apriRisposta = (recensioneId, parentId = null, replyToName = "") => { state.modal = { type: 'rispondi', data: { recensioneId, parentId, replyToName } }; requestRender(); setTimeout(() => { if(window.cercaGif) window.cercaGif(''); }, 100); };
+    window.apriRisposta = (recensioneId, parentId = null, replyToName = "") => { state.modal = { type: 'rispondi', data: { recensioneId, parentId, replyToName } }; renderModal(); setTimeout(() => { if(window.cercaGif) window.cercaGif(''); }, 100); };
 
     function buildCommentTree(recensioneId, parentId = null, depth = 0) {
-        const children = state.comments.filter(c => c.recensioneId === recensioneId && c.parentId === parentId);
-        if (!children.length) return '';
+        const children = state.comments.filter(c => c.recensioneId === recensioneId && c.parentId === parentId); if (!children.length) return '';
         const mlClass = depth === 0 ? "ml-3 sm:ml-6 mt-4" : "ml-2 sm:ml-4 mt-3"; const borderClass = depth % 2 === 0 ? "border-indigo-200" : "border-rose-200";
-
         return children.map(c => {
-            const dataStr = (c.data && c.data.toMillis) ? new Date(c.data.toMillis()).toLocaleDateString() : 'Pochi istanti fa';
-            const badgeHtml = c.badgeUtente ? `<span class="ml-1 text-[8px] font-black uppercase px-1.5 py-0.5 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm align-middle">${escapeHTML(c.badgeUtente)}</span>` : '';
-            return `
-            <div class="relative pl-3 sm:pl-4 border-l-2 ${borderClass} ${mlClass}">
-                <div class="absolute left-0 top-3 sm:top-4 w-2 sm:w-3 border-t-2 ${borderClass}"></div>
-                <div class="bg-slate-50/80 p-3 sm:p-4 rounded-xl border border-slate-100/50 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="flex items-center gap-1.5 mb-2">${window.getAvatar(c.avatar, "w-5 h-5 sm:w-6 sm:h-6")}<span class="font-bold text-xs sm:text-sm text-slate-800">${escapeHTML(c.nomeUtente)}</span>${badgeHtml}<span class="text-[9px] sm:text-[10px] font-bold text-slate-400 ml-1">${dataStr}</span></div>
-                    ${c.testo ? `<p class="text-xs sm:text-sm font-medium text-slate-700 break-words mb-2">${escapeHTML(c.testo)}</p>` : ''}
-                    ${c.gifUrl ? `<img src="${escapeHTML(c.gifUrl)}" loading="lazy" decoding="async" class="rounded-xl max-w-[150px] sm:max-w-[200px] shadow-sm mb-2 bg-slate-100">` : ''}
-                    ${c.fotoUrl ? `<img src="${escapeHTML(c.fotoUrl)}" loading="lazy" decoding="async" class="rounded-xl max-w-full sm:max-w-xs shadow-sm mb-2 max-h-48 object-contain border border-slate-200/60">` : ''}
-                    <div class="flex flex-wrap gap-2 items-center mt-2 border-t border-slate-200/50 pt-2">
-                        <button onclick="votaCommento('${c.id}', 'up')" class="text-[10px] sm:text-xs flex items-center gap-1 py-1 px-2 rounded-lg font-bold transition-colors ${c.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white border text-slate-500 hover:bg-slate-100'}">👍 ${c.upvotes?.length||0}</button>
-                        <button onclick="votaCommento('${c.id}', 'down')" class="text-[10px] sm:text-xs flex items-center gap-1 py-1 px-2 rounded-lg font-bold transition-colors ${c.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white shadow-sm' : 'bg-white border text-slate-500 hover:bg-slate-100'}">👎 ${c.downvotes?.length||0}</button>
-                        <button onclick="apriRisposta('${recensioneId}', '${c.id}', '${escapeHTML(c.nomeUtente).replace(/'/g, "\\'")}')" class="text-[10px] sm:text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors ml-1">Rispondi</button>
-                        ${(state.isAdmin || c.uid === state.user.uid) ? `<button onclick="eliminaCommento('${c.id}')" class="text-[10px] font-bold text-red-500 hover:text-red-700 ml-auto px-2 py-1">Elimina</button>` : ''}
-                    </div>
-                </div>
-                ${buildCommentTree(recensioneId, c.id, depth + 1)}
-            </div>`;
+            const dataStr = (c.data && c.data.toMillis) ? new Date(c.data.toMillis()).toLocaleDateString() : 'Pochi istanti fa'; const badgeHtml = c.badgeUtente ? `<span class="ml-1 text-[8px] font-black uppercase px-1.5 py-0.5 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm align-middle">${escapeHTML(c.badgeUtente)}</span>` : '';
+            return `<div class="relative pl-3 sm:pl-4 border-l-2 ${borderClass} ${mlClass}"><div class="absolute left-0 top-3 sm:top-4 w-2 sm:w-3 border-t-2 ${borderClass}"></div><div class="bg-slate-50/80 p-3 sm:p-4 rounded-xl border border-slate-100/50 shadow-sm hover:shadow-md transition-shadow"><div class="flex items-center gap-1.5 mb-2">${window.getAvatar(c.avatar, "w-5 h-5 sm:w-6 sm:h-6")}<span class="font-bold text-xs sm:text-sm text-slate-800">${escapeHTML(c.nomeUtente)}</span>${badgeHtml}<span class="text-[9px] sm:text-[10px] font-bold text-slate-400 ml-1">${dataStr}</span></div>${c.testo ? `<p class="text-xs sm:text-sm font-medium text-slate-700 break-words mb-2">${escapeHTML(c.testo)}</p>` : ''}${c.gifUrl ? `<img src="${escapeHTML(c.gifUrl)}" loading="lazy" decoding="async" class="rounded-xl max-w-[150px] sm:max-w-[200px] shadow-sm mb-2 bg-slate-100">` : ''}${c.fotoUrl ? `<img src="${escapeHTML(c.fotoUrl)}" loading="lazy" decoding="async" class="rounded-xl max-w-full sm:max-w-xs shadow-sm mb-2 max-h-48 object-contain border border-slate-200/60">` : ''}<div class="flex flex-wrap gap-2 items-center mt-2 border-t border-slate-200/50 pt-2"><button onclick="votaCommento('${c.id}', 'up')" class="text-[10px] sm:text-xs flex items-center gap-1 py-1 px-2 rounded-lg font-bold transition-colors ${c.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white border text-slate-500 hover:bg-slate-100'}">👍 ${c.upvotes?.length||0}</button><button onclick="votaCommento('${c.id}', 'down')" class="text-[10px] sm:text-xs flex items-center gap-1 py-1 px-2 rounded-lg font-bold transition-colors ${c.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white shadow-sm' : 'bg-white border text-slate-500 hover:bg-slate-100'}">👎 ${c.downvotes?.length||0}</button><button onclick="apriRisposta('${recensioneId}', '${c.id}', '${escapeHTML(c.nomeUtente).replace(/'/g, "\\'")}')" class="text-[10px] sm:text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors ml-1">Rispondi</button>${(state.isAdmin || c.uid === state.user.uid) ? `<button onclick="eliminaCommento('${c.id}')" class="text-[10px] font-bold text-red-500 hover:text-red-700 ml-auto px-2 py-1">Elimina</button>` : ''}</div></div>${buildCommentTree(recensioneId, c.id, depth + 1)}</div>`;
         }).join('');
     }
 
     window.inviaProposta = async (e) => {
-        e.preventDefault(); const f = new FormData(e.target); const btn = $('btnProponi'); btn.disabled = true; 
-        let copUrl = f.get('url_copertina') || ""; const fileInput = $('file_copertina');
-        try {
-            if (fileInput && fileInput.files && fileInput.files.length > 0) { btn.innerText = "Elaborazione foto..."; try { copUrl = await comprimiInBase64(fileInput.files[0], 300, 400, 0.5); } catch(err) { await mostraAlert(`Invio solo testo.`); } }
-            btn.innerText = "Salvataggio...";
-            await addDoc(collection(db, "richieste"), { tipo: 'nuovo_libro', stato: 'in_attesa', richiedente: state.userData.nome || state.user.displayName || "Utente", richiedente_uid: state.user.uid, data: serverTimestamp(), dati: { titolo: f.get('titolo'), autore: f.get('autore'), trama: f.get('trama') || "", data_pubblicazione: f.get('data_pubblicazione') || "", copertina: copUrl } });
-            mostraAlert("Proposta inviata!"); e.target.reset();
-        } catch (dbErr) { mostraAlert("Errore Riprova."); } finally { btn.disabled = false; btn.innerText = "Invia Proposta"; }
+        e.preventDefault(); const f = new FormData(e.target); const btn = $('btnProponi'); btn.disabled = true; let copUrl = f.get('url_copertina') || ""; const fileInput = $('file_copertina');
+        try { if (fileInput && fileInput.files && fileInput.files.length > 0) { btn.innerText = "Elaborazione foto..."; try { copUrl = await comprimiInBase64(fileInput.files[0], 300, 400, 0.5); } catch(err) { await mostraAlert(`Invio solo testo.`); } } btn.innerText = "Salvataggio..."; await addDoc(collection(db, "richieste"), { tipo: 'nuovo_libro', stato: 'in_attesa', richiedente: state.userData.nome || state.user.displayName || "Utente", richiedente_uid: state.user.uid, data: serverTimestamp(), dati: { titolo: f.get('titolo'), autore: f.get('autore'), trama: f.get('trama') || "", data_pubblicazione: f.get('data_pubblicazione') || "", copertina: copUrl } }); mostraAlert("Proposta inviata!"); e.target.reset(); } catch (dbErr) { mostraAlert("Errore."); } finally { btn.disabled = false; btn.innerText = "Invia Proposta"; }
     };
 
-    window.cambiaTab = (tab) => { state.tab = tab; state.selectedReviewBookId = null; if(state.user) updateDoc(doc(db, "utenti", state.user.uid), { lastActive: serverTimestamp() }).catch(()=>{}); requestRender(true); };
-
-    window.toggleServer = async () => {
-        if (!state.isGod) return mostraAlert("Permesso negato");
-        const newState = !serverState.attivo;
-        try { await updateDoc(doc(db, "sistema", "stato_server"), { attivo: newState }); mostraAlert(newState ? "✅ Server Riattivato." : "🛑 Server Spento."); } catch(e) { mostraAlert("Errore: " + e.message); }
-    };
-
-    window.chiudiAltreVersioni = async () => {
-        if (!state.isGod) return mostraAlert("Permesso negato");
-        if(await chiediConferma("Tutti i link attualmente aperti dagli altri verranno bloccati. Sicuro?")) {
-            try { await updateDoc(doc(db, "sistema", "stato_server"), { last_force_reload: Date.now() }); mostraAlert("🔒 Vecchi link isolati. La tua sessione al momento del riavvio sarà pulita."); } catch(e) { mostraAlert("Errore: " + e.message); }
-        }
-    };
-
-    window.invocaPotere = async (potere) => {
-        if (!state.isGod) return mostraAlert("Permesso negato");
-        const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value);
-        if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio (Tutti o un utente specifico)!");
-        try {
-            await setDoc(doc(db, "sistema", "caos"), { evento: potere, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
-            mostraAlert(`⚡ Potere scatenato!`);
-        } catch(e) { mostraAlert("Errore: " + e.message); }
-    };
-
-    window.voceDiDio = async () => {
-        if (!state.isGod) return mostraAlert("Permesso negato");
-        const msg = await chiediInput("Scrivi il messaggio globale:", ""); if(!msg) return;
-        const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value); if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio!");
-        try {
-            await setDoc(doc(db, "sistema", "caos"), { evento: 'messaggio', messaggio: msg, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
-            mostraAlert("Messaggio Divino inviato!");
-        } catch(e) { mostraAlert("Errore: " + e.message); }
-    };
-
-    window.miracoloApprovazione = async () => {
-        if (!state.isGod) return mostraAlert("Permesso negato");
-        if(await chiediConferma("✨ MIRACOLO: Approvare tutte le richieste in attesa?")) {
-            try {
-                for(let r of state.requests) {
-                    if(r.tipo === 'nuovo_libro') await addDoc(collection(db, "libri"), { ...r.dati, stato: 'disponibile', rating_media: 0, numero_recensioni: 0 }), await updateDoc(doc(db, "richieste", r.id), { stato: 'approvato' });
-                    else if(r.tipo === 'prestito') await updateDoc(doc(db, "libri", r.libroId), { stato: 'noleggiato', noleggiato_da: r.richiedente, noleggiato_da_uid: r.richiedente_uid, scadenza: (Date.now() + 30*DAY) }), await updateDoc(doc(db, "richieste", r.id), { stato: 'approvato' });
-                }
-                mostraAlert("Miracolo compiuto.");
-            } catch(e) { mostraAlert("Errore: " + e.message); }
-        }
-    };
-
-    window.amnistiaGenerale = async () => {
-        if (!state.isGod) return mostraAlert("Permesso negato");
-        if(await chiediConferma("🕊️ AMNISTIA: Restituire forzatamente tutti i libri in prestito?")) {
-            try {
-                for(let b of state.books.filter(b => b.stato === 'noleggiato')) {
-                    if(b.noleggiato_da_uid) await updateDoc(doc(db, "utenti", b.noleggiato_da_uid), { libri_letti: arrayUnion(b.id) });
-                    await updateDoc(doc(db, "libri", b.id), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null });
-                }
-                mostraAlert("Amnistia completata.");
-            } catch(e) { mostraAlert("Errore: " + e.message); }
-        }
-    };
-
-    window.apocalisse = async () => {
-        if (!state.isGod) return mostraAlert("Permesso negato");
-        if(await chiediConferma("💀 APOCALISSE: Eliminare TUTTE le richieste, RECENSIONI e COMMENTI?")) {
-            try {
-                for(let r of state.requests) await updateDoc(doc(db, "richieste", r.id), { stato: 'rifiutato' }); 
-                for(let r of state.reviews) await deleteDoc(doc(db, "recensioni", r.id));
-                for(let c of state.comments) await deleteDoc(doc(db, "commenti", c.id));
-                for(let b of state.books) await updateDoc(doc(db, "libri", b.id), { rating_media: 0, numero_recensioni: 0 });
-                mostraAlert("Il database è stato purificato.");
-            } catch(e) { mostraAlert("Errore: " + e.message); }
-        }
-    };
-
-    window.comprimiDatabaseEsistente = async () => {
-        if (!state.isGod) return mostraAlert("Permesso negato");
-        if(!await chiediConferma("🗜️ AVVIO COMPRESSIONE DI MASSA\n\nVuoi scansionare l'intero database e comprimere le foto già caricate in passato? Questo libererà moltissimo spazio, ma ci vorrà qualche secondo. Procediamo?")) return;
-        mostraAlert("Compressione in corso... Potrebbe volerci 1 minuto. NON chiudere la pagina."); let count = 0;
-        try {
-            for(let u of state.users) if(u.avatar && u.avatar.length > 50000) { const newAvatar = await window.comprimiBase64Esistente(u.avatar, 150, 150, 0.4); if(newAvatar !== u.avatar) { await updateDoc(doc(db, "utenti", u.id), { avatar: newAvatar }); count++; } }
-            for(let b of state.books) if(b.copertina && b.copertina.length > 50000) { const newCopertina = await window.comprimiBase64Esistente(b.copertina, 300, 400, 0.5); if(newCopertina !== b.copertina) { await updateDoc(doc(db, "libri", b.id), { copertina: newCopertina }); count++; } }
-            for(let r of state.reviews) { let updated = false, dataToUpdate = {}; if(r.fotoUrl && r.fotoUrl.length > 50000) { dataToUpdate.fotoUrl = await window.comprimiBase64Esistente(r.fotoUrl, 400, 400, 0.5); updated = true; } if(r.avatar && r.avatar.length > 50000) { dataToUpdate.avatar = await window.comprimiBase64Esistente(r.avatar, 150, 150, 0.4); updated = true; } if(updated) { await updateDoc(doc(db, "recensioni", r.id), dataToUpdate); count++; } }
-            for(let c of state.comments) { let updated = false, dataToUpdate = {}; if(c.fotoUrl && c.fotoUrl.length > 50000) { dataToUpdate.fotoUrl = await window.comprimiBase64Esistente(c.fotoUrl, 400, 400, 0.5); updated = true; } if(c.avatar && c.avatar.length > 50000) { dataToUpdate.avatar = await window.comprimiBase64Esistente(c.avatar, 150, 150, 0.4); updated = true; } if(updated) { await updateDoc(doc(db, "commenti", c.id), dataToUpdate); count++; } }
-            mostraAlert(`✅ Pulizia completata! Sono stati compressi ${count} file pesanti. Spazio recuperato con successo.`);
-        } catch (err) { mostraAlert("Errore durante la compressione: " + err.message); }
-    };
+    window.toggleServer = async () => { if (!state.isGod) return; const newState = !serverState.attivo; try { await updateDoc(doc(db, "sistema", "stato_server"), { attivo: newState }); mostraAlert(newState ? "✅ Server Riattivato." : "🛑 Server Spento."); } catch(e) { mostraAlert("Errore"); } };
+    window.chiudiAltreVersioni = async () => { if (!state.isGod) return; if(await chiediConferma("Tutti i link attualmente aperti dagli altri verranno bloccati. Sicuro?")) { try { await updateDoc(doc(db, "sistema", "stato_server"), { last_force_reload: Date.now() }); mostraAlert("🔒 Vecchi link isolati."); } catch(e) { mostraAlert("Errore"); } } };
+    window.invocaPotere = async (potere) => { if (!state.isGod) return; const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value); if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio!"); try { await setDoc(doc(db, "sistema", "caos"), { evento: potere, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets }); mostraAlert(`⚡ Potere scatenato!`); } catch(e) { mostraAlert("Errore"); } };
+    window.voceDiDio = async () => { if (!state.isGod) return; const msg = await chiediInput("Scrivi il messaggio globale:", ""); if(!msg) return; const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value); if(targets.length === 0) return; try { await setDoc(doc(db, "sistema", "caos"), { evento: 'messaggio', messaggio: msg, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets }); mostraAlert("Messaggio inviato!"); } catch(e) { mostraAlert("Errore"); } };
+    window.miracoloApprovazione = async () => { if (!state.isGod) return; if(await chiediConferma("✨ Approvare tutte le richieste in attesa?")) { try { for(let r of state.requests) { if(r.tipo === 'nuovo_libro') await addDoc(collection(db, "libri"), { ...r.dati, stato: 'disponibile', rating_media: 0, numero_recensioni: 0 }), await updateDoc(doc(db, "richieste", r.id), { stato: 'approvato' }); else if(r.tipo === 'prestito') await updateDoc(doc(db, "libri", r.libroId), { stato: 'noleggiato', noleggiato_da: r.richiedente, noleggiato_da_uid: r.richiedente_uid, scadenza: (Date.now() + 30*DAY) }), await updateDoc(doc(db, "richieste", r.id), { stato: 'approvato' }); } mostraAlert("Completato."); } catch(e) { mostraAlert("Errore"); } } };
+    window.amnistiaGenerale = async () => { if (!state.isGod) return; if(await chiediConferma("🕊 Restituire tutti i libri in prestito?")) { try { for(let b of state.books.filter(b => b.stato === 'noleggiato')) { if(b.noleggiato_da_uid) await updateDoc(doc(db, "utenti", b.noleggiato_da_uid), { libri_letti: arrayUnion(b.id) }); await updateDoc(doc(db, "libri", b.id), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null }); } mostraAlert("Completato."); } catch(e) { mostraAlert("Errore"); } } };
+    window.apocalisse = async () => { if (!state.isGod) return; if(await chiediConferma("💀 Eliminare TUTTE le richieste e RECENSIONI?")) { try { for(let r of state.requests) await updateDoc(doc(db, "richieste", r.id), { stato: 'rifiutato' }); for(let r of state.reviews) await deleteDoc(doc(db, "recensioni", r.id)); for(let c of state.comments) await deleteDoc(doc(db, "commenti", c.id)); for(let b of state.books) await updateDoc(doc(db, "libri", b.id), { rating_media: 0, numero_recensioni: 0 }); mostraAlert("Completato."); } catch(e) { mostraAlert("Errore"); } } };
 
     window.sguardoDivino = (uid) => {
-        if (!state.isGod) return mostraAlert("Permesso negato");
-        const u = state.users.find(x => x.id === uid); if(!u) return;
-        const p = state.books.filter(b => b.noleggiato_da_uid === uid);
-        const volteAdmin = u.volte_admin || 0; const statusAdmin = volteAdmin > 0 ? `Sì (${volteAdmin} volt${volteAdmin === 1 ? 'a' : 'e'})` : "Mai stato";
-        const isBanned = bannedDevices.includes(u.deviceId);
-
-        state.modal = { 
-            type: 'sguardoDivinoRender', 
-            html: `
-            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);">
-                <div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-left relative">
-                    <button onclick="closeModal()" class="absolute top-5 right-5 w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold transition-colors">✕</button>
-                    <div class="text-center">
-                        ${window.getAvatar(u.avatar, "w-16 h-16 mx-auto mb-4 border-4 border-white shadow-md")}
-                        <h2 class="text-2xl font-black mb-1 flex items-center justify-center gap-2">👁️ ${escapeHTML(u.nome)}</h2>
-                        ${u.badge ? `<span class="inline-block text-[10px] font-black uppercase px-2 py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm mb-5">${escapeHTML(u.badge)}</span>` : '<div class="h-2 mb-4"></div>'}
-                    </div>
-                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-sm space-y-3 mb-6 shadow-inner">
-                        <p class="flex justify-between border-b pb-1 gap-4"><b class="shrink-0">Email:</b> <span class="text-slate-600 truncate">${escapeHTML(u.email)}</span></p>
-                        <p class="flex justify-between border-b pb-1"><b>Ruolo Attuale:</b> <span class="uppercase font-bold text-indigo-600">${u.ruolo}</span></p>
-                        <p class="flex justify-between border-b pb-1"><b>Storico Admin:</b> <span class="text-slate-600">${statusAdmin}</span></p>
-                        <p class="flex justify-between pt-1 items-center"><b>PC Bannato:</b> ${isBanned ? '<span class="text-[10px] sm:text-xs text-red-600 font-black tracking-widest bg-red-100 px-2 py-1 rounded-md border border-red-200">SÌ 🔨</span>' : '<span class="text-[10px] sm:text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">NO</span>'}</p>
-                    </div>
-                    <h3 class="font-extrabold text-slate-800 text-lg mb-3">📚 Libri in Possesso:</h3>
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-sm max-h-40 overflow-y-auto mb-6 hide-scrollbar shadow-inner">
-                        ${p.length > 0 ? p.map(b => `<p class="font-bold text-indigo-700 py-1.5 border-b border-slate-200/60 last:border-0 last:pb-0 flex items-center gap-2"><span class="text-lg">📖</span> <span class="truncate">${escapeHTML(b.titolo)}</span></p>`).join('') : '<p class="italic text-slate-400 font-medium text-center py-2">Nessuno.</p>'}
-                    </div>
-                    <button onclick="closeModal()" class="w-full py-3.5 rounded-xl font-extrabold text-white bg-slate-900 hover:bg-indigo-600 transition-colors shadow-lg active:scale-95">Chiudi Radar</button>
-                </div>
-            </div>` 
-        };
-        requestRender(false);
+        if (!state.isGod) return; const u = state.users.find(x => x.id === uid); if(!u) return; const p = state.books.filter(b => b.noleggiato_da_uid === uid); const volteAdmin = u.volte_admin || 0; const statusAdmin = volteAdmin > 0 ? `Sì (${volteAdmin} volte)` : "Mai stato"; const isBanned = bannedDevices.includes(u.deviceId);
+        state.modal = { type: 'sguardoDivinoRender', html: `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in"><div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-left relative"><button onclick="closeModal()" class="absolute top-5 right-5 w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold transition-colors">✕</button><div class="text-center">${window.getAvatar(u.avatar, "w-16 h-16 mx-auto mb-4 border-4 border-white shadow-md")}<h2 class="text-2xl font-black mb-1 flex items-center justify-center gap-2">👁️ ${escapeHTML(u.nome)}</h2>${u.badge ? `<span class="inline-block text-[10px] font-black uppercase px-2 py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm mb-5">${escapeHTML(u.badge)}</span>` : '<div class="h-2 mb-4"></div>'}</div><div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-sm space-y-3 mb-6 shadow-inner"><p class="flex justify-between border-b pb-1 gap-4"><b class="shrink-0">Email:</b> <span class="text-slate-600 truncate">${escapeHTML(u.email)}</span></p><p class="flex justify-between border-b pb-1"><b>Ruolo Attuale:</b> <span class="uppercase font-bold text-indigo-600">${u.ruolo}</span></p><p class="flex justify-between border-b pb-1"><b>Storico Admin:</b> <span class="text-slate-600">${statusAdmin}</span></p><p class="flex justify-between pt-1 items-center"><b>PC Bannato:</b> ${isBanned ? '<span class="text-[10px] sm:text-xs text-red-600 font-black tracking-widest bg-red-100 px-2 py-1 rounded-md border border-red-200">SÌ 🔨</span>' : '<span class="text-[10px] sm:text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">NO</span>'}</p></div><h3 class="font-extrabold text-slate-800 text-lg mb-3">📚 Libri in Possesso:</h3><div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-sm max-h-40 overflow-y-auto mb-6 hide-scrollbar shadow-inner">${p.length > 0 ? p.map(b => `<p class="font-bold text-indigo-700 py-1.5 border-b border-slate-200/60 last:border-0 last:pb-0 flex items-center gap-2"><span class="text-lg">📖</span> <span class="truncate">${escapeHTML(b.titolo)}</span></p>`).join('') : '<p class="italic text-slate-400 font-medium text-center py-2">Nessuno.</p>'}</div><button onclick="closeModal()" class="w-full py-3.5 rounded-xl font-extrabold text-white bg-slate-900 hover:bg-indigo-600 transition-colors shadow-lg active:scale-95">Chiudi Radar</button></div></div>` }; renderModal();
     };
 
     function renderStars(rating) {
-        if(!rating || rating === 0) return `<span class="text-slate-300 text-sm">Nessun voto</span>`;
-        let stars = ''; for(let i=1; i<=5; i++) stars += i <= Math.round(rating) ? `<span class="text-amber-400">★</span>` : `<span class="text-slate-200">★</span>`;
-        return `<span class="text-lg tracking-widest">${stars}</span> <span class="text-sm font-bold text-slate-500 ml-1">${(Math.round(rating*10)/10)}</span>`;
+        if(!rating || rating === 0) return `<span class="text-slate-300 text-sm">Nessun voto</span>`; let stars = ''; for(let i=1; i<=5; i++) stars += i <= Math.round(rating) ? `<span class="text-amber-400">★</span>` : `<span class="text-slate-200">★</span>`; return `<span class="text-lg tracking-widest">${stars}</span> <span class="text-sm font-bold text-slate-500 ml-1">${(Math.round(rating*10)/10)}</span>`;
     }
 
-    function tempoRimanente(ms) {
-        if (!ms) return "N/D"; const d = ms - Date.now(); if (d <= 0) return "Scaduto!";
-        return `${Math.floor(d / DAY)}g ${Math.floor(d % DAY / 3600000)}h ${Math.floor(d % 3600000 / 60000)}m`;
-    }
+    function tempoRimanente(ms) { if (!ms) return "N/D"; const d = ms - Date.now(); if (d <= 0) return "Scaduto!"; return `${Math.floor(d / DAY)}g ${Math.floor(d % DAY / 3600000)}h ${Math.floor(d % 3600000 / 60000)}m`; }
 
-    function renderModal() {
+    function buildModalHTML() {
         if(!state.modal) return '';
         if (state.modal.type === 'sguardoDivinoRender') return state.modal.html;
 
         if (state.modal.type === 'radarManuale') {
             const now = Date.now(); const onlineUsers = state.users.filter(u => u.lastActive && u.id !== state.user.uid && (now - u.lastActive.toMillis() < 30 * 60000));
-            return `
-            <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md fade-in" style="transform: translate3d(0,0,0);">
-                <div class="bg-slate-900 rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-center border border-purple-500/30 relative">
-                    <div class="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-rose-900/20 rounded-3xl pointer-events-none"></div>
-                    <button onclick="closeModal()" class="absolute top-5 right-5 w-8 h-8 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center font-bold transition-colors z-20">✕</button>
-                    <div class="relative z-10">
-                        <div class="text-5xl mb-4">📡</div><h2 class="text-2xl font-black text-white mb-2">Scansione Rete Completata</h2><p class="text-purple-300/80 text-sm mb-6">Questi utenti hanno l'app aperta o l'hanno usata di recente.</p>
-                        <div class="bg-black/40 rounded-2xl border border-purple-500/20 p-4 max-h-60 overflow-y-auto hide-scrollbar text-left space-y-3 mb-6 shadow-inner">
-                            ${onlineUsers.length > 0 ? onlineUsers.map(u => `<div class="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5"><div class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse shrink-0"></div><div class="flex flex-col truncate"><span class="text-sm font-bold text-white truncate">${escapeHTML(u.nome)}</span></div></div>`).join('') : `<div class="text-center py-6"><span class="text-2xl block mb-2">👻</span><span class="text-slate-400 font-medium text-sm">Nessuno online in questo momento.</span></div>`}
-                        </div>
-                        <button onclick="closeModal()" class="w-full py-4 rounded-xl font-extrabold text-white bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-600/30 transition-transform active:scale-95">Chiudi Radar</button>
-                    </div>
-                </div>
-            </div>`;
+            return `<div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md fade-in"><div class="bg-slate-900 rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-center border border-purple-500/30 relative"><div class="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-rose-900/20 rounded-3xl pointer-events-none"></div><button onclick="closeModal()" class="absolute top-5 right-5 w-8 h-8 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center font-bold transition-colors z-20">✕</button><div class="relative z-10"><div class="text-5xl mb-4">📡</div><h2 class="text-2xl font-black text-white mb-2">Scansione Rete Completata</h2><p class="text-purple-300/80 text-sm mb-6">Questi utenti hanno l'app aperta o l'hanno usata di recente.</p><div class="bg-black/40 rounded-2xl border border-purple-500/20 p-4 max-h-60 overflow-y-auto hide-scrollbar text-left space-y-3 mb-6 shadow-inner">${onlineUsers.length > 0 ? onlineUsers.map(u => `<div class="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5"><div class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse shrink-0"></div><div class="flex flex-col truncate"><span class="text-sm font-bold text-white truncate">${escapeHTML(u.nome)}</span></div></div>`).join('') : `<div class="text-center py-6"><span class="text-2xl block mb-2">👻</span><span class="text-slate-400 font-medium text-sm">Nessuno online in questo momento.</span></div>`}</div><button onclick="closeModal()" class="w-full py-4 rounded-xl font-extrabold text-white bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-600/30 transition-transform active:scale-95">Chiudi Radar</button></div></div></div>`;
         }
 
         if (state.modal.type === 'profilo') {
             const avatarPreview = window.getAvatar(state.userData.avatar, "w-full h-full object-cover");
-            return `
-            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);">
-                <div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-indigo-500 to-purple-600 z-0"></div>
-                    <button onclick="closeModal()" class="absolute top-4 right-4 z-20 w-8 h-8 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center font-bold transition-colors">✕</button>
-                    <form onsubmit="salvaProfilo(event)" class="relative z-10 pt-4 flex flex-col items-center w-full">
-                        <div class="relative group cursor-pointer mb-6 w-24 h-24 sm:w-32 sm:h-32 mx-auto" id="avatar-wrapper">
-                            <div id="avatar_preview_container" class="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center">${avatarPreview}</div>
-                            <label for="file_avatar" class="absolute inset-0 bg-black/50 text-white rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"><span class="text-2xl mb-1">📷</span><span class="text-[10px] font-bold uppercase tracking-wider">Cambia</span></label>
-                            <input type="file" id="file_avatar" accept="image/*" class="hidden" onchange="const f = this.files[0]; if(f) { const r = new FileReader(); r.onload = e => { document.getElementById('avatar_preview_container').innerHTML = '<img src=\\'' + e.target.result + '\\' class=\\'w-full h-full object-cover\\'>'; }; r.readAsDataURL(f); }">
-                        </div>
-                        <div class="w-full space-y-4">
-                            <div><label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-2 mb-1 block">Nome Mostrato</label><input name="nome" value="${escapeHTML(state.userData.nome || state.user.displayName)}" class="${INPUT_CLS} text-center font-bold text-lg text-slate-800" required></div>
-                            <div><label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-2 mb-1 block">Email (Bloccata)</label><input value="${escapeHTML(state.user.email)}" class="w-full rounded-2xl border-2 border-slate-100 px-4 py-3 bg-slate-50 text-slate-400 font-medium text-center text-sm cursor-not-allowed" disabled></div>
-                        </div>
-                        <div class="flex gap-3 w-full mt-8"><button type="button" onclick="closeModal()" class="flex-1 py-3.5 rounded-xl font-extrabold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">Annulla</button><button type="submit" id="btnSalvaProfilo" class="flex-1 py-3.5 rounded-xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-600/30 transition-colors">Salva Profilo</button></div>
-                    </form>
-                </div>
-            </div>`;
+            return `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in"><div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-indigo-500 to-purple-600 z-0"></div><button onclick="closeModal()" class="absolute top-4 right-4 z-20 w-8 h-8 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center font-bold transition-colors">✕</button><form onsubmit="salvaProfilo(event)" class="relative z-10 pt-4 flex flex-col items-center w-full"><div class="relative group cursor-pointer mb-6 w-24 h-24 sm:w-32 sm:h-32 mx-auto" id="avatar-wrapper"><div id="avatar_preview_container" class="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center">${avatarPreview}</div><label for="file_avatar" class="absolute inset-0 bg-black/50 text-white rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"><span class="text-2xl mb-1">📷</span><span class="text-[10px] font-bold uppercase tracking-wider">Cambia</span></label><input type="file" id="file_avatar" accept="image/*" class="hidden" onchange="const f = this.files[0]; if(f) { const r = new FileReader(); r.onload = e => { document.getElementById('avatar_preview_container').innerHTML = '<img src=\\'' + e.target.result + '\\' class=\\'w-full h-full object-cover\\'>'; }; r.readAsDataURL(f); }"></div><div class="w-full space-y-4"><div><label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-2 mb-1 block">Nome Mostrato</label><input name="nome" value="${escapeHTML(state.userData.nome || state.user.displayName)}" class="${INPUT_CLS} text-center font-bold text-lg text-slate-800" required></div><div><label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-2 mb-1 block">Email (Bloccata)</label><input value="${escapeHTML(state.user.email)}" class="w-full rounded-2xl border-2 border-slate-100 px-4 py-3 bg-slate-50 text-slate-400 font-medium text-center text-sm cursor-not-allowed" disabled></div></div><div class="flex gap-3 w-full mt-8"><button type="button" onclick="closeModal()" class="flex-1 py-3.5 rounded-xl font-extrabold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">Annulla</button><button type="submit" id="btnSalvaProfilo" class="flex-1 py-3.5 rounded-xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-600/30 transition-colors">Salva Profilo</button></div></form></div></div>`;
         }
 
         if (state.modal.type === 'rispondi') {
             const d = state.modal.data; const contextText = d.parentId ? `Rispondi a <span class="text-indigo-600">${escapeHTML(d.replyToName)}</span>` : "Aggiungi un commento";
-            return `
-            <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);">
-                <div class="bg-white rounded-t-3xl sm:rounded-[2.5rem] p-5 sm:p-8 w-full max-w-lg shadow-2xl slide-up flex flex-col max-h-[90vh]">
-                    <div class="flex justify-between items-center mb-4 border-b pb-3 shrink-0"><h3 class="font-extrabold text-lg sm:text-xl text-slate-800">${contextText}</h3><button onclick="closeModal()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full font-bold transition-colors">✕</button></div>
-                    <form onsubmit="inviaCommento(event)" class="flex flex-col gap-4 overflow-y-auto hide-scrollbar pb-6">
-                        <textarea name="testo" rows="3" placeholder="Scrivi una risposta..." class="${INPUT_CLS} resize-none"></textarea>
-                        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4 space-y-4">
-                            <div><label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2">📷 Aggiungi Foto</label><input type="file" id="file_commento" accept="image/*" class="text-xs sm:text-sm font-medium w-full file:mr-3 file:py-2 file:px-3 sm:file:px-4 file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer"></div>
-                            <div class="border-t border-slate-200 pt-4"><label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><span>🔎 Cerca GIF</span></label><input type="text" placeholder="Cerca GIF (in automatico carica le tendenze)..." class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none transition-all" oninput="if(window.cercaGif) window.cercaGif(this.value)"><div id="gif-results" class="grid grid-cols-2 gap-2 mt-3 h-32 overflow-y-auto hide-scrollbar rounded-xl bg-slate-100 border border-slate-200/50 p-2 relative"></div><input type="hidden" id="selected_gif_url" name="gifUrl"></div>
-                        </div>
-                        <button type="submit" id="btnInviaCommento" class="w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 transition-transform active:scale-95 text-sm sm:text-base mt-2">Pubblica Risposta</button>
-                    </form>
-                </div>
-            </div>`;
+            return `<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm fade-in"><div class="bg-white rounded-t-3xl sm:rounded-[2.5rem] p-5 sm:p-8 w-full max-w-lg shadow-2xl slide-up flex flex-col max-h-[90vh]"><div class="flex justify-between items-center mb-4 border-b pb-3 shrink-0"><h3 class="font-extrabold text-lg sm:text-xl text-slate-800">${contextText}</h3><button onclick="closeModal()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full font-bold transition-colors">✕</button></div><form onsubmit="inviaCommento(event)" class="flex flex-col gap-4 overflow-y-auto hide-scrollbar pb-6"><textarea name="testo" rows="3" placeholder="Scrivi una risposta..." class="${INPUT_CLS} resize-none"></textarea><div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4 space-y-4"><div><label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2">📷 Aggiungi Foto</label><input type="file" id="file_commento" accept="image/*" class="text-xs sm:text-sm font-medium w-full file:mr-3 file:py-2 file:px-3 sm:file:px-4 file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer"></div><div class="border-t border-slate-200 pt-4"><label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><span>🔎 Cerca GIF</span></label><input type="text" placeholder="Cerca GIF (in automatico carica le tendenze)..." class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none transition-all" oninput="if(window.cercaGif) window.cercaGif(this.value)"><div id="gif-results" class="grid grid-cols-2 gap-2 mt-3 h-32 overflow-y-auto hide-scrollbar rounded-xl bg-slate-100 border border-slate-200/50 p-2 relative"></div><input type="hidden" id="selected_gif_url" name="gifUrl"></div></div><button type="submit" id="btnInviaCommento" class="w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 transition-transform active:scale-95 text-sm sm:text-base mt-2">Pubblica Risposta</button></form></div></div>`;
         }
 
         if(state.modal.type === 'dettaglioLibro') {
@@ -893,93 +594,78 @@
             else {
                 recsHtml = `<div class="space-y-6">${bookRecs.map(r => {
                     const dataStr = (r.data && r.data.toMillis) ? new Date(r.data.toMillis()).toLocaleDateString() : 'Pochi istanti fa'; const badgeHtml = r.badgeUtente ? `<span class="ml-2 text-[10px] font-black uppercase px-2 py-1 bg-amber-400 text-amber-900 rounded-lg border border-amber-300 shadow-sm align-middle">${escapeHTML(r.badgeUtente)}</span>` : '';
-                    return `
-                    <div class="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm">
-                        <div class="flex justify-between items-start gap-4 mb-4">
-                            <div class="flex gap-3">${window.getAvatar(r.avatar, "w-10 h-10 sm:w-12 sm:h-12")}<div><div class="flex flex-wrap items-center gap-1.5"><span class="font-extrabold text-sm sm:text-base text-slate-800">${escapeHTML(r.nomeUtente)}</span>${badgeHtml}</div><span class="block text-[10px] sm:text-xs font-bold text-slate-400 mt-0.5">${dataStr}</span></div></div>
-                            <div class="scale-75 sm:scale-90 origin-top-right shrink-0">${renderStars(r.voto)}</div>
-                        </div>
-                        ${r.commento ? `<p class="text-sm sm:text-base font-medium text-slate-700 mb-3 break-words leading-relaxed">${escapeHTML(r.commento)}</p>` : ''}
-                        ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" loading="lazy" decoding="async" class="rounded-2xl max-w-full sm:max-w-md shadow-sm mb-4 border border-slate-100">` : ''}
-                        <div class="flex flex-wrap gap-2 items-center border-t border-slate-100 pt-3">
-                            <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-1.5 px-3 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button>
-                            <button onclick="votaRecensione('${r.id}', 'down')" class="text-xs sm:text-sm flex items-center gap-1.5 py-1.5 px-3 rounded-xl font-bold transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👎 ${r.downvotes?.length||0}</button>
-                            <button onclick="apriRisposta('${r.id}', null, '${escapeHTML(r.nomeUtente).replace(/'/g, "\\'")}')" class="text-xs sm:text-sm font-extrabold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-4 py-1.5 rounded-xl transition-colors ml-auto flex items-center gap-2 border border-indigo-100"><span class="text-lg leading-none">💬</span> Rispondi</button>
-                        </div>
-                        <div class="mt-4 pt-2 border-t border-slate-100">${buildCommentTree(r.id, null)}</div>
-                    </div>`;
+                    return `<div class="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm"><div class="flex justify-between items-start gap-4 mb-4"><div class="flex gap-3">${window.getAvatar(r.avatar, "w-10 h-10 sm:w-12 sm:h-12")}<div><div class="flex flex-wrap items-center gap-1.5"><span class="font-extrabold text-sm sm:text-base text-slate-800">${escapeHTML(r.nomeUtente)}</span>${badgeHtml}</div><span class="block text-[10px] sm:text-xs font-bold text-slate-400 mt-0.5">${dataStr}</span></div></div><div class="scale-75 sm:scale-90 origin-top-right shrink-0">${renderStars(r.voto)}</div></div>${r.commento ? `<p class="text-sm sm:text-base font-medium text-slate-700 mb-3 break-words leading-relaxed">${escapeHTML(r.commento)}</p>` : ''}${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" loading="lazy" decoding="async" class="rounded-2xl max-w-full sm:max-w-md shadow-sm mb-4 border border-slate-100">` : ''}<div class="flex flex-wrap gap-2 items-center border-t border-slate-100 pt-3"><button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-1.5 px-3 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button><button onclick="votaRecensione('${r.id}', 'down')" class="text-xs sm:text-sm flex items-center gap-1.5 py-1.5 px-3 rounded-xl font-bold transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👎 ${r.downvotes?.length||0}</button><button onclick="apriRisposta('${r.id}', null, '${escapeHTML(r.nomeUtente).replace(/'/g, "\\'")}')" class="text-xs sm:text-sm font-extrabold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-4 py-1.5 rounded-xl transition-colors ml-auto flex items-center gap-2 border border-indigo-100"><span class="text-lg leading-none">💬</span> Rispondi</button></div><div class="mt-4 pt-2 border-t border-slate-100">${buildCommentTree(r.id, null)}</div></div>`;
                 }).join('')}</div>`;
             }
-            return `
-            <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/70 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);">
-                <div class="bg-slate-50 w-full h-[95vh] sm:h-auto sm:max-h-[90vh] sm:max-w-3xl rounded-t-3xl sm:rounded-3xl flex flex-col shadow-2xl slide-up overflow-hidden relative">
-                    <button onclick="closeModal()" class="absolute top-4 right-4 z-50 w-10 h-10 bg-black/50 backdrop-blur-md text-white rounded-full flex items-center justify-center font-bold text-xl hover:bg-black/70 transition-colors">✕</button>
-                    <div class="overflow-y-auto w-full hide-scrollbar flex-1 pb-20 sm:pb-0 relative">
-                        <div class="w-full h-48 sm:h-64 bg-slate-900 relative flex items-center justify-center overflow-hidden shrink-0">${b.copertina ? `<img src="${escapeHTML(b.copertina)}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover opacity-40 blur-2xl scale-125"><img src="${escapeHTML(b.copertina)}" loading="lazy" decoding="async" class="relative z-10 w-full h-full object-contain p-4 drop-shadow-2xl">` : `<div class="text-7xl z-10 opacity-30 text-white">📖</div>`}<div class="absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-transparent z-10"></div></div>
-                        <div class="px-5 sm:px-8 py-4 sm:py-6 relative z-20 -mt-8 sm:-mt-10">
-                            <div class="bg-white p-5 sm:p-8 rounded-3xl shadow-xl border border-slate-100 mb-8 relative">
-                                <span class="absolute -top-3 left-6 sm:left-8 px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider ${b.stato === 'disponibile' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} shadow-sm border border-white block w-max">${b.stato}</span>
-                                <h2 class="text-2xl sm:text-4xl font-black text-slate-800 leading-tight mb-2 mt-2">${escapeHTML(b.titolo)}</h2>
-                                <p class="text-sm sm:text-base font-bold text-indigo-600 mb-4 flex items-center flex-wrap gap-2">${escapeHTML(b.autore)} ${b.data_pubblicazione ? `<span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md text-xs">&bull; ${escapeHTML(b.data_pubblicazione)}</span>` : ''}</p>
-                                <div class="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-3 rounded-2xl w-max mb-6 shadow-inner">${renderStars(b.rating_media)} <span class="text-xs sm:text-sm font-bold text-slate-400">(${b.numero_recensioni || 0} voti)</span></div>
-                                <h3 class="font-extrabold text-slate-800 text-lg mb-2">Trama</h3><p class="text-sm sm:text-base text-slate-600 leading-relaxed">${b.trama ? escapeHTML(b.trama).replace(/\n/g, '<br>') : '<span class="italic opacity-50">Nessuna trama inserita.</span>'}</p>
-                            </div>
-                            <div class="flex items-center gap-3 mb-6"><h3 class="font-black text-slate-800 text-xl sm:text-2xl">Discussioni</h3><span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">${bookRecs.length}</span></div>
-                            ${recsHtml}
+            
+            const nomeProprietario = b.caricato_da_uid ? (state.users.find(u => u.id === b.caricato_da_uid)?.nome || b.caricato_da) : b.caricato_da;
+
+            return `<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/90 fade-in"><div class="bg-slate-50 w-full h-[95vh] sm:h-auto sm:max-h-[90vh] sm:max-w-3xl rounded-t-3xl sm:rounded-3xl flex flex-col shadow-2xl slide-up overflow-hidden relative" style="will-change: transform;"><button onclick="closeModal()" class="absolute top-4 right-4 z-50 w-10 h-10 bg-black/50 backdrop-blur-md text-white rounded-full flex items-center justify-center font-bold text-xl hover:bg-black/70 transition-colors">✕</button><div class="overflow-y-auto w-full hide-scrollbar flex-1 pb-20 sm:pb-0 relative"><div class="w-full h-48 sm:h-64 bg-slate-900 relative flex items-center justify-center overflow-hidden shrink-0">${b.copertina ? `<img src="${escapeHTML(b.copertina)}" decoding="async" class="absolute inset-0 w-full h-full object-cover opacity-20 blur-lg scale-125 transition-transform" style="will-change: transform; transform: translateZ(0);"><img src="${escapeHTML(b.copertina)}" decoding="async" class="relative z-10 w-full h-full object-contain p-4 drop-shadow-2xl">` : `<div class="text-7xl z-10 opacity-30 text-white">📖</div>`}<div class="absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-transparent z-10"></div></div><div class="px-5 sm:px-8 py-4 sm:py-6 relative z-20 -mt-8 sm:-mt-10"><div class="bg-white p-5 sm:p-8 rounded-3xl shadow-xl border border-slate-100 mb-8 relative"><span class="absolute -top-3 left-6 sm:left-8 px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider ${b.stato === 'disponibile' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} shadow-sm border border-white block w-max">${b.stato}</span><h2 class="text-2xl sm:text-4xl font-black text-slate-800 leading-tight mb-2 mt-2">${escapeHTML(b.titolo)}</h2><p class="text-sm sm:text-base font-bold text-indigo-600 mb-4 flex items-center flex-wrap gap-2">${escapeHTML(b.autore)} ${b.data_pubblicazione ? `<span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md text-xs">&bull; ${escapeHTML(b.data_pubblicazione)}</span>` : ''}</p>${nomeProprietario ? `<p class="text-[10px] sm:text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider">Proposto da: <span class="text-indigo-500">${escapeHTML(nomeProprietario)}</span></p>` : ''}<div class="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-3 rounded-2xl w-max mb-6 shadow-inner">${renderStars(b.rating_media)} <span class="text-xs sm:text-sm font-bold text-slate-400">(${b.numero_recensioni || 0} voti)</span></div><h3 class="font-extrabold text-slate-800 text-lg mb-2">Trama</h3><p class="text-sm sm:text-base text-slate-600 leading-relaxed">${b.trama ? escapeHTML(b.trama).replace(/\n/g, '<br>') : '<span class="italic opacity-50">Nessuna trama inserita.</span>'}</p></div><div class="flex items-center gap-3 mb-6"><h3 class="font-black text-slate-800 text-xl sm:text-2xl">Discussioni</h3><span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">${bookRecs.length}</span></div>${recsHtml}</div></div>${b.stato === 'disponibile' ? `<div class="sticky bottom-0 left-0 w-full p-4 sm:p-5 bg-white/95 backdrop-blur-md border-t border-slate-200 flex"><button onclick="richiediPrestito('${b.id}', '${escapeHTML(b.titolo).replace(/'/g, "\\'")}'); closeModal();" class="flex-1 bg-slate-900 text-white font-extrabold text-sm sm:text-base py-4 rounded-2xl hover:bg-indigo-600 transition-colors shadow-2xl shadow-indigo-900/20 active:scale-[0.98]">Richiedi Prestito</button></div>` : ''}</div></div>`;
+        }
+
+        if(state.modal.type === 'modificaLibro') {
+            const b = state.books.find(x => x.id === state.modal.data);
+            if (!b) return '';
+            return `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in">
+                <div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-lg shadow-2xl slide-up max-h-[90vh] overflow-y-auto hide-scrollbar">
+                    <h2 class="text-xl sm:text-2xl font-bold mb-6">Modifica Libro</h2>
+                    <form onsubmit="salvaModificaLibro(event, '${b.id}')" class="space-y-3 sm:space-y-4">
+                        <div><label class="text-xs sm:text-sm font-bold mb-1 block">Titolo</label><input name="titolo" value="${escapeHTML(b.titolo)}" class="${INPUT_CLS}" required></div>
+                        <div><label class="text-xs sm:text-sm font-bold mb-1 block">Autore</label><input name="autore" value="${escapeHTML(b.autore)}" class="${INPUT_CLS}" required></div>
+                        <div><label class="text-xs sm:text-sm font-bold mb-1 block">Anno</label><input name="data_pubblicazione" type="number" value="${escapeHTML(b.data_pubblicazione)}" class="${INPUT_CLS}"></div>
+                        <div><label class="text-xs sm:text-sm font-bold mb-1 block">Trama</label><textarea name="trama" rows="4" class="${INPUT_CLS}">${escapeHTML(b.trama)}</textarea></div>
+                        <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200 mt-2 space-y-3">
+                            <label class="text-xs sm:text-sm font-bold block">Aggiorna Copertina (Opzionale)</label>
+                            <div><p class="text-[10px] sm:text-xs font-bold uppercase mb-1">Nuovo file o Fotocamera</p><input type="file" id="file_modifica_copertina" accept="image/*" class="text-xs sm:text-sm font-medium w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer"></div>
+                            <div class="flex items-center gap-3 my-1"><div class="h-px flex-1 bg-slate-200"></div><span class="text-[10px] font-bold uppercase text-slate-400">Oppure URL</span><div class="h-px flex-1 bg-slate-200"></div></div>
+                            <div><input name="url_copertina" type="url" placeholder="https://..." class="${INPUT_CLS}"></div>
                         </div>
-                    </div>
-                    ${b.stato === 'disponibile' ? `<div class="sticky bottom-0 left-0 w-full p-4 sm:p-5 bg-white/95 backdrop-blur-md border-t border-slate-200 flex"><button onclick="richiediPrestito('${b.id}', '${escapeHTML(b.titolo).replace(/'/g, "\\'")}'); closeModal();" class="flex-1 bg-slate-900 text-white font-extrabold text-sm sm:text-base py-4 rounded-2xl hover:bg-indigo-600 transition-colors shadow-2xl shadow-indigo-900/20 active:scale-[0.98]">Richiedi Prestito</button></div>` : ''}
+                        <div class="flex gap-2 sm:gap-3 pt-4">
+                            <button type="button" onclick="closeModal()" class="flex-1 py-3 rounded-xl font-bold bg-slate-100 text-sm sm:text-base">Annulla</button>
+                            <button type="submit" id="btnSalvaModifica" class="flex-1 py-3 rounded-xl font-bold text-white bg-indigo-600 text-sm sm:text-base">Salva Modifiche</button>
+                        </div>
+                    </form>
                 </div>
             </div>`;
         }
 
-        if(state.modal.type === 'modificaLibro') {
-            const b = state.modal.data;
-            return `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);"><div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-lg shadow-2xl slide-up max-h-[90vh] overflow-y-auto"><h2 class="text-xl sm:text-2xl font-bold mb-6">Modifica Libro</h2><form onsubmit="salvaModificaLibro(event, '${b.id}')" class="space-y-3 sm:space-y-4">
-                <div><label class="text-xs sm:text-sm font-bold mb-1 block">Titolo</label><input name="titolo" value="${escapeHTML(b.titolo)}" class="${INPUT_CLS}" required></div>
-                <div><label class="text-xs sm:text-sm font-bold mb-1 block">Autore</label><input name="autore" value="${escapeHTML(b.autore)}" class="${INPUT_CLS}" required></div>
-                <div><label class="text-xs sm:text-sm font-bold mb-1 block">Anno</label><input name="data_pubblicazione" type="number" value="${escapeHTML(b.data_pubblicazione)}" class="${INPUT_CLS}"></div>
-                <div><label class="text-xs sm:text-sm font-bold mb-1 block">Trama</label><textarea name="trama" rows="4" class="${INPUT_CLS}">${escapeHTML(b.trama)}</textarea></div>
-                <div class="flex gap-2 sm:gap-3 pt-4"><button type="button" onclick="closeModal()" class="flex-1 py-3 rounded-xl font-bold bg-slate-100 text-sm sm:text-base">Annulla</button><button type="submit" class="flex-1 py-3 rounded-xl font-bold text-white bg-indigo-600 text-sm sm:text-base">Salva</button></div>
-            </form></div></div>`;
-        }
-
         if(state.modal.type === 'recensisci') {
-            const b = state.modal.data;
-            return `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" style="transform: translate3d(0,0,0);"><div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-center"><h2 class="text-xl sm:text-2xl font-bold mb-2">Scrivi Recensione</h2><p class="text-xs sm:text-sm text-slate-500 mb-6 font-medium">${escapeHTML(b.titolo)}</p><form onsubmit="inviaRecensione(event, '${b.id}')" class="space-y-4 sm:space-y-6">
-                <div class="star-cb-group"><input type="radio" id="r5" name="voto" value="5"/><label for="r5">★</label><input type="radio" id="r4" name="voto" value="4"/><label for="r4">★</label><input type="radio" id="r3" name="voto" value="3"/><label for="r3">★</label><input type="radio" id="r2" name="voto" value="2"/><label for="r2">★</label><input type="radio" id="r1" name="voto" value="1"/><label for="r1">★</label></div>
-                <textarea name="commento" rows="4" placeholder="Cosa ne pensi?" class="${INPUT_CLS} resize-none"></textarea>
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4 text-left"><label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2">📷 Aggiungi Foto (Opzionale)</label><input type="file" id="file_recensione" accept="image/*" class="text-xs sm:text-sm font-medium w-full file:mr-3 file:py-2 file:px-3 sm:file:px-4 file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer"></div>
-                <div class="flex gap-2 sm:gap-3"><button type="button" onclick="closeModal()" class="flex-1 py-3 sm:py-4 rounded-xl font-bold bg-slate-100 text-sm sm:text-base">Annulla</button><button type="submit" class="flex-1 py-3 sm:py-4 rounded-xl font-bold text-white bg-amber-500 shadow-lg shadow-amber-500/30 text-sm sm:text-base">Pubblica</button></div>
-            </form></div></div>`;
+            const b = state.books.find(x => x.id === state.modal.data); if (!b) return '';
+            return `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in"><div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl slide-up text-center"><h2 class="text-xl sm:text-2xl font-bold mb-2">Scrivi Recensione</h2><p class="text-xs sm:text-sm text-slate-500 mb-6 font-medium">${escapeHTML(b.titolo)}</p><form onsubmit="inviaRecensione(event, '${b.id}')" class="space-y-4 sm:space-y-6"><div class="star-cb-group"><input type="radio" id="r5" name="voto" value="5"/><label for="r5">★</label><input type="radio" id="r4" name="voto" value="4"/><label for="r4">★</label><input type="radio" id="r3" name="voto" value="3"/><label for="r3">★</label><input type="radio" id="r2" name="voto" value="2"/><label for="r2">★</label><input type="radio" id="r1" name="voto" value="1"/><label for="r1">★</label></div><textarea name="commento" rows="4" placeholder="Cosa ne pensi?" class="${INPUT_CLS} resize-none"></textarea><div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4 text-left"><label class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2">📷 Aggiungi Foto (Opzionale)</label><input type="file" id="file_recensione" accept="image/*" class="text-xs sm:text-sm font-medium w-full file:mr-3 file:py-2 file:px-3 sm:file:px-4 file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer"></div><div class="flex gap-2 sm:gap-3"><button type="button" onclick="closeModal()" class="flex-1 py-3 sm:py-4 rounded-xl font-bold bg-slate-100 text-sm sm:text-base">Annulla</button><button type="submit" class="flex-1 py-3 sm:py-4 rounded-xl font-bold text-white bg-amber-500 shadow-lg shadow-amber-500/30 text-sm sm:text-base">Pubblica</button></div></form></div></div>`;
         }
         return '';
     }
 
     function catalogoView() {
         if (!state.books.length) return `<div class="text-center p-10 sm:p-16 bg-white rounded-3xl shadow-sm border mx-4 sm:mx-0"><div class="text-5xl sm:text-6xl mb-4">📚</div><p class="font-bold text-base sm:text-lg text-slate-500">Catalogo vuoto.</p></div>`;
-        return `<div class="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 px-4 sm:px-0">${state.books.map(b => `
+        return `<div class="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 px-4 sm:px-0">${state.books.map((b, index) => {
+            const nomeProprietario = b.caricato_da_uid ? (state.users.find(u => u.id === b.caricato_da_uid)?.nome || b.caricato_da) : b.caricato_da;
+            const nomeNoleggiatore = b.noleggiato_da_uid ? (state.users.find(u => u.id === b.noleggiato_da_uid)?.nome || b.noleggiato_da) : b.noleggiato_da;
+            const loadingAttr = index < 4 ? '' : 'loading="lazy"';
+            return `
             <div onclick="apriDettaglioLibro('${b.id}')" class="bg-white rounded-3xl sm:rounded-[2rem] overflow-hidden shadow-sm border hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col group cursor-pointer active:scale-[0.98] sm:active:scale-100">
                 <div class="relative h-56 sm:h-72 bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
-                    ${b.copertina ? `<img src="${escapeHTML(b.copertina)}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover opacity-30 blur-xl scale-125 transition-transform duration-700 group-hover:scale-150"><img src="${escapeHTML(b.copertina)}" loading="lazy" decoding="async" class="relative z-10 w-full h-full object-contain p-3 sm:p-4 group-hover:scale-105 transition-transform duration-300 drop-shadow-2xl">` : `<div class="w-full h-full grid place-items-center text-6xl sm:text-7xl z-10 opacity-50">📖</div>`}
+                    ${b.copertina ? `<img src="${escapeHTML(b.copertina)}" ${loadingAttr} decoding="async" class="absolute inset-0 w-full h-full object-cover opacity-30 blur-xl scale-125 transition-transform duration-700 group-hover:scale-150"><img src="${escapeHTML(b.copertina)}" ${loadingAttr} decoding="async" class="relative z-10 w-full h-full object-contain p-3 sm:p-4 group-hover:scale-105 transition-transform duration-300 drop-shadow-2xl">` : `<div class="w-full h-full grid place-items-center text-6xl sm:text-7xl z-10 opacity-50">📖</div>`}
                     <div class="absolute top-3 right-3 z-20 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-xl shadow-sm font-bold text-[10px] sm:text-xs flex items-center gap-1">${renderStars(b.rating_media)} <span class="text-slate-400 font-medium">(${b.numero_recensioni || 0})</span></div>
                 </div>
                 <div class="p-5 sm:p-6 flex flex-col flex-1">
                     <h3 class="font-extrabold text-slate-800 text-lg sm:text-xl leading-tight">${escapeHTML(b.titolo)}</h3>
-                    <p class="text-slate-500 font-medium text-xs sm:text-sm mt-1">${escapeHTML(b.autore)} ${b.data_pubblicazione ? `&bull; ${escapeHTML(b.data_pubblicazione)}` : ''}</p>
+                    <p class="text-slate-500 font-medium text-xs sm:text-sm mt-1">${escapeHTML(b.autore)}${b.data_pubblicazione ? `&bull; ${escapeHTML(b.data_pubblicazione)}` : ''}</p>
+                    ${nomeProprietario ? `<p class="text-[10px] sm:text-xs font-bold text-indigo-500 mt-1.5 uppercase tracking-wider">Aggiunto da: ${escapeHTML(nomeProprietario)}</p>` : ''}
                     ${b.trama ? `<p class="text-slate-400 text-xs sm:text-sm mt-3 line-clamp-2 sm:line-clamp-3">${escapeHTML(b.trama)}</p>` : ''}
                     <div class="mt-auto pt-5 sm:pt-6">
                         ${b.stato === 'disponibile' ? 
                             `<span class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 block w-max mb-3 sm:mb-4">Disponibile</span>
                              <button onclick="event.stopPropagation(); richiediPrestito('${b.id}', '${escapeHTML(b.titolo).replace(/'/g, "\\'")}')" class="w-full bg-slate-900 text-white font-bold py-3 sm:py-3.5 rounded-xl sm:rounded-2xl hover:bg-indigo-600 transition-colors shadow-md text-sm sm:text-base">Richiedi Prestito</button>` : 
                             `<div class="w-full bg-slate-50 p-3 rounded-xl sm:rounded-2xl border text-center">
-                                <p class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Prestato a: <span class="text-indigo-600">${escapeHTML(b.noleggiato_da)}</span></p>
+                                <p class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Prestato a: <span class="textindigo-600">${escapeHTML(nomeNoleggiatore)}</span></p>
                                 <p class="text-xs sm:text-sm font-bold text-amber-600 cd" data-exp="${b.scadenza}">Scade tra: ${tempoRimanente(b.scadenza)}</p>
                             </div>`
                         }
                     </div>
                 </div>
-            </div>`).join("")}</div>`;
+            </div>`;
+        }).join("")}</div>`;
     }
 
     function recensioniView() {
@@ -1008,11 +694,14 @@
             return h;
         }
 
-        const userRevIds = state.reviews.filter(r => r.uid === state.user.uid).map(r => r.libroId); const daRecensire = state.userData.libri_letti.filter(id => !userRevIds.includes(id)); const libriDaRec = state.books.filter(b => daRecensire.includes(b.id));
+        const userRevIds = state.reviews.filter(r => r.uid === state.user.uid).map(r => r.libroId); 
+        const idLibriDaRecensire = [...new Set([ ...(state.userData.libri_letti || []), ...state.books.filter(b => b.caricato_da_uid === state.user.uid).map(b => b.id) ])];
+        const idMancanti = idLibriDaRecensire.filter(id => !userRevIds.includes(id));
+        const libriDaRec = state.books.filter(b => idMancanti.includes(b.id));
 
         let h = '';
         if(libriDaRec.length > 0) {
-            h += `<div class="mb-10 sm:mb-12 px-4 sm:px-0"><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">✍ Da Recensire</h2><div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">${libriDaRec.map(b => `<div class="bg-indigo-50 p-5 sm:p-6 rounded-3xl border border-indigo-100 flex flex-col justify-between items-start gap-4"><div><h4 class="font-bold text-indigo-900 text-base sm:text-lg">${escapeHTML(b.titolo)}</h4><p class="text-indigo-600 text-xs sm:text-sm">${escapeHTML(b.autore)}</p></div><button onclick="openModal('recensisci', {id: '${b.id}', titolo: '${escapeHTML(b.titolo).replace(/'/g, "\\'")}'})" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-sm sm:text-base shadow-lg shadow-indigo-600/30 hover:scale-105 transition-transform">Scrivi Recensione</button></div>`).join('')}</div></div>`;
+            h += `<div class="mb-10 sm:mb-12 px-4 sm:px-0"><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">✍ Da Recensire</h2><div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">${libriDaRec.map(b => `<div class="bg-indigo-50 p-5 sm:p-6 rounded-3xl border border-indigo-100 flex flex-col justify-between items-start gap-4"><div><h4 class="font-bold text-indigo-900 text-base sm:text-lg">${escapeHTML(b.titolo)}</h4><p class="text-indigo-600 text-xs sm:text-sm">${escapeHTML(b.autore)}</p></div><button onclick="openModal('recensisci', '${b.id}')" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-sm sm:text-base shadow-lg shadow-indigo-600/30 hover:scale-105 transition-transform">Scrivi Recensione</button></div>`).join('')}</div></div>`;
         }
 
         const revBooksIds = [...new Set(state.reviews.map(r => r.libroId))]; const revBooks = state.books.filter(b => revBooksIds.includes(b.id));
@@ -1029,210 +718,52 @@
 
     function prestitiView() {
         const inPrestito = state.books.filter(b => b.noleggiato_da_uid === state.user.uid);
-        if(!inPrestito.length) return `<div class="text-center p-10 sm:p-16 mx-4 sm:mx-0 bg-white rounded-3xl border"><span class="text-4xl sm:text-5xl block mb-4">🎒</span><p class="font-bold text-sm sm:text-base">Nessun libro in prestito.</p></div>`;
-        return `<div class="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 px-4 sm:px-0">${inPrestito.map(b => `<div class="bg-white p-5 sm:p-6 rounded-3xl border flex flex-col gap-4 sm:gap-5 hover:shadow-xl transition-shadow"><h4 class="font-extrabold text-lg sm:text-xl">${escapeHTML(b.titolo)}</h4><div class="bg-slate-50 p-4 sm:p-5 rounded-2xl border"><p class="text-[10px] sm:text-xs font-black uppercase text-slate-400 mb-1 sm:mb-2">Tempo Rimanente</p><div class="text-lg sm:text-xl font-bold text-slate-700 cd" data-exp="${b.scadenza}">${tempoRimanente(b.scadenza)}</div></div></div>`).join('')}</div>`;
+        const mieiCaricati = state.books.filter(b => b.caricato_da_uid === state.user.uid);
+        
+        let h = '';
+        
+        if (!inPrestito.length && !mieiCaricati.length) return `<div class="text-center p-10 sm:p-16 mx-4 sm:mx-0 bg-white rounded-3xl border"><span class="text-4xl sm:text-5xl block mb-4">🎒</span><p class="font-bold text-sm sm:text-base">Non hai libri in prestito o pubblicati.</p></div>`;
+
+        if (inPrestito.length > 0) {
+            h += `<h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6 px-4 sm:px-0">🎒 Libri in Lettura</h2>`;
+            h += `<div class="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 px-4 sm:px-0 mb-10">${inPrestito.map(b => `<div class="bg-white p-5 sm:p-6 rounded-3xl border flex flex-col gap-4 sm:gap-5 hover:shadow-xl transition-shadow"><h4 class="font-extrabold text-lg sm:text-xl">${escapeHTML(b.titolo)}</h4><div class="bg-slate-50 p-4 sm:p-5 rounded-2xl border"><p class="text-[10px] sm:text-xs font-black uppercase text-slate-400 mb-1 sm:mb-2">Tempo Rimanente</p><div class="text-lg sm:text-xl font-bold text-slate-700 cd" data-exp="${b.scadenza}">${tempoRimanente(b.scadenza)}</div></div></div>`).join('')}</div>`;
+        }
+
+        if (mieiCaricati.length > 0) {
+            h += `<h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6 px-4 sm:px-0">📤 I Miei Libri Pubblicati</h2>`;
+            h += `<div class="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 px-4 sm:px-0">${mieiCaricati.map(b => `
+            <div class="bg-indigo-50 p-5 sm:p-6 rounded-3xl border border-indigo-100 flex flex-col gap-4 sm:gap-5 hover:shadow-xl transition-shadow">
+                <div class="flex gap-4">
+                    ${b.copertina ? `<img src="${escapeHTML(b.copertina)}" loading="lazy" class="w-16 h-24 rounded-lg object-cover shadow-md shrink-0 border border-slate-200">` : `<div class="w-16 h-24 rounded-lg bg-indigo-200 flex items-center justify-center text-2xl shrink-0 border border-indigo-300 opacity-80">📖</div>`}
+                    <div>
+                        <h4 class="font-extrabold text-indigo-900 text-lg sm:text-xl leading-tight">${escapeHTML(b.titolo)}</h4>
+                        <p class="text-indigo-600 text-xs sm:text-sm font-medium mt-1">${escapeHTML(b.autore)}</p>
+                        <span class="inline-block mt-2 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${b.stato === 'disponibile' ? 'bg-emerald-200 text-emerald-800' : 'bg-amber-200 text-amber-800'}">${b.stato}</span>
+                    </div>
+                </div>
+                <button onclick="openModal('modificaLibro', '${b.id}')" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-md text-sm sm:text-base mt-auto">Modifica Libro</button>
+            </div>`).join('')}</div>`;
+        }
+        return h;
     }
 
     function proponiView() {
-        return `<form onsubmit="inviaProposta(event)" class="max-w-2xl mx-auto bg-white rounded-3xl sm:rounded-[2rem] p-6 sm:p-10 border shadow-sm mx-4 sm:mx-auto"><div class="text-center mb-6 sm:mb-8"><div class="text-4xl sm:text-5xl mb-3 sm:mb-4">💡</div><h2 class="text-2xl sm:text-3xl font-extrabold">Proponi Libro</h2></div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4"><div><label class="block text-xs sm:text-sm font-bold mb-2">Titolo*</label><input name="titolo" class="${INPUT_CLS}" required></div><div><label class="block text-xs sm:text-sm font-bold mb-2">Autore*</label><input name="autore" class="${INPUT_CLS}" required></div></div>
-            <div class="mb-4"><label class="block text-xs sm:text-sm font-bold mb-2">Anno</label><input name="data_pubblicazione" type="number" class="${INPUT_CLS}"></div>
-            <div class="mb-4"><label class="block text-xs sm:text-sm font-bold mb-2">Trama (Opzionale)</label><textarea name="trama" rows="3" class="${INPUT_CLS}"></textarea></div>
-            <div class="bg-slate-50 p-4 sm:p-6 rounded-2xl border-2 border-dashed space-y-4"><label class="block text-xs sm:text-sm font-bold">Copertina</label>
-                <div><p class="text-[10px] sm:text-xs font-bold uppercase mb-2">Scegli file o Fotocamera</p><input type="file" id="file_copertina" accept="image/*" class="text-xs sm:text-sm font-medium w-full file:mr-3 file:py-2 file:px-3 sm:file:px-4 file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer"></div>
-                <div class="flex items-center gap-3 sm:gap-4 my-2"><div class="h-px flex-1 bg-slate-200"></div><span class="text-[10px] sm:text-xs font-bold uppercase text-slate-400">Oppure URL</span><div class="h-px flex-1 bg-slate-200"></div></div>
-                <div><input name="url_copertina" type="url" placeholder="https://..." class="${INPUT_CLS}"></div>
-            </div>
-            <button id="btnProponi" type="submit" class="w-full mt-6 bg-indigo-600 text-white font-extrabold py-3.5 sm:py-4 rounded-xl sm:rounded-2xl text-sm sm:text-base hover:scale-[1.02] transition-transform shadow-xl shadow-indigo-600/30">Invia Proposta</button>
-        </form>`;
+        return `<form onsubmit="inviaProposta(event)" class="max-w-2xl mx-auto bg-white rounded-3xl sm:rounded-[2rem] p-6 sm:p-10 border shadow-sm mx-4 sm:mx-auto"><div class="text-center mb-6 sm:mb-8"><div class="text-4xl sm:text-5xl mb-3 sm:mb-4">💡</div><h2 class="text-2xl sm:text-3xl font-extrabold">Proponi Libro</h2></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4"><div><label class="block text-xs sm:text-sm font-bold mb-2">Titolo*</label><input name="titolo" class="${INPUT_CLS}" required></div><div><label class="block text-xs sm:text-sm font-bold mb-2">Autore*</label><input name="autore" class="${INPUT_CLS}" required></div></div><div class="mb-4"><label class="block text-xs sm:text-sm font-bold mb-2">Anno</label><input name="data_pubblicazione" type="number" class="${INPUT_CLS}"></div><div class="mb-4"><label class="block text-xs sm:text-sm font-bold mb-2">Trama (Opzionale)</label><textarea name="trama" rows="3" class="${INPUT_CLS}"></textarea></div><div class="bg-slate-50 p-4 sm:p-6 rounded-2xl border-2 border-dashed space-y-4"><label class="block text-xs sm:text-sm font-bold">Copertina</label><div><p class="text-[10px] sm:text-xs font-bold uppercase mb-2">Scegli file o Fotocamera</p><input type="file" id="file_copertina" accept="image/*" class="text-xs sm:text-sm font-medium w-full file:mr-3 file:py-2 file:px-3 sm:file:px-4 file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer"></div><div class="flex items-center gap-3 sm:gap-4 my-2"><div class="h-px flex-1 bg-slate-200"></div><span class="text-[10px] sm:text-xs font-bold uppercase text-slate-400">Oppure URL</span><div class="h-px flex-1 bg-slate-200"></div></div><div><input name="url_copertina" type="url" placeholder="https://..." class="${INPUT_CLS}"></div></div><button id="btnProponi" type="submit" class="w-full mt-6 bg-indigo-600 text-white font-extrabold py-3.5 sm:py-4 rounded-xl sm:rounded-2xl text-sm sm:text-base hover:scale-[1.02] transition-transform shadow-xl shadow-indigo-600/30">Invia Proposta</button></form>`;
     }
 
     function adminView() {
         let allarmiHtml = '';
         if (state.isGod) {
-            allarmiHtml = `
-            <section class="mb-8 sm:mb-12">
-                <h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6 text-red-600 flex items-center gap-2">
-                    <span class="text-2xl">🚨</span> Log di Sicurezza (Sabotaggi)
-                    ${(state.allarmi && state.allarmi.length > 0) ? `<button onclick="pulisciAllarmi()" class="ml-auto text-xs sm:text-sm font-bold bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl transition-colors shadow-sm">Pulisci Log</button>` : ''}
-                </h2>
-                ${(state.allarmi && state.allarmi.length > 0) ? `<div class="space-y-3 sm:space-y-4">${[...state.allarmi].reverse().map(a => `<div class="bg-red-50 border-2 border-red-100 p-4 sm:p-5 rounded-2xl shadow-sm"><p class="text-[10px] sm:text-xs font-black uppercase tracking-wider text-red-400 mb-2">${new Date(a.data).toLocaleString()}</p><p class="text-sm sm:text-base font-bold text-slate-800">Bersaglio: <span class="text-indigo-600">${escapeHTML(a.bersaglio)}</span></p><p class="text-sm sm:text-base font-bold text-slate-800 mt-1">Colpevole: <span class="text-red-600">${escapeHTML(a.attaccante_nome)}</span> <span class="text-xs font-medium text-slate-500">(${escapeHTML(a.attaccante_email)})</span></p><p class="text-sm sm:text-base font-medium text-slate-700 mt-2 bg-white p-3 rounded-xl border border-red-100">${escapeHTML(a.messaggio)}</p></div>`).join('')}</div>` : `<div class="bg-emerald-50 border-2 border-emerald-100 p-5 sm:p-6 rounded-2xl text-center shadow-sm"><p class="font-extrabold text-sm sm:text-base text-emerald-600 flex items-center justify-center gap-2"><span>🛡️</span> Nessun tentativo di sabotaggio rilevato.</p></div>`}
-            </section>`;
+            allarmiHtml = `<section class="mb-8 sm:mb-12"><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6 text-red-600 flex items-center gap-2"><span class="text-2xl">🚨</span> Log di Sicurezza (Sabotaggi)${(state.allarmi && state.allarmi.length > 0) ? `<button onclick="pulisciAllarmi()" class="ml-auto text-xs sm:text-sm font-bold bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl transition-colors shadow-sm">Pulisci Log</button>` : ''}</h2>${(state.allarmi && state.allarmi.length > 0) ? `<div class="space-y-3 sm:space-y-4">${[...state.allarmi].reverse().map(a => `<div class="bg-red-50 border-2 border-red-100 p-4 sm:p-5 rounded-2xl shadow-sm"><p class="text-[10px] sm:text-xs font-black uppercase tracking-wider text-red-400 mb-2">${new Date(a.data).toLocaleString()}</p><p class="text-sm sm:text-base font-bold text-slate-800">Bersaglio: <span class="text-indigo-600">${escapeHTML(a.bersaglio)}</span></p><p class="text-sm sm:text-base font-bold text-slate-800 mt-1">Colpevole: <span class="text-red-600">${escapeHTML(a.attaccante_nome)}</span> <span class="text-xs font-medium text-slate-500">(${escapeHTML(a.attaccante_email)})</span></p><p class="text-sm sm:text-base font-medium text-slate-700 mt-2 bg-white p-3 rounded-xl border border-red-100">${escapeHTML(a.messaggio)}</p></div>`).join('')}</div>` : `<div class="bg-emerald-50 border-2 border-emerald-100 p-5 sm:p-6 rounded-2xl text-center shadow-sm"><p class="font-extrabold text-sm sm:text-base text-emerald-600 flex items-center justify-center gap-2"><span>🛡</span> Nessun tentativo di sabotaggio rilevato.</p></div>`}</section>`;
         }
-
-        return `<div class="space-y-8 sm:space-y-12 px-4 sm:px-0">
-            ${allarmiHtml}
-            <section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6"><span class="bg-amber-400 text-white px-2.5 sm:px-3 py-1 rounded-lg sm:rounded-xl shadow-sm text-lg">${state.requests.length}</span> Richieste in Attesa</h2>
-                <div class="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">${state.requests.map(r => `<div class="bg-white p-5 sm:p-6 rounded-3xl border shadow-sm flex flex-col justify-between"><div class="mb-5 sm:mb-6"><span class="text-[10px] sm:text-xs font-black uppercase tracking-widest px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl ${r.tipo==='nuovo_libro'?'bg-indigo-50 text-indigo-600':'bg-emerald-50 text-emerald-600'}">${r.tipo==="nuovo_libro"?"Nuovo Libro":"Prestito"}</span><h4 class="font-extrabold text-lg sm:text-xl mt-3 sm:mt-4">${escapeHTML(r.tipo==='nuovo_libro'?r.dati.titolo:r.titolo)}</h4><p class="text-xs sm:text-sm font-semibold text-slate-500 mt-1">Da: ${escapeHTML(r.richiedente)}</p></div><div class="flex gap-2"><button class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 sm:py-3 rounded-xl text-sm sm:text-base" onclick="${r.tipo==='nuovo_libro'?`approvaProposta('${r.id}')`:`approvaPrestito('${r.id}')`}">Approva</button><button class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-2.5 sm:py-3 rounded-xl text-sm sm:text-base" onclick="rifiutaRichiesta('${r.id}')">Rifiuta</button></div></div>`).join('') || `<div class="col-span-full p-8 sm:p-10 text-center bg-white rounded-3xl border"><p class="font-bold text-sm sm:text-base text-slate-500">Nessuna richiesta.</p></div>`}</div>
-            </section>
-            
-            <section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">Catalogo & Prestiti</h2>
-                <div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto shadow-sm"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Libro</th><th class="p-3 sm:p-5">Stato</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">
-                    ${state.books.map(b => `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3 max-w-[150px] sm:max-w-xs truncate">${b.copertina ? `<img src="${b.copertina}" loading="lazy" class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover shrink-0 border border-slate-200">` : `<div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-slate-200 flex items-center justify-center text-sm sm:text-lg shrink-0">📖</div>`} <span class="truncate">${escapeHTML(b.titolo)}</span></td><td class="p-3 sm:p-5"><span class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-[9px] sm:text-xs font-black uppercase ${b.stato==='noleggiato'?'bg-amber-100 text-amber-700':'bg-emerald-100 text-emerald-700'}">${b.stato}</span></td>
-                    <td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">
-                        ${b.stato==='noleggiato'?`<button onclick="prolungaPrestito('${b.id}', ${b.scadenza})" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-100 text-emerald-700 rounded-md sm:rounded-lg font-bold hover:bg-emerald-200">+ G</button><button onclick="restituisciLibro('${b.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-indigo-100 text-indigo-700 rounded-md sm:rounded-lg font-bold hover:bg-indigo-200">Fine</button>`:''}
-                        <button onclick='openModal("modificaLibro", ${JSON.stringify(b).replace(/'/g, "&#39;")})' class="px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 text-slate-600 rounded-md sm:rounded-lg font-bold hover:bg-slate-200">Mod</button>
-                        <button onclick="eliminaLibro('${b.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-rose-100 text-rose-600 rounded-md sm:rounded-lg font-bold hover:bg-rose-200">Elim</button>
-                    </td></tr>`).join('')}
-                </tbody></table></div>
-            </section>
-
-            <section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">Utenti Registrati</h2>
-                <div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto shadow-sm"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Utente</th><th class="p-3 sm:p-5">Email</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">
-                    ${state.users.map(u => {
-                        return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3">${window.getAvatar(u.avatar, "w-6 h-6 sm:w-8 sm:h-8")}<span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span>${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td>
-                    <td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">
-                        ${state.isGod ? `
-                            <button onclick="sguardoDivino('${u.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Sguardo Divino">👁</button>
-                            <button onclick="assegnaBadge('${u.id}', '${escapeHTML(u.nome).replace(/'/g, "\\'")}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-pink-100 hover:bg-pink-200 text-pink-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Assegna Badge">🏷️</button>
-                            <button onclick="banDispositivo('${u.id}', '${escapeHTML(u.nome).replace(/'/g, "\\'")}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-red-900 hover:bg-red-800 text-red-100 font-bold rounded-md sm:rounded-lg shadow-md shadow-red-900/20 transition-colors" title="Banna Dispositivo PC/Telefono">🔨</button>
-                        ` : ''}
-                        <button onclick="modificaUtente('${u.id}', '${escapeHTML(u.nome).replace(/'/g, "\\'")}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md sm:rounded-lg font-bold transition-colors">Mod</button>
-                        <button onclick="eliminaUtente('${u.id}', '${escapeHTML(u.nome).replace(/'/g, "\\'")}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-600 rounded-md sm:rounded-lg font-bold transition-colors">Elimina</button>
-                    </td></tr>`;
-                    }).join('')}
-                </tbody></table></div>
-            </section>
-        </div>`;
+        return `<div class="space-y-8 sm:space-y-12 px-4 sm:px-0">${allarmiHtml}<section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6"><span class="bg-amber-400 text-white px-2.5 sm:px-3 py-1 rounded-lg sm:rounded-xl shadow-sm text-lg">${state.requests.length}</span> Richieste in Attesa</h2><div class="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">${state.requests.map(r => `<div class="bg-white p-5 sm:p-6 rounded-3xl border shadow-sm flex flex-col justify-between"><div class="mb-5 sm:mb-6"><span class="text-[10px] sm:text-xs font-black uppercase tracking-widest px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl ${r.tipo==='nuovo_libro'?'bg-indigo-50 text-indigo-600':'bg-emerald-50 text-emerald-600'}">${r.tipo==="nuovo_libro"?"Nuovo Libro":"Prestito"}</span><h4 class="font-extrabold text-lg sm:text-xl mt-3 sm:mt-4">${escapeHTML(r.tipo==='nuovo_libro'?r.dati.titolo:r.titolo)}</h4><p class="text-xs sm:text-sm font-semibold text-slate-500 mt-1">Da: ${escapeHTML(r.richiedente)}</p></div><div class="flex gap-2"><button class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 sm:py-3 rounded-xl text-sm sm:text-base" onclick="${r.tipo==='nuovo_libro'?`approvaProposta('${r.id}')`:`approvaPrestito('${r.id}')`}">Approva</button><button class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-2.5 sm:py-3 rounded-xl text-sm sm:text-base" onclick="rifiutaRichiesta('${r.id}')">Rifiuta</button></div></div>`).join('') || `<div class="col-span-full p-8 sm:p-10 text-center bg-white rounded-3xl border"><p class="font-bold text-sm sm:text-base text-slate-500">Nessuna richiesta.</p></div>`}</div></section><section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">Catalogo & Prestiti</h2><div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto shadow-sm"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Libro</th><th class="p-3 sm:p-5">Stato</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">${state.books.map(b => `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3 max-w-[150px] sm:max-w-xs truncate">${b.copertina ? `<img src="${b.copertina}" loading="lazy" class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover shrink-0 border border-slate-200">` : `<div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-slate-200 flex items-center justify-center text-sm sm:text-lg shrink-0">📖</div>`} <span class="truncate">${escapeHTML(b.titolo)}</span></td><td class="p-3 sm:p-5"><span class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-[9px] sm:text-xs font-black uppercase ${b.stato==='noleggiato'?'bg-amber-100 text-amber-700':'bg-emerald-100 text-emerald-700'}">${b.stato}</span></td><td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">${b.stato==='noleggiato'?`<button onclick="prolungaPrestito('${b.id}', ${b.scadenza})" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-100 text-emerald-700 rounded-md sm:rounded-lg font-bold hover:bg-emerald-200">+ G</button><button onclick="restituisciLibro('${b.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-indigo-100 text-indigo-700 rounded-md sm:rounded-lg font-bold hover:bg-indigo-200">Fine</button>`:''}<button onclick="openModal('modificaLibro', '${b.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 text-slate-600 rounded-md sm:rounded-lg font-bold hover:bg-slate-200">Mod</button><button onclick="eliminaLibro('${b.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-rose-100 text-rose-600 rounded-md sm:rounded-lg font-bold hover:bg-rose-200">Elim</button></td></tr>`).join('')}</tbody></table></div></section><section><h2 class="text-xl sm:text-2xl font-extrabold mb-4 sm:mb-6">Utenti Registrati</h2><div class="bg-white rounded-2xl sm:rounded-3xl border overflow-x-auto shadow-sm"><table class="w-full text-left text-xs sm:text-sm whitespace-nowrap"><thead class="bg-slate-50 border-b"><tr><th class="p-3 sm:p-5">Utente</th><th class="p-3 sm:p-5">Email</th><th class="p-3 sm:p-5 text-right">Azioni</th></tr></thead><tbody class="divide-y divide-slate-100">${state.users.map(u => { return `<tr class="hover:bg-slate-50"><td class="p-3 sm:p-5 font-bold flex items-center gap-2 sm:gap-3">${window.getAvatar(u.avatar, "w-6 h-6 sm:w-8 sm:h-8")}<span class="truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.nome)}</span>${u.badge ? `<span class="ml-1 sm:ml-2 text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm shrink-0">${escapeHTML(u.badge)}</span>` : ''}</td><td class="p-3 sm:p-5 text-slate-500 truncate max-w-[100px] sm:max-w-xs">${escapeHTML(u.email)}</td><td class="p-3 sm:p-5 text-right flex gap-1.5 sm:gap-2 justify-end">${state.isGod ? `<button onclick="sguardoDivino('${u.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Sguardo Divino">👁</button><button onclick="assegnaBadge('${u.id}', '${escapeHTML(u.nome).replace(/'/g, "\\'")}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-pink-100 hover:bg-pink-200 text-pink-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Assegna Badge">🏷</button><button onclick="banDispositivo('${u.id}', '${escapeHTML(u.nome).replace(/'/g, "\\'")}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-red-900 hover:bg-red-800 text-red-100 font-bold rounded-md sm:rounded-lg shadow-md shadow-red-900/20 transition-colors" title="Banna Dispositivo">🔨</button>` : ''}<button onclick="modificaUtente('${u.id}', '${escapeHTML(u.nome).replace(/'/g, "\\'")}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md sm:rounded-lg font-bold transition-colors">Mod</button><button onclick="eliminaUtente('${u.id}', '${escapeHTML(u.nome).replace(/'/g, "\\'")}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-600 rounded-md sm:rounded-lg font-bold transition-colors">Elimina</button></td></tr>`; }).join('')}</tbody></table></div></section></div>`;
     }
 
     function godView() {
         const targetUsers = state.users.filter(u => u.id !== state.user.uid);
-
-        return `<div class="bg-slate-900 mx-4 sm:mx-0 rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 border border-purple-500/30 shadow-2xl shadow-purple-900/20 relative overflow-hidden fade-in text-white mb-8 sm:mb-10">
-            <div class="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-rose-900/20 pointer-events-none"></div>
-            <h2 class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-rose-400 mb-1 sm:mb-2 relative z-10">⚡ L'OLIMPO</h2>
-            <p class="text-purple-300/60 font-bold tracking-widest uppercase text-[10px] sm:text-sm mb-6 sm:mb-10 relative z-10">Console Suprema</p>
-            
-            <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-purple-200">Manutenzione & Spazio</h3>
-            <div class="mb-6 sm:mb-10 relative z-10">
-                <button onclick="comprimiDatabaseEsistente()" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold p-4 sm:p-5 rounded-2xl backdrop-blur-sm border border-amber-500/50 flex w-full items-center justify-center gap-2 text-sm sm:text-base transition-colors shadow-lg shadow-black/50">
-                    <span class="text-2xl">🗜️</span> Comprimi Foto e GIF Vecchie (Libera Spazio Database)
-                </button>
-            </div>
-
-            <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-purple-200">Controllo Sistema Centrale</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-10 relative z-10">
-                <button onclick="toggleServer()" class="${serverState.attivo ? 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/50' : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/50'} font-bold p-4 sm:p-5 rounded-2xl backdrop-blur-sm border flex items-center justify-center gap-2 text-sm sm:text-base transition-colors shadow-lg shadow-black/50">
-                    <span class="text-2xl">${serverState.attivo ? '🛑' : '✅'}</span> ${serverState.attivo ? 'Spegni Server per Tutti' : 'Riaccendi Server'}
-                </button>
-                <button onclick="chiudiAltreVersioni()" class="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 font-bold p-4 sm:p-5 rounded-2xl backdrop-blur-sm border border-blue-500/50 flex items-center justify-center gap-2 text-sm sm:text-base transition-colors shadow-lg shadow-black/50">
-                    <span class="text-2xl">🔒</span> Isola questa Sessione (Apocalisse)
-                </button>
-            </div>
-
-            <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-purple-200">Gestione Database</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-10 relative z-10">
-                <button onclick="voceDiDio()" class="bg-white/5 hover:bg-white/10 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-white/10 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">📢</span> Messaggio</button>
-                <button onclick="miracoloApprovazione()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-emerald-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">✨</span> Miracolo</button>
-                <button onclick="amnistiaGenerale()" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-blue-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">🕊</span> Amnistia</button>
-                <button onclick="apocalisse()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-rose-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">💀</span> Apocalisse</button>
-            </div>
-
-            <div class="flex items-center justify-between mb-3 sm:mb-4 relative z-10">
-                <h3 class="text-lg sm:text-xl font-bold text-purple-200">Radar Bersagli (Iscritti)</h3>
-                <button onclick="apriRadarManuale()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-xl text-xs sm:text-sm shadow-lg shadow-purple-600/30 transition-colors flex items-center gap-2">📡 Scansione Online</button>
-            </div>
-            
-            <div class="bg-black/40 p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-purple-500/30 mb-6 sm:mb-8 relative z-10">
-                <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 border-b border-purple-500/30 pb-3 sm:pb-4">
-                    <input type="checkbox" id="target-all" class="target-cb w-4 h-4 sm:w-5 sm:h-5 accent-purple-500 cursor-pointer" value="all" checked onchange="document.querySelectorAll('.target-user').forEach(c => c.checked = false)">
-                    <label for="target-all" class="text-white font-bold cursor-pointer text-xs sm:text-sm">🌐 Colpisci TUTTI</label>
-                </div>
-                <div id="god-radar-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 max-h-48 overflow-y-auto pr-1 sm:pr-2 hide-scrollbar">
-                    ${targetUsers.length ? targetUsers.map(u => `<label class="flex items-center gap-2 sm:gap-3 bg-white/5 p-2 sm:p-3 rounded-lg sm:rounded-xl cursor-pointer hover:bg-white/10 transition-colors border border-white/5"><input type="checkbox" class="target-cb target-user w-4 h-4 sm:w-5 sm:h-5 accent-purple-500 cursor-pointer" value="${u.id}" onchange="document.getElementById('target-all').checked = false"><div class="flex flex-col truncate"><span class="text-xs sm:text-sm font-bold text-white truncate">${escapeHTML(u.nome)}</span><span class="text-[8px] sm:text-[10px] text-purple-300/50 font-black tracking-widest uppercase">${escapeHTML(u.ruolo)}</span></div></label>`).join('') : '<p class="text-xs sm:text-sm text-slate-400 italic font-medium">Nessun altro utente registrato.</p>'}
-                </div>
-            </div>
-
-            <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-purple-200">Caos e Divertimento</h3>
-            <div class="grid grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4 relative z-10">
-                <button onclick="invocaPotere('discoteca')" class="bg-pink-500/10 hover:bg-pink-500/20 text-pink-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-pink-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🪩</span> Disco</button>
-                <button onclick="invocaPotere('terremoto')" class="bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-orange-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🫨</span> Sisico</button>
-                <button onclick="invocaPotere('pioggia')" class="bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-teal-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🌧️</span> Pioggia</button>
-                <button onclick="invocaPotere('rickroll')" class="bg-red-500/10 hover:bg-red-500/20 text-red-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-red-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🕺</span> Rickroll</button>
-                <button onclick="invocaPotere('gattini')" class="bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-yellow-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🐱</span> Gattini</button>
-                <button onclick="invocaPotere('sottosopra')" class="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-indigo-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🙃</span> SottoSopra</button>
-                <button onclick="invocaPotere('comic')" class="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-cyan-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🖍️</span> Comic</button>
-                <button onclick="invocaPotere('buio')" class="bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🌒</span> Blackout</button>
-                <button onclick="invocaPotere('thanos')" class="bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-purple-400/50 flex flex-col items-center text-[10px] sm:text-xs text-center shadow-lg shadow-purple-900"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">💨</span> Thanos</button>
-            </div>
-        </div>`;
+        return `<div class="bg-slate-900 mx-4 sm:mx-0 rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 border border-purple-500/30 shadow-2xl shadow-purple-900/20 relative overflow-hidden fade-in text-white mb-8 sm:mb-10"><div class="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-rose-900/20 pointer-events-none"></div><h2 class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-rose-400 mb-1 sm:mb-2 relative z-10">⚡ L'OLIMPO</h2><p class="text-purple-300/60 font-bold tracking-widest uppercase text-[10px] sm:text-sm mb-6 sm:mb-10 relative z-10">Console Suprema</p><h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-purple-200">Controllo Sistema Centrale</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-10 relative z-10"><button onclick="toggleServer()" class="${serverState.attivo ? 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/50' : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/50'} font-bold p-4 sm:p-5 rounded-2xl backdrop-blur-sm border flex items-center justify-center gap-2 text-sm sm:text-base transition-colors shadow-lg shadow-black/50"><span class="text-2xl">${serverState.attivo ? '🛑' : '✅'}</span> ${serverState.attivo ? 'Spegni Server per Tutti' : 'Riaccendi Server'}</button><button onclick="chiudiAltreVersioni()" class="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 font-bold p-4 sm:p-5 rounded-2xl backdrop-blur-sm border border-blue-500/50 flex items-center justify-center gap-2 text-sm sm:text-base transition-colors shadow-lg shadow-black/50"><span class="text-2xl">🔒</span> Isola questa Sessione (Apocalisse)</button></div><h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-purple-200">Gestione Database</h3><div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-10 relative z-10"><button onclick="voceDiDio()" class="bg-white/5 hover:bg-white/10 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-white/10 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">📢</span> Messaggio</button><button onclick="miracoloApprovazione()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-emerald-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">✨</span> Miracolo</button><button onclick="amnistiaGenerale()" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-blue-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">🕊</span> Amnistia</button><button onclick="apocalisse()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-bold p-3 sm:p-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-rose-500/20 flex flex-col items-center gap-1 sm:gap-2 text-xs sm:text-base"><span class="text-2xl sm:text-3xl">💀</span> Apocalisse</button></div><div class="flex items-center justify-between mb-3 sm:mb-4 relative z-10"><h3 class="text-lg sm:text-xl font-bold text-purple-200">Radar Bersagli (Iscritti)</h3><button onclick="apriRadarManuale()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-xl text-xs sm:text-sm shadow-lg shadow-purple-600/30 transition-colors flex items-center gap-2">📡 Scansione Online</button></div><div class="bg-black/40 p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-purple-500/30 mb-6 sm:mb-8 relative z-10"><div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 border-b border-purple-500/30 pb-3 sm:pb-4"><input type="checkbox" id="target-all" class="target-cb w-4 h-4 sm:w-5 sm:h-5 accent-purple-500 cursor-pointer" value="all" checked onchange="document.querySelectorAll('.target-user').forEach(c => c.checked = false)"><label for="target-all" class="text-white font-bold cursor-pointer text-xs sm:text-sm">🌐 Colpisci TUTTI</label></div><div id="god-radar-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 max-h-48 overflow-y-auto pr-1 sm:pr-2 hide-scrollbar">${targetUsers.length ? targetUsers.map(u => `<label class="flex items-center gap-2 sm:gap-3 bg-white/5 p-2 sm:p-3 rounded-lg sm:rounded-xl cursor-pointer hover:bg-white/10 transition-colors border border-white/5"><input type="checkbox" class="target-cb target-user w-4 h-4 sm:w-5 sm:h-5 accent-purple-500 cursor-pointer" value="${u.id}" onchange="document.getElementById('target-all').checked = false"><div class="flex flex-col truncate"><span class="text-xs sm:text-sm font-bold text-white truncate">${escapeHTML(u.nome)}</span><span class="text-[8px] sm:text-[10px] text-purple-300/50 font-black tracking-widest uppercase">${escapeHTML(u.ruolo)}</span></div></label>`).join('') : '<p class="text-xs sm:text-sm text-slate-400 italic font-medium">Nessun altro utente registrato.</p>'}</div></div><h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-purple-200">Caos e Divertimento</h3><div class="grid grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4 relative z-10"><button onclick="invocaPotere('discoteca')" class="bg-pink-500/10 hover:bg-pink-500/20 text-pink-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-pink-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🪩</span> Disco</button><button onclick="invocaPotere('terremoto')" class="bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-orange-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🫨</span> Sisico</button><button onclick="invocaPotere('pioggia')" class="bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-teal-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🌧</span> Pioggia</button><button onclick="invocaPotere('rickroll')" class="bg-red-500/10 hover:bg-red-500/20 text-red-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-red-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🕺</span> Rickroll</button><button onclick="invocaPotere('gattini')" class="bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-yellow-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🐱</span> Gattini</button><button onclick="invocaPotere('sottosopra')" class="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-indigo-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🙃</span> SottoSopra</button><button onclick="invocaPotere('comic')" class="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-cyan-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🖍</span> Comic</button><button onclick="invocaPotere('buio')" class="bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-500/20 flex flex-col items-center text-[10px] sm:text-xs text-center"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">🌒</span> Blackout</button><button onclick="invocaPotere('thanos')" class="bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 font-bold p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-purple-400/50 flex flex-col items-center text-[10px] sm:text-xs text-center shadow-lg shadow-purple-900"><span class="text-xl sm:text-2xl mb-0.5 sm:mb-1">💨</span> Thanos</button></div></div>`;
     }
 
-    function actualRender(animate = true) {
-        const appDiv = $('app');
-        if (!state.user) {
-            appDiv.innerHTML = `
-            <div class="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-slate-50 fade-in">
-                <div class="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 shadow-2xl border border-slate-100 w-full max-w-md">
-                    <div class="text-center mb-6 sm:mb-8"><div class="text-5xl sm:text-6xl mb-3 sm:mb-4">📚</div><h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Libreria 2ALD</h1></div>
-                    <form onsubmit="gestisciLogin(event)" class="space-y-3 sm:space-y-4">
-                        ${state.authMode === 'register' ? `<input id="nome" type="text" placeholder="Il tuo Nome e Cognome" class="${INPUT_CLS}" required>` : ''}
-                        <input id="email" type="email" placeholder="Email" required class="${INPUT_CLS}">
-                        <input id="password" type="password" placeholder="Password (min 6 caratteri)" required class="${INPUT_CLS}">
-                        <p id="errorBox" class="text-red-500 text-xs sm:text-sm font-bold text-center h-4 sm:h-5"></p>
-                        <button id="authSubmitBtn" type="submit" class="w-full text-white font-extrabold py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-lg transition-all active:scale-95 text-sm sm:text-base ${state.authMode === 'register' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-700'}">
-                            ${state.authMode === 'register' ? 'Crea Account' : 'Accedi'}
-                        </button>
-                    </form>
-                    <div class="mt-5 sm:mt-6 text-center border-t border-slate-100 pt-5 sm:pt-6">
-                        <button onclick="toggleAuthMode()" type="button" class="text-indigo-600 font-bold hover:text-indigo-800 transition-colors text-xs sm:text-sm">
-                            ${state.authMode === 'register' ? 'Hai già un account? Accedi' : 'Non hai un account? Registrati'}
-                        </button>
-                    </div>
-                </div>
-            </div>`;
-            return;
-        }
-
-        let godChecked = []; let allChecked = true;
-        if (state.tab === 'god') {
-            const radar = document.getElementById('god-radar-list');
-            if (radar) {
-                godChecked = Array.from(radar.querySelectorAll('.target-user:checked')).map(cb => cb.value);
-                const allCb = document.getElementById('target-all'); allChecked = allCb ? allCb.checked : true;
-            }
-        }
-
-        const btnClass = id => `flex items-center justify-center shrink-0 gap-1.5 sm:gap-2 px-4 py-2 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl font-extrabold transition-all duration-300 text-xs sm:text-base ${state.tab === id ? 'bg-slate-900 text-white shadow-lg sm:shadow-xl sm:scale-105' : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'}`;
-        const content = { catalogo: catalogoView, prestiti: prestitiView, proponi: proponiView, recensioni: recensioniView, admin: adminView, god: godView }[state.tab === "admin" && !state.isAdmin ? "catalogo" : state.tab]();
-        const animationClass = animate ? 'fade-in' : '';
-
-        appDiv.innerHTML = `
-        <nav class="sticky top-0 z-40 glass-panel border-b border-slate-200/60 px-4 sm:px-6 py-3 sm:py-4 shadow-sm">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <span class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2 sm:gap-3"><span class="text-2xl sm:text-3xl drop-shadow-sm hover:rotate-12 transition-transform cursor-pointer">📚</span> <span>2ALD</span></span>
-                <div class="flex items-center gap-2 sm:gap-4">
-                    
-                    <button onclick="openModal('profilo')" class="flex items-center gap-2 sm:gap-3 bg-slate-100/80 hover:bg-slate-200/80 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-full border border-slate-200 transition-colors shadow-sm cursor-pointer group">
-                        ${window.getAvatar(state.userData.avatar, "w-6 h-6 sm:w-8 sm:h-8")}
-                        <span class="text-xs sm:text-sm font-bold text-slate-700 hidden md:flex items-center group-hover:text-indigo-600 transition-colors">${escapeHTML(state.userData.nome || state.user.displayName)} ${state.userData.badge ? `<span class="ml-1.5 text-[9px] uppercase font-black px-1.5 py-0.5 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm">${escapeHTML(state.userData.badge)}</span>` : ''}</span>
-                    </button>
-                    
-                    <button onclick="logout()" class="bg-white border-2 border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-rose-500 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-colors shadow-sm">Esci</button>
-                </div>
-            </div>
-        </nav>
-        
-        <main class="max-w-7xl mx-auto pt-4 sm:pt-8 space-y-6 sm:space-y-10 ${animationClass}">
-            <div class="flex flex-nowrap sm:flex-wrap gap-2 sm:gap-3 items-center border-b pb-4 sm:pb-8 px-4 sm:px-6 overflow-x-auto hide-scrollbar snap-x">
-                <button onclick="cambiaTab('catalogo')" class="${btnClass('catalogo')} snap-start">📖 Catalogo</button>
-                <button onclick="cambiaTab('prestiti')" class="${btnClass('prestiti')} snap-start">🎒 I Miei Libri</button>
-                <button onclick="cambiaTab('recensioni')" class="${btnClass('recensioni')} snap-start">⭐ Recensioni & Social</button>
-                <button onclick="cambiaTab('proponi')" class="${btnClass('proponi')} snap-start">💡 Proponi</button>
-                ${state.isAdmin ? `<button onclick="cambiaTab('admin')" class="${btnClass('admin')} snap-start !bg-amber-400 !text-white !border-amber-400 shadow-amber-400/30">⚙ <span class="hidden sm:inline">Admin</span></button>` : ''}
-                ${state.isGod ? `<button onclick="cambiaTab('god')" class="${btnClass('god')} snap-start !bg-purple-600 !text-white !border-purple-600 shadow-purple-600/30">⚡ <span class="hidden sm:inline">L'Olimpo</span></button>` : ''}
-                <div class="w-1 shrink-0 sm:hidden"></div>
-            </div>
-            <div class="pb-10">${content}</div>
-        </main>
-        ${renderModal()}`;
-
-        if (state.tab === 'god') {
-            const radar = document.getElementById('god-radar-list');
-            if (radar) { godChecked.forEach(val => { const cb = radar.querySelector(`.target-user[value="${val}"]`); if (cb) cb.checked = true; }); const allCb = document.getElementById('target-all'); if (allCb) allCb.checked = allChecked; }
-        }
-    }
 </script>
 </body>
 </html>
