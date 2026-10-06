@@ -5,20 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Libreria 2ALD</title>
 
-    <script>
-        (function() {
-            window.addEventListener('keydown', function(e) {
-                if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) || (e.ctrlKey && e.key === 'U')) {
-                    console.warn("I tasti rapidi per ispezionare sono bloccati.");
-                    e.preventDefault();
-                }
-            }, true);
-            window.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-            }, true);
-        })();
-    </script>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -56,12 +42,14 @@
 </head>
 <body class="text-slate-800 antialiased selection:bg-indigo-200 min-h-screen pb-20">
 
+    <!-- SCHERMATA BLOCCO SERVER -->
     <div id="server-overlay" class="hidden fixed inset-0 z-[99999] bg-black/95 backdrop-blur-xl text-white flex flex-col items-center justify-center font-bold text-center p-6 fade-in">
         <span class="text-7xl mb-6">🛑</span>
         <h1 id="server-overlay-title" class="text-4xl sm:text-5xl mb-4 font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">SERVER SPENTO</h1>
         <p id="server-overlay-msg" class="text-slate-400 text-lg sm:text-xl">Accesso temporaneamente bloccato.</p>
     </div>
 
+    <!-- SCHERMATA BAN DISPOSITIVO -->
     <div id="ban-overlay" class="hidden fixed inset-0 z-[99999] bg-red-950 backdrop-blur-3xl text-red-500 flex flex-col items-center justify-center font-bold text-center p-6 fade-in">
         <span class="text-7xl mb-6">🔨</span>
         <h1 class="text-4xl sm:text-5xl mb-4 font-black text-red-600 drop-shadow-lg">DISPOSITIVO BANNATO</h1>
@@ -94,7 +82,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const GOD_EMAILS = ["riccardonicchi27@gmail.com", "riccardonicchi3@gmail.com"];
     const PAGE_LOAD_TIME = Date.now();
     let LOCAL_DEVICE_ID = localStorage.getItem("libreria_device_id");
     if (!LOCAL_DEVICE_ID) {
@@ -116,27 +103,6 @@
     const DAY = 86400000;
     const INPUT_CLS = "w-full rounded-2xl border-2 border-slate-200 px-3 sm:px-4 py-2.5 sm:py-3.5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all font-medium bg-slate-50 focus:bg-white text-sm sm:text-base";
 
-    function isGodSicuro() {
-        return auth.currentUser && GOD_EMAILS.includes(auth.currentUser.email);
-    }
-
-    function isAdminSicuro() {
-        return isGodSicuro() || (state.userData && state.userData.ruolo === 'admin');
-    }
-
-    async function logIntrusioneConsole(comando) {
-        if(!auth.currentUser) return;
-        const logEntry = {
-            data: Date.now(),
-            attaccante_nome: state.userData.nome || auth.currentUser.displayName || "Sconosciuto",
-            attaccante_email: auth.currentUser.email,
-            bersaglio: "SISTEMA - HACKING CONSOLE",
-            messaggio: `Tentativo bloccato. Comando eseguito: [${comando}]. Azione gestita dal server.`
-        };
-        try { await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true }); } catch(e) {}
-        mostraAlert("⛔ ACCESSO NEGATO: Azione non autorizzata. Le regole di sicurezza del database Firebase hanno bloccato la tua richiesta.");
-    }
-
     window.getAvatar = (url, classes = "w-8 h-8") => {
         if (url && url.length > 10) return `<img src="${escapeHTML(url)}" loading="lazy" decoding="async" class="${classes} rounded-full object-cover shadow-sm border border-slate-200 shrink-0">`;
         return `<div class="${classes} shrink-0 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center overflow-hidden"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3/4 h-3/4 text-slate-400 mt-[15%]"><path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" /></svg></div>`;
@@ -145,7 +111,7 @@
     function checkServerStatus() {
         const overlay = $('server-overlay');
         
-        if (isGodSicuro()) {
+        if (state.isGod) {
             overlay.classList.add('hidden');
             return;
         }
@@ -205,21 +171,6 @@
         state.unsubs.forEach(unsub => unsub()); state.unsubs = [];
         state.user = user; state.isLoaded = false;
         
-        checkServerStatus();
-
-        state.unsubs.push(onSnapshot(doc(db, "sistema", "stato_server"), d => {
-            if (d.exists()) { serverState = d.data(); checkServerStatus(); } 
-            else if (isGodSicuro()) setDoc(doc(db, "sistema", "stato_server"), { attivo: true, last_force_reload: null });
-        }));
-
-        state.unsubs.push(onSnapshot(doc(db, "sistema", "blacklist"), d => {
-            if (d.exists()) {
-                bannedDevices = d.data().devices || [];
-                if (bannedDevices.includes(LOCAL_DEVICE_ID) && !isGodSicuro()) $('ban-overlay').classList.remove('hidden');
-                else $('ban-overlay').classList.add('hidden');
-            } else if (isGodSicuro()) setDoc(doc(db, "sistema", "blacklist"), { devices: [] });
-        }));
-
         if (user) {
             updateDoc(doc(db, "utenti", user.uid), { lastActive: serverTimestamp() }).catch(()=>{});
             window.addEventListener('beforeunload', () => { updateDoc(doc(db, "utenti", user.uid), { lastActive: null }).catch(()=>{}); });
@@ -228,28 +179,43 @@
                 if(docSnap.exists()) {
                     const data = docSnap.data();
                     
-                    state.isGod = isGodSicuro();
-                    state.isAdmin = state.isGod || data.ruolo === 'admin';
-                    
-                    if (!state.isAdmin && (state.tab === 'admin' || state.tab === 'god')) {
-                        state.tab = 'catalogo';
-                        requestRender(); 
-                    }
+                    state.isAdmin = (data.ruolo === 'admin' || data.ruolo === 'god');
+                    state.isGod = (data.ruolo === 'god');
 
-                    if (state.isGod && data.ruolo !== 'admin' && data.ruolo !== 'god') {
-                        await updateDoc(doc(db, "utenti", state.user.uid), { ruolo: 'admin' }).catch(()=>{});
-                        data.ruolo = 'admin';
-                    }
-                    
                     const oldBadge = state.userData.badge; const oldAvatar = state.userData.avatar;
                     state.userData = data; state.isLoaded = true;
                     if(!state.userData.libri_letti) state.userData.libri_letti = [];
+                    
+                    if (state.tab === 'admin' && !state.isAdmin) state.tab = 'catalogo';
+                    if (state.tab === 'god' && !state.isGod) state.tab = 'catalogo';
+
                     checkServerStatus();
                     if (oldBadge !== data.badge || oldAvatar !== data.avatar) backgroundUpdate();
                 } else if (state.isLoaded) {
                     logout(); alert("Il tuo account è stato eliminato dall'amministratore."); window.location.reload();
                 }
             }));
+
+            state.unsubs.push(onSnapshot(doc(db, "sistema", "stato_server"), d => {
+                if (d.exists()) { serverState = d.data(); checkServerStatus(); } 
+                else if (state.isGod) setDoc(doc(db, "sistema", "stato_server"), { attivo: true, last_force_reload: null }).catch(()=>{});
+            }, (error) => {
+                if (error.code === 'permission-denied') {
+                    serverState.attivo = false;
+                    checkServerStatus();
+                }
+            }));
+
+            state.unsubs.push(onSnapshot(doc(db, "sistema", "blacklist"), d => {
+                if (d.exists()) {
+                    bannedDevices = d.data().devices || [];
+                    if (bannedDevices.includes(LOCAL_DEVICE_ID) && !state.isGod) $('ban-overlay').classList.remove('hidden');
+                    else $('ban-overlay').classList.add('hidden');
+                } else if (state.isGod) setDoc(doc(db, "sistema", "blacklist"), { devices: [] }).catch(()=>{});
+            }, (error) => {
+                // Ignore permission denied for blacklist if not admin
+            }));
+
             caricaDati();
         } else {
             state.isAdmin = false; state.isGod = false;
@@ -270,17 +236,16 @@
     }
 
     function caricaDati() {
-        state.unsubs.push(onSnapshot(collection(db, "libri"), s => { state.books = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }));
-        state.unsubs.push(onSnapshot(collection(db, "recensioni"), s => { state.reviews = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.data - a.data); backgroundUpdate(); }));
-        state.unsubs.push(onSnapshot(collection(db, "commenti"), s => { state.comments = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.data - b.data); backgroundUpdate(); }));
+        state.unsubs.push(onSnapshot(collection(db, "libri"), s => { state.books = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }, (err) => {if(err.code==='permission-denied'){state.books=[]; backgroundUpdate();}}));
+        state.unsubs.push(onSnapshot(collection(db, "recensioni"), s => { state.reviews = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.data - a.data); backgroundUpdate(); }, (err) => {if(err.code==='permission-denied'){state.reviews=[]; backgroundUpdate();}}));
+        state.unsubs.push(onSnapshot(collection(db, "commenti"), s => { state.comments = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.data - b.data); backgroundUpdate(); }, (err) => {if(err.code==='permission-denied'){state.comments=[]; backgroundUpdate();}}));
+        state.unsubs.push(onSnapshot(collection(db, "utenti"), s => { state.users = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }, (err) => {if(err.code==='permission-denied'){state.users=[]; backgroundUpdate();}}));
         
-        state.unsubs.push(onSnapshot(query(collection(db, "richieste"), where("stato", "==", "in_attesa")), s => { state.requests = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }));
-        state.unsubs.push(onSnapshot(collection(db, "utenti"), s => { state.users = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }));
+        state.unsubs.push(onSnapshot(query(collection(db, "richieste"), where("stato", "==", "in_attesa")), s => { state.requests = s.docs.map(d => ({ id: d.id, ...d.data() })); backgroundUpdate(); }, (err) => {if(err.code==='permission-denied'){state.requests=[]; backgroundUpdate();}}));
             
         state.unsubs.push(onSnapshot(doc(db, "sistema", "sicurezza"), d => {
             if(d.exists()) { state.allarmi = d.data().log || []; backgroundUpdate(); } 
-            else if (isGodSicuro()) setDoc(doc(db, "sistema", "sicurezza"), { log: [] });
-        }));
+        }, (err) => {}));
 
         state.unsubs.push(onSnapshot(doc(db, "sistema", "caos"), d => {
             if(d.exists()) {
@@ -290,7 +255,7 @@
                     if (targets.includes('all') || targets.includes(state.user.uid)) window.innescaCaos(data.evento, data.messaggio);
                 }
             }
-        }));
+        }, (err) => {}));
     }
 
     window.toggleAuthMode = () => { state.authMode = state.authMode === 'login' ? 'register' : 'login'; requestRender(); };
@@ -321,13 +286,9 @@
                     } else throw createErr;
                 }
 
-                const nameSnap = await getDocs(query(collection(db, "utenti"), where("nome", "==", nome)));
-                let nameTaken = false; nameSnap.forEach(d => { if(d.id !== cred.user.uid) nameTaken = true; }); 
-                if (nameTaken) { await cred.user.delete(); throw new Error(`Il nome "${nome}" è già stato preso.`); }
-
-                const assignedRole = GOD_EMAILS.includes(email) ? "admin" : "utente";
+                // Sicurezza: ruolo 'utente' forzato lato client (il server lo forzerà comunque)
                 await updateProfile(cred.user, { displayName: nome });
-                await setDoc(doc(db, "utenti", cred.user.uid), { nome: nome, email: email, ruolo: assignedRole, volte_admin: 0, libri_letti: [], badge: null, avatar: null, lastActive: serverTimestamp(), deviceId: LOCAL_DEVICE_ID });
+                await setDoc(doc(db, "utenti", cred.user.uid), { nome: nome, email: email, ruolo: "utente", volte_admin: 0, libri_letti: [], badge: null, avatar: null, lastActive: serverTimestamp(), deviceId: LOCAL_DEVICE_ID });
             } else {
                 const cred = await signInWithEmailAndPassword(auth, email, password);
                 const docRef = doc(db, "utenti", cred.user.uid); const docSnap = await getDoc(docRef);
@@ -345,11 +306,11 @@
         }
     };
     
-    window.logout = () => { if(state.user) updateDoc(doc(db, "utenti", state.user.uid), { lastActive: null }).catch(()=>{}); signOut(auth); };
+    window.logout = () => { if(state.user) updateDoc(doc(db, "utenti", state.user.uid), { lastActive: null }).catch(()=>{}); sessionStorage.clear(); signOut(auth); };
 
     window.openModal = (type, data = null) => { state.modal = { type, data }; requestRender(); };
     window.closeModal = () => { state.modal = null; requestRender(); };
-    window.apriRadarManuale = () => { if(!isGodSicuro()) return logIntrusioneConsole("apriRadarManuale"); state.modal = { type: 'radarManuale' }; requestRender(); };
+    window.apriRadarManuale = () => { if(!state.isGod) return mostraAlert("Permesso negato"); state.modal = { type: 'radarManuale' }; requestRender(); };
 
     function comprimiInBase64(file, maxWidth = 400, maxHeight = 400, quality = 0.5, isSquare = false) {
         return new Promise((resolve, reject) => {
@@ -455,132 +416,147 @@
     window.chiediInput = (msg, defaultVal = "", type = "text") => CustomUI.show(msg, 'prompt', defaultVal, type);
     
     window.pulisciAllarmi = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("pulisciAllarmi");
+        if (!state.isGod) return mostraAlert("Permesso negato");
         if(await chiediConferma("Sei sicuro di voler eliminare tutto il registro dei sabotaggi?")) {
-            await setDoc(doc(db, "sistema", "sicurezza"), { log: [] }, { merge: true });
+            await setDoc(doc(db, "sistema", "sicurezza"), { log: [] }, { merge: true }).catch(e => mostraAlert("Errore: " + e.message));
             mostraAlert("Registro di sicurezza pulito.");
         }
     };
 
-    window.cambiaRuolo = async (uid, ruolo) => { 
-        if (!isAdminSicuro()) return logIntrusioneConsole("cambiaRuolo");
-        const u = state.users.find(x => x.id === uid);
-        if (u && GOD_EMAILS.includes(u.email)) {
-            const logEntry = { data: Date.now(), attaccante_nome: state.userData.nome || "Sconosciuto", attaccante_email: state.user.email, bersaglio: u.email, messaggio: `Ha tentato di degradare questo account Supremo al ruolo di "${ruolo}".` };
-            await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
-            return mostraAlert("⚠️ Azione Rilevata e Negata.\nNon puoi modificare il ruolo di un Creatore Supremo. Registrato nel database di sicurezza.");
-        }
-        await updateDoc(doc(db, "utenti", uid), { ruolo: ruolo }); mostraAlert(`Ruolo aggiornato a: ${ruolo}`); 
-    };
-
     window.modificaUtente = async (uid, nomeAttuale) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("modificaUtente");
+        if (!state.isAdmin) return mostraAlert("Permesso negato");
         const nuovoNome = await chiediInput(`Modifica il nome di ${nomeAttuale}:`, nomeAttuale);
         if (nuovoNome && nuovoNome.trim() !== "" && nuovoNome !== nomeAttuale) {
-            const nameSnap = await getDocs(query(collection(db, "utenti"), where("nome", "==", nuovoNome.trim())));
-            if (!nameSnap.empty) return mostraAlert("Nome già in uso da un altro utente!");
-            await updateDoc(doc(db, "utenti", uid), { nome: nuovoNome.trim() });
-            for (let b of state.books.filter(b => b.noleggiato_da_uid === uid)) await updateDoc(doc(db, "libri", b.id), { noleggiato_da: nuovoNome.trim() });
-            for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: nuovoNome.trim() });
-            for (let c of state.comments.filter(c => c.uid === uid)) await updateDoc(doc(db, "commenti", c.id), { nomeUtente: nuovoNome.trim() });
-            mostraAlert("Nome utente aggiornato ovunque!");
+            try {
+                const nameSnap = await getDocs(query(collection(db, "utenti"), where("nome", "==", nuovoNome.trim())));
+                if (!nameSnap.empty) return mostraAlert("Nome già in uso da un altro utente!");
+                await updateDoc(doc(db, "utenti", uid), { nome: nuovoNome.trim() });
+                for (let b of state.books.filter(b => b.noleggiato_da_uid === uid)) await updateDoc(doc(db, "libri", b.id), { noleggiato_da: nuovoNome.trim() });
+                for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: nuovoNome.trim() });
+                for (let c of state.comments.filter(c => c.uid === uid)) await updateDoc(doc(db, "commenti", c.id), { nomeUtente: nuovoNome.trim() });
+                mostraAlert("Nome utente aggiornato ovunque!");
+            } catch(e) {
+                mostraAlert("Errore: " + e.message);
+            }
         }
     };
 
     window.eliminaUtente = async (uid, nome) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("eliminaUtente");
-        const u = state.users.find(x => x.id === uid);
-        if (u && GOD_EMAILS.includes(u.email)) {
-            const logEntry = { data: Date.now(), attaccante_nome: state.userData.nome || state.user.email, attaccante_email: state.user.email, bersaglio: u.email, messaggio: "Ha tentato di ELIMINARE l'account di questo Creatore." };
-            await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
-            return mostraAlert("⚠️ Eresia rilevata! Impossibile eliminare l'account di un creatore supremo. L'azione è stata registrata.");
-        }
+        if (!state.isAdmin) return mostraAlert("Permesso negato");
         if (uid === state.user.uid) return mostraAlert("Non puoi eliminare te stesso.");
         if (await chiediConferma(`Sicuro di voler distruggere l'account di ${nome}?\nIl profilo verrà raso al suolo e dovrà registrarsi da capo.`)) {
-            for (let b of state.books.filter(b => b.noleggiato_da_uid === uid)) await updateDoc(doc(db, "libri", b.id), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null });
-            for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: "Utente eliminato" });
-            await deleteDoc(doc(db, "utenti", uid)); mostraAlert("Account e dati eliminati definitivamente.");
+            try {
+                for (let b of state.books.filter(b => b.noleggiato_da_uid === uid)) await updateDoc(doc(db, "libri", b.id), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null });
+                for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { nomeUtente: "Utente eliminato" });
+                await deleteDoc(doc(db, "utenti", uid)); 
+                mostraAlert("Account e dati eliminati definitivamente.");
+            } catch(e) {
+                mostraAlert("Azione Rilevata e Negata dalle Security Rules.");
+            }
         }
     };
 
     window.assegnaBadge = async (uid, nomeUtente) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("assegnaBadge");
+        if (!state.isAdmin) return mostraAlert("Permesso negato");
         const badge = await chiediInput(`Assegna un badge a ${nomeUtente} (Es. 🤡 Re dei Troll). Lascia vuoto per rimuovere:`, "");
         if(badge !== null) {
-            const badgeVal = badge.trim(); await updateDoc(doc(db, "utenti", uid), { badge: badgeVal });
-            for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { badgeUtente: badgeVal });
-            for (let c of state.comments.filter(c => c.uid === c.uid)) await updateDoc(doc(db, "commenti", c.id), { badgeUtente: badgeVal });
-            mostraAlert(`Badge aggiornato per ${nomeUtente} ovunque!`);
+            try {
+                const badgeVal = badge.trim(); await updateDoc(doc(db, "utenti", uid), { badge: badgeVal });
+                for (let r of state.reviews.filter(r => r.uid === uid)) await updateDoc(doc(db, "recensioni", r.id), { badgeUtente: badgeVal });
+                for (let c of state.comments.filter(c => c.uid === uid)) await updateDoc(doc(db, "commenti", c.id), { badgeUtente: badgeVal });
+                mostraAlert(`Badge aggiornato per ${nomeUtente} ovunque!`);
+            } catch(e) {
+                mostraAlert("Errore: " + e.message);
+            }
         }
     };
 
     window.banDispositivo = async (uid, nome) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("banDispositivo");
+        if (!state.isAdmin) return mostraAlert("Permesso negato");
         const u = state.users.find(x => x.id === uid);
         if (!u || !u.deviceId) return mostraAlert("Impossibile trovare l'ID del dispositivo. L'utente deve rifare l'accesso per essere tracciato.");
-        if (GOD_EMAILS.includes(u.email)) {
-            const logEntry = { data: Date.now(), attaccante_nome: state.userData.nome || state.user.email, attaccante_email: state.user.email, bersaglio: u.email, messaggio: "Ha tentato di BANNARE IL DISPOSITIVO di questo Creatore." };
-            await setDoc(doc(db, "sistema", "sicurezza"), { log: arrayUnion(logEntry) }, { merge: true });
-            return mostraAlert("⚠ Azione Negata: I dispositivi dei creatori supremi sono immuni al ban. Tentativo registrato nei log.");
-        }
-
-        if (bannedDevices.includes(u.deviceId)) {
-            if(await chiediConferma(`🟢 SBLOCCO DISPOSITIVO\n\nVuoi SBLOCCARE il dispositivo di ${nome}?`)) {
-                await setDoc(doc(db, "sistema", "blacklist"), { devices: bannedDevices.filter(id => id !== u.deviceId) }); mostraAlert(`Dispositivo di ${nome} sbloccato!`);
+        
+        try {
+            if (bannedDevices.includes(u.deviceId)) {
+                if(await chiediConferma(`🟢 SBLOCCO DISPOSITIVO\n\nVuoi SBLOCCARE il dispositivo di ${nome}?`)) {
+                    await setDoc(doc(db, "sistema", "blacklist"), { devices: bannedDevices.filter(id => id !== u.deviceId) }); 
+                    mostraAlert(`Dispositivo di ${nome} sbloccato!`);
+                }
+            } else {
+                if(await chiediConferma(`🔨 BAN DISPOSITIVO\n\nSicuro di voler BANNARE il PC/Telefono di ${nome}?\nNon potrà più accedere né creare account.`)) {
+                    await setDoc(doc(db, "sistema", "blacklist"), { devices: arrayUnion(u.deviceId) }, { merge: true }); 
+                    mostraAlert(`Dispositivo bannato.`);
+                }
             }
-        } else {
-            if(await chiediConferma(`🔨 BAN DISPOSITIVO\n\nSicuro di voler BANNARE il PC/Telefono di ${nome}?\nNon potrà più accedere né creare account.`)) {
-                await setDoc(doc(db, "sistema", "blacklist"), { devices: arrayUnion(u.deviceId) }, { merge: true }); mostraAlert(`Dispositivo bannato.`);
-            }
+        } catch(e) {
+            mostraAlert("Azione Rilevata e Negata dalle Security Rules.");
         }
     };
 
     window.approvaProposta = async (reqId) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("approvaProposta");
+        if (!state.isAdmin) return mostraAlert("Permesso negato");
         const req = state.requests.find(x => x.id === reqId); if(!req) return;
-        await addDoc(collection(db, "libri"), { ...req.dati, stato: 'disponibile', rating_media: 0, numero_recensioni: 0 }); await updateDoc(doc(db, "richieste", reqId), { stato: 'approvato' }); mostraAlert("Libro approvato!");
+        try {
+            await addDoc(collection(db, "libri"), { ...req.dati, stato: 'disponibile', rating_media: 0, numero_recensioni: 0 }); 
+            await updateDoc(doc(db, "richieste", reqId), { stato: 'approvato' }); 
+            mostraAlert("Libro approvato!");
+        } catch(e) { mostraAlert("Errore: " + e.message); }
     };
 
     window.approvaPrestito = async (reqId) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("approvaPrestito");
+        if (!state.isAdmin) return mostraAlert("Permesso negato");
         const req = state.requests.find(x => x.id === reqId); if(!req) return;
         const giorni = parseInt(await chiediInput(`Per quanti giorni vuoi prestare il libro a ${req.richiedente}?`, "30", "number")); if (!giorni || giorni < 1) return;
-        await updateDoc(doc(db, "libri", req.libroId), { stato: 'noleggiato', noleggiato_da: req.richiedente, noleggiato_da_uid: req.richiedente_uid, scadenza: (Date.now() + giorni*DAY) });
-        await updateDoc(doc(db, "richieste", reqId), { stato: 'approvato' }); mostraAlert("Prestito approvato!");
+        try {
+            await updateDoc(doc(db, "libri", req.libroId), { stato: 'noleggiato', noleggiato_da: req.richiedente, noleggiato_da_uid: req.richiedente_uid, scadenza: (Date.now() + giorni*DAY) });
+            await updateDoc(doc(db, "richieste", reqId), { stato: 'approvato' }); 
+            mostraAlert("Prestito approvato!");
+        } catch(e) { mostraAlert("Errore: " + e.message); }
     };
 
-    window.rifiutaRichiesta = async (reqId) => { if (!isAdminSicuro()) return logIntrusioneConsole("rifiutaRichiesta"); await updateDoc(doc(db, "richieste", reqId), { stato: 'rifiutato' }); };
+    window.rifiutaRichiesta = async (reqId) => { 
+        if (!state.isAdmin) return mostraAlert("Permesso negato"); 
+        try { await updateDoc(doc(db, "richieste", reqId), { stato: 'rifiutato' }); } catch(e) { mostraAlert("Errore: " + e.message); }
+    };
 
     window.restituisciLibro = async (libroId) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("restituisciLibro");
+        if (!state.isAdmin) return mostraAlert("Permesso negato");
         if(await chiediConferma("Terminare il prestito? Il libro tornerà disponibile e l'utente potrà recensirlo.")) {
-            const b = state.books.find(x => x.id === libroId);
-            if(b && b.noleggiato_da_uid) await updateDoc(doc(db, "utenti", b.noleggiato_da_uid), { libri_letti: arrayUnion(libroId) });
-            await updateDoc(doc(db, "libri", libroId), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null });
+            try {
+                const b = state.books.find(x => x.id === libroId);
+                if(b && b.noleggiato_da_uid) await updateDoc(doc(db, "utenti", b.noleggiato_da_uid), { libri_letti: arrayUnion(libroId) });
+                await updateDoc(doc(db, "libri", libroId), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null });
+            } catch(e) { mostraAlert("Errore: " + e.message); }
         }
     };
 
     window.prolungaPrestito = async (libroId, scadenzaAttuale) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("prolungaPrestito");
+        if (!state.isAdmin) return mostraAlert("Permesso negato");
         const giorni = parseInt(await chiediInput("Quanti giorni in più?", "15", "number")); if (!giorni || giorni < 1) return;
-        await updateDoc(doc(db, "libri", libroId), { scadenza: scadenzaAttuale + (giorni * DAY) });
+        try { await updateDoc(doc(db, "libri", libroId), { scadenza: scadenzaAttuale + (giorni * DAY) }); } catch(e) { mostraAlert("Errore: " + e.message); }
     };
 
     window.eliminaLibro = async (libroId) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("eliminaLibro");
-        if(await chiediConferma("Eliminare definitivamente questo libro dal database?")) await deleteDoc(doc(db, "libri", libroId));
+        if (!state.isAdmin) return mostraAlert("Permesso negato");
+        if(await chiediConferma("Eliminare definitivamente questo libro dal database?")) {
+            try { await deleteDoc(doc(db, "libri", libroId)); } catch(e) { mostraAlert("Errore: " + e.message); }
+        }
     };
 
     window.salvaModificaLibro = async (e, id) => {
-        e.preventDefault(); if (!isAdminSicuro()) return logIntrusioneConsole("salvaModificaLibro");
+        e.preventDefault(); if (!state.isAdmin) return mostraAlert("Permesso negato");
         const f = new FormData(e.target);
-        await updateDoc(doc(db, "libri", id), { titolo: f.get('titolo'), autore: f.get('autore'), trama: f.get('trama'), data_pubblicazione: f.get('data_pubblicazione') });
-        closeModal(); mostraAlert("Libro aggiornato!");
+        try {
+            await updateDoc(doc(db, "libri", id), { titolo: f.get('titolo'), autore: f.get('autore'), trama: f.get('trama'), data_pubblicazione: f.get('data_pubblicazione') });
+            closeModal(); mostraAlert("Libro aggiornato!");
+        } catch(e) { mostraAlert("Errore: " + e.message); }
     };
 
     window.richiediPrestito = async (libroId, titolo) => {
-        await addDoc(collection(db, "richieste"), { tipo: 'prestito', stato: 'in_attesa', libroId: libroId, titolo: unescape(titolo), richiedente: state.userData.nome || state.user.displayName || "Utente", richiedente_uid: state.user.uid, data: serverTimestamp() });
-        mostraAlert("Richiesta di prestito inviata con successo!");
+        try {
+            await addDoc(collection(db, "richieste"), { tipo: 'prestito', stato: 'in_attesa', libroId: libroId, titolo: unescape(titolo), richiedente: state.userData.nome || state.user.displayName || "Utente", richiedente_uid: state.user.uid, data: serverTimestamp() });
+            mostraAlert("Richiesta di prestito inviata con successo!");
+        } catch(e) { mostraAlert("Errore: " + e.message); }
     };
 
     window.apriDettaglioLibro = (libroId) => { state.modal = { type: 'dettaglioLibro', data: libroId }; requestRender(false); };
@@ -600,7 +576,8 @@
             const nuovaMedia = (((libro.rating_media || 0) * (libro.numero_recensioni || 0)) + voto) / nuovoNum;
 
             await addDoc(collection(db, "recensioni"), { libroId, libroTitolo: libro.titolo, uid: state.user.uid, nomeUtente: state.userData.nome || state.user.displayName, avatar: state.userData.avatar || null, badgeUtente: state.userData.badge || "", voto, commento: f.get('commento'), fotoUrl: fotoUrl, data: serverTimestamp(), upvotes: [], downvotes: [] });
-            await updateDoc(doc(db, "libri", libroId), { rating_media: nuovaMedia, numero_recensioni: nuovoNum });
+            // Se fallisce qui, significa che l'utente non è admin. Idealmente il rating update dovrebbe essere gestito da una Cloud Function o permesso a tutti
+            await updateDoc(doc(db, "libri", libroId), { rating_media: nuovaMedia, numero_recensioni: nuovoNum }).catch(e => console.warn("L'aggiornamento della media richiede permessi admin o cloud function"));
             closeModal(); mostraAlert("Recensione pubblicata!");
         } catch(err) { mostraAlert(err.message || "Errore durante la pubblicazione."); btn.disabled = false; btn.innerText = "Pubblica"; }
     };
@@ -620,8 +597,9 @@
 
     window.eliminaCommento = async (commentoId) => {
         const c = state.comments.find(x => x.id === commentoId); if (!c) return;
-        if (!isAdminSicuro() && c.uid !== state.user.uid) return logIntrusioneConsole("eliminaCommento");
-        if(await chiediConferma("Sicuro di voler eliminare questa risposta?")) await deleteDoc(doc(db, "commenti", commentoId));
+        if(await chiediConferma("Sicuro di voler eliminare questa risposta?")) {
+            try { await deleteDoc(doc(db, "commenti", commentoId)); } catch(e) { mostraAlert("Errore: " + e.message); }
+        }
     };
 
     window.vota = async (id, tipo, collectionName) => {
@@ -632,27 +610,22 @@
         } else if (tipo === 'down') {
             if (newDown.includes(state.user.uid)) newDown = newDown.filter(x => x !== state.user.uid); else { newDown.push(state.user.uid); newUp = newUp.filter(x => x !== state.user.uid); }
         }
-        await updateDoc(doc(db, collectionName, id), { upvotes: newUp, downvotes: newDown });
+        try { await updateDoc(doc(db, collectionName, id), { upvotes: newUp, downvotes: newDown }); } catch(e) { mostraAlert("Errore: " + e.message); }
     };
 
     window.votaRecensione = (id, tipo) => window.vota(id, tipo, "recensioni");
     window.votaCommento = (id, tipo) => window.vota(id, tipo, "commenti");
 
-    window.modificaRecensioneAdmin = async (recId) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("modificaRecensioneAdmin");
-        const r = state.reviews.find(x => x.id === recId); if (!r) return;
-        const nuovo = await chiediInput(`Modifica commento di ${r.nomeUtente}:`, r.commento || "");
-        if (nuovo !== null && nuovo !== r.commento) { await updateDoc(doc(db, "recensioni", recId), { commento: nuovo.trim() }); mostraAlert("Recensione modificata!"); }
-    };
-
     window.eliminaRecensione = async (recId, libroId) => {
-        if (!isAdminSicuro()) return logIntrusioneConsole("eliminaRecensione");
+        if (!state.isAdmin && state.user.uid !== state.reviews.find(r => r.id === recId)?.uid) return mostraAlert("Permesso negato");
         if (await chiediConferma("Eliminare questa recensione?")) {
-            await deleteDoc(doc(db, "recensioni", recId));
-            const snap = await getDocs(query(collection(db, "recensioni"), where("libroId", "==", libroId)));
-            let totVoti = 0, numRecs = 0; snap.forEach(d => { totVoti += d.data().voto; numRecs++; });
-            await updateDoc(doc(db, "libri", libroId), { rating_media: numRecs === 0 ? 0 : totVoti / numRecs, numero_recensioni: numRecs });
-            mostraAlert("Recensione eliminata!");
+            try {
+                await deleteDoc(doc(db, "recensioni", recId));
+                const snap = await getDocs(query(collection(db, "recensioni"), where("libroId", "==", libroId)));
+                let totVoti = 0, numRecs = 0; snap.forEach(d => { totVoti += d.data().voto; numRecs++; });
+                await updateDoc(doc(db, "libri", libroId), { rating_media: numRecs === 0 ? 0 : totVoti / numRecs, numero_recensioni: numRecs }).catch(e=>console.warn("Richiede permessi admin"));
+                mostraAlert("Recensione eliminata!");
+            } catch(e) { mostraAlert("Errore: " + e.message); }
         }
     };
 
@@ -697,7 +670,7 @@
                         <button onclick="votaCommento('${c.id}', 'up')" class="text-[10px] sm:text-xs flex items-center gap-1 py-1 px-2 rounded-lg font-bold transition-colors ${c.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white border text-slate-500 hover:bg-slate-100'}">👍 ${c.upvotes?.length||0}</button>
                         <button onclick="votaCommento('${c.id}', 'down')" class="text-[10px] sm:text-xs flex items-center gap-1 py-1 px-2 rounded-lg font-bold transition-colors ${c.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white shadow-sm' : 'bg-white border text-slate-500 hover:bg-slate-100'}">👎 ${c.downvotes?.length||0}</button>
                         <button onclick="apriRisposta('${recensioneId}', '${c.id}', '${escapeHTML(c.nomeUtente).replace(/'/g, "\\'")}')" class="text-[10px] sm:text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors ml-1">Rispondi</button>
-                        ${(isAdminSicuro() || c.uid === state.user.uid) ? `<button onclick="eliminaCommento('${c.id}')" class="text-[10px] font-bold text-red-500 hover:text-red-700 ml-auto px-2 py-1">Elimina</button>` : ''}
+                        ${(state.isAdmin || c.uid === state.user.uid) ? `<button onclick="eliminaCommento('${c.id}')" class="text-[10px] font-bold text-red-500 hover:text-red-700 ml-auto px-2 py-1">Elimina</button>` : ''}
                     </div>
                 </div>
                 ${buildCommentTree(recensioneId, c.id, depth + 1)}
@@ -719,70 +692,79 @@
     window.cambiaTab = (tab) => { state.tab = tab; state.selectedReviewBookId = null; if(state.user) updateDoc(doc(db, "utenti", state.user.uid), { lastActive: serverTimestamp() }).catch(()=>{}); requestRender(true); };
 
     window.toggleServer = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("toggleServer");
+        if (!state.isGod) return mostraAlert("Permesso negato");
         const newState = !serverState.attivo;
-        await updateDoc(doc(db, "sistema", "stato_server"), { attivo: newState });
-        mostraAlert(newState ? "✅ Server Riattivato." : "🛑 Server Spento.");
+        try { await updateDoc(doc(db, "sistema", "stato_server"), { attivo: newState }); mostraAlert(newState ? "✅ Server Riattivato." : "🛑 Server Spento."); } catch(e) { mostraAlert("Errore: " + e.message); }
     };
 
     window.chiudiAltreVersioni = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("chiudiAltreVersioni");
+        if (!state.isGod) return mostraAlert("Permesso negato");
         if(await chiediConferma("Tutti i link attualmente aperti dagli altri verranno bloccati. Sicuro?")) {
-            await updateDoc(doc(db, "sistema", "stato_server"), { last_force_reload: Date.now() }); mostraAlert("🔒 Vecchi link isolati. La tua sessione al momento del riavvio sarà pulita.");
+            try { await updateDoc(doc(db, "sistema", "stato_server"), { last_force_reload: Date.now() }); mostraAlert("🔒 Vecchi link isolati. La tua sessione al momento del riavvio sarà pulita."); } catch(e) { mostraAlert("Errore: " + e.message); }
         }
     };
 
     window.invocaPotere = async (potere) => {
-        if (!isGodSicuro()) return logIntrusioneConsole("invocaPotere");
+        if (!state.isGod) return mostraAlert("Permesso negato");
         const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value);
         if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio (Tutti o un utente specifico)!");
-        await setDoc(doc(db, "sistema", "caos"), { evento: potere, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
-        mostraAlert(`⚡ Potere scatenato!`);
+        try {
+            await setDoc(doc(db, "sistema", "caos"), { evento: potere, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
+            mostraAlert(`⚡ Potere scatenato!`);
+        } catch(e) { mostraAlert("Errore: " + e.message); }
     };
 
     window.voceDiDio = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("voceDiDio");
+        if (!state.isGod) return mostraAlert("Permesso negato");
         const msg = await chiediInput("Scrivi il messaggio globale:", ""); if(!msg) return;
         const targets = Array.from(document.querySelectorAll('.target-cb:checked')).map(cb => cb.value); if(targets.length === 0) return mostraAlert("Seleziona almeno un bersaglio!");
-        await setDoc(doc(db, "sistema", "caos"), { evento: 'messaggio', messaggio: msg, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
-        mostraAlert("Messaggio Divino inviato!");
+        try {
+            await setDoc(doc(db, "sistema", "caos"), { evento: 'messaggio', messaggio: msg, timestamp: serverTimestamp(), emessoDa: state.userData.nome || state.user.displayName, targets: targets.includes('all') ? ['all'] : targets });
+            mostraAlert("Messaggio Divino inviato!");
+        } catch(e) { mostraAlert("Errore: " + e.message); }
     };
 
     window.miracoloApprovazione = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("miracoloApprovazione");
+        if (!state.isGod) return mostraAlert("Permesso negato");
         if(await chiediConferma("✨ MIRACOLO: Approvare tutte le richieste in attesa?")) {
-            for(let r of state.requests) {
-                if(r.tipo === 'nuovo_libro') await addDoc(collection(db, "libri"), { ...r.dati, stato: 'disponibile', rating_media: 0, numero_recensioni: 0 }), await updateDoc(doc(db, "richieste", r.id), { stato: 'approvato' });
-                else if(r.tipo === 'prestito') await updateDoc(doc(db, "libri", r.libroId), { stato: 'noleggiato', noleggiato_da: r.richiedente, noleggiato_da_uid: r.richiedente_uid, scadenza: (Date.now() + 30*DAY) }), await updateDoc(doc(db, "richieste", r.id), { stato: 'approvato' });
-            }
-            mostraAlert("Miracolo compiuto.");
+            try {
+                for(let r of state.requests) {
+                    if(r.tipo === 'nuovo_libro') await addDoc(collection(db, "libri"), { ...r.dati, stato: 'disponibile', rating_media: 0, numero_recensioni: 0 }), await updateDoc(doc(db, "richieste", r.id), { stato: 'approvato' });
+                    else if(r.tipo === 'prestito') await updateDoc(doc(db, "libri", r.libroId), { stato: 'noleggiato', noleggiato_da: r.richiedente, noleggiato_da_uid: r.richiedente_uid, scadenza: (Date.now() + 30*DAY) }), await updateDoc(doc(db, "richieste", r.id), { stato: 'approvato' });
+                }
+                mostraAlert("Miracolo compiuto.");
+            } catch(e) { mostraAlert("Errore: " + e.message); }
         }
     };
 
     window.amnistiaGenerale = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("amnistiaGenerale");
+        if (!state.isGod) return mostraAlert("Permesso negato");
         if(await chiediConferma("🕊️ AMNISTIA: Restituire forzatamente tutti i libri in prestito?")) {
-            for(let b of state.books.filter(b => b.stato === 'noleggiato')) {
-                if(b.noleggiato_da_uid) await updateDoc(doc(db, "utenti", b.noleggiato_da_uid), { libri_letti: arrayUnion(b.id) });
-                await updateDoc(doc(db, "libri", b.id), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null });
-            }
-            mostraAlert("Amnistia completata.");
+            try {
+                for(let b of state.books.filter(b => b.stato === 'noleggiato')) {
+                    if(b.noleggiato_da_uid) await updateDoc(doc(db, "utenti", b.noleggiato_da_uid), { libri_letti: arrayUnion(b.id) });
+                    await updateDoc(doc(db, "libri", b.id), { stato: 'disponibile', noleggiato_da: null, noleggiato_da_uid: null, scadenza: null });
+                }
+                mostraAlert("Amnistia completata.");
+            } catch(e) { mostraAlert("Errore: " + e.message); }
         }
     };
 
     window.apocalisse = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("apocalisse");
+        if (!state.isGod) return mostraAlert("Permesso negato");
         if(await chiediConferma("💀 APOCALISSE: Eliminare TUTTE le richieste, RECENSIONI e COMMENTI?")) {
-            for(let r of state.requests) await updateDoc(doc(db, "richieste", r.id), { stato: 'rifiutato' }); 
-            for(let r of state.reviews) await deleteDoc(doc(db, "recensioni", r.id));
-            for(let c of state.comments) await deleteDoc(doc(db, "commenti", c.id));
-            for(let b of state.books) await updateDoc(doc(db, "libri", b.id), { rating_media: 0, numero_recensioni: 0 });
-            mostraAlert("Il database è stato purificato.");
+            try {
+                for(let r of state.requests) await updateDoc(doc(db, "richieste", r.id), { stato: 'rifiutato' }); 
+                for(let r of state.reviews) await deleteDoc(doc(db, "recensioni", r.id));
+                for(let c of state.comments) await deleteDoc(doc(db, "commenti", c.id));
+                for(let b of state.books) await updateDoc(doc(db, "libri", b.id), { rating_media: 0, numero_recensioni: 0 });
+                mostraAlert("Il database è stato purificato.");
+            } catch(e) { mostraAlert("Errore: " + e.message); }
         }
     };
 
     window.comprimiDatabaseEsistente = async () => {
-        if (!isGodSicuro()) return logIntrusioneConsole("comprimiDatabaseEsistente");
+        if (!state.isGod) return mostraAlert("Permesso negato");
         if(!await chiediConferma("🗜️ AVVIO COMPRESSIONE DI MASSA\n\nVuoi scansionare l'intero database e comprimere le foto già caricate in passato? Questo libererà moltissimo spazio, ma ci vorrà qualche secondo. Procediamo?")) return;
         mostraAlert("Compressione in corso... Potrebbe volerci 1 minuto. NON chiudere la pagina."); let count = 0;
         try {
@@ -795,7 +777,7 @@
     };
 
     window.sguardoDivino = (uid) => {
-        if (!isGodSicuro()) return logIntrusioneConsole("sguardoDivino");
+        if (!state.isGod) return mostraAlert("Permesso negato");
         const u = state.users.find(x => x.id === uid); if(!u) return;
         const p = state.books.filter(b => b.noleggiato_da_uid === uid);
         const volteAdmin = u.volte_admin || 0; const statusAdmin = volteAdmin > 0 ? `Sì (${volteAdmin} volt${volteAdmin === 1 ? 'a' : 'e'})` : "Mai stato";
@@ -1014,10 +996,10 @@
                         <div class="flex justify-between items-start mb-4"><div class="flex items-center gap-3">${window.getAvatar(r.avatar, "w-10 h-10 sm:w-12 sm:h-12")}<div><div class="flex items-center flex-wrap gap-1"><span class="font-extrabold text-base sm:text-lg text-slate-800">${escapeHTML(r.nomeUtente)}</span>${badgeHtml}</div><div class="text-[10px] sm:text-xs font-bold text-slate-400 mt-0.5">${dataStr}</div></div></div><div class="scale-90 sm:scale-100 origin-top-right shrink-0">${renderStars(r.voto)}</div></div>${r.commento ? `<p class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-100 text-sm sm:text-base font-medium italic text-slate-700 mb-3">${escapeHTML(r.commento)}</p>` : ''}
                         ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" loading="lazy" decoding="async" class="rounded-2xl max-w-full sm:max-w-md shadow-sm mb-4 border border-slate-100">` : ''}
                         <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 pt-2 border-t border-slate-100">
-                            <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button>
-                            <button onclick="votaRecensione('${r.id}', 'down')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-50 text-rose-600 border border-rose-200 shadow-sm' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👎 ${r.downvotes?.length||0}</button>
+                            <button onclick="votaRecensione('${r.id}', 'up')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.upvotes?.includes(state.user.uid) ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👍 ${r.upvotes?.length||0}</button>
+                            <button onclick="votaRecensione('${r.id}', 'down')" class="text-xs sm:text-sm flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl font-bold transition-colors ${r.downvotes?.includes(state.user.uid) ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'}">👎 ${r.downvotes?.length||0}</button>
                             <button onclick="apriRisposta('${r.id}', null, '${escapeHTML(r.nomeUtente).replace(/'/g, "\\'")}')" class="text-xs sm:text-sm font-extrabold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-xl transition-colors ml-auto flex items-center gap-2 border border-indigo-100"><span class="text-lg leading-none">💬</span> Rispondi</button>
-                            ${isAdminSicuro() ? `<button onclick="eliminaRecensione('${r.id}', '${r.libroId}')" class="text-[10px] sm:text-xs font-bold px-3 py-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200">Elimina</button>` : ''}
+                            ${state.isAdmin ? `<button onclick="eliminaRecensione('${r.id}', '${r.libroId}')" class="text-[10px] sm:text-xs font-bold px-3 py-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200">Elimina</button>` : ''}
                         </div>
                         <div class="mt-5 border-t border-slate-100 pt-2">${buildCommentTree(r.id, null)}</div>
                     </div>`;
@@ -1103,7 +1085,6 @@
                         ${state.isGod ? `
                             <button onclick="sguardoDivino('${u.id}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Sguardo Divino">👁</button>
                             <button onclick="assegnaBadge('${u.id}', '${escapeHTML(u.nome).replace(/'/g, "\\'")}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-pink-100 hover:bg-pink-200 text-pink-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Assegna Badge">🏷️</button>
-                            ${u.ruolo==='admin'?`<button onclick="cambiaRuolo('${u.id}', 'utente')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Rimuovi Admin">↓</button>`:`<button onclick="cambiaRuolo('${u.id}', 'admin')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold rounded-md sm:rounded-lg transition-colors" title="Promuovi Admin">↑</button>`}
                             <button onclick="banDispositivo('${u.id}', '${escapeHTML(u.nome).replace(/'/g, "\\'")}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-red-900 hover:bg-red-800 text-red-100 font-bold rounded-md sm:rounded-lg shadow-md shadow-red-900/20 transition-colors" title="Banna Dispositivo PC/Telefono">🔨</button>
                         ` : ''}
                         <button onclick="modificaUtente('${u.id}', '${escapeHTML(u.nome).replace(/'/g, "\\'")}')" class="px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md sm:rounded-lg font-bold transition-colors">Mod</button>
@@ -1214,7 +1195,7 @@
         }
 
         const btnClass = id => `flex items-center justify-center shrink-0 gap-1.5 sm:gap-2 px-4 py-2 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl font-extrabold transition-all duration-300 text-xs sm:text-base ${state.tab === id ? 'bg-slate-900 text-white shadow-lg sm:shadow-xl sm:scale-105' : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'}`;
-        const content = { catalogo: catalogoView, prestiti: prestitiView, proponi: proponiView, recensioni: recensioniView, admin: adminView, god: godView }[state.tab];
+        const content = { catalogo: catalogoView, prestiti: prestitiView, proponi: proponiView, recensioni: recensioniView, admin: adminView, god: godView }[state.tab === "admin" && !state.isAdmin ? "catalogo" : state.tab]();
         const animationClass = animate ? 'fade-in' : '';
 
         appDiv.innerHTML = `
@@ -1222,6 +1203,7 @@
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <span class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2 sm:gap-3"><span class="text-2xl sm:text-3xl drop-shadow-sm hover:rotate-12 transition-transform cursor-pointer">📚</span> <span>2ALD</span></span>
                 <div class="flex items-center gap-2 sm:gap-4">
+                    
                     <button onclick="openModal('profilo')" class="flex items-center gap-2 sm:gap-3 bg-slate-100/80 hover:bg-slate-200/80 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-full border border-slate-200 transition-colors shadow-sm cursor-pointer group">
                         ${window.getAvatar(state.userData.avatar, "w-6 h-6 sm:w-8 sm:h-8")}
                         <span class="text-xs sm:text-sm font-bold text-slate-700 hidden md:flex items-center group-hover:text-indigo-600 transition-colors">${escapeHTML(state.userData.nome || state.user.displayName)} ${state.userData.badge ? `<span class="ml-1.5 text-[9px] uppercase font-black px-1.5 py-0.5 bg-amber-400 text-amber-900 rounded-md border border-amber-300 shadow-sm">${escapeHTML(state.userData.badge)}</span>` : ''}</span>
@@ -1242,7 +1224,7 @@
                 ${state.isGod ? `<button onclick="cambiaTab('god')" class="${btnClass('god')} snap-start !bg-purple-600 !text-white !border-purple-600 shadow-purple-600/30">⚡ <span class="hidden sm:inline">L'Olimpo</span></button>` : ''}
                 <div class="w-1 shrink-0 sm:hidden"></div>
             </div>
-            <div class="pb-10">${content()}</div>
+            <div class="pb-10">${content}</div>
         </main>
         ${renderModal()}`;
 
@@ -1252,7 +1234,5 @@
         }
     }
 </script>
-
-<!-- Aggiornamento forzato per GitHub Actions (05-10-2026) -->
 </body>
 </html>
